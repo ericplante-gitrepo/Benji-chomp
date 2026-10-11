@@ -522,8 +522,8 @@ const MEGA_LEVELS = [
 //   1 2 3 pad   4 5 6 clam   X Y Z coral gate   x y z rock wall   (coral / gold / pink)
 const SWITCH_LEVELS = {
   little: [
-    { grid: ["1#X#G", "S...."], slots: 5 },                         // URRRR       pad -> coral gate (intro)
-    { grid: ["S#y#G", ".#5.."], slots: 6 },                         // RDRURR      chomp clam -> gold rocks (intro)
+    { grid: ["1#X#G", "S...."], slots: 6 },                         // URRRR       pad -> coral gate (intro)
+    { grid: ["S#y#G", ".#5.."], slots: 7 },                         // RDRURR      chomp clam -> gold rocks (intro)
   ],
   big: [
     { grid: ["...X##G", "S###U..", "..1#..."], slots: 9 },          // RRDURURRR   detour to the pad
@@ -757,6 +757,62 @@ function routeHits(pts, loop, keys, th, Rl){     // how many key tiles (goal, ur
   if (loop) keys.forEach((k, j) => { if (Math.abs(Math.hypot(k.x - loop.x, k.y - (loop.y - Rl)) - Rl) < near) hit.add(j); });
   return hit.size;
 }
+// ---- v9.4 permanent-pipe router: try many orthogonal routes (U / Z / sideways / 4-elbow steps, with or without a loop)
+//  and keep the one that covers no key tiles, crosses the fewest other pipes and ordinary tiles, and stays on screen.
+function routeTubeSmart(from, to, style, others){
+  const s = tubeScale(G), th = 36 * s, Re = 36 * s, Rl = 60 * s, lift = G.TD * .12;
+  const P0 = cellXY(G, from[0], from[1]), P1 = cellXY(G, to[0], to[1]); P0.y -= lift; P1.y -= lift;
+  const X0 = 118 + th / 2, X1 = 1150 - th / 2, Y0 = 8 + th / 2, Y1 = BAR_Y - th / 2 - 6;
+  const o00 = cellXY(G, 0, 0), o11 = cellXY(G, 1, 1), px = o11.x - o00.x, py = o11.y - o00.y;
+  const cellOf = (x, y) => { const c = Math.round((x - o00.x) / px), r = Math.round((y - o00.y - G.TH * .35) / py); return [r, c]; };
+  const isEnd = (r, c) => (r === from[0] && c === from[1]) || (r === to[0] && c === to[1]);
+  const hash = new Map(), HS = 24; (others || []).forEach(R => { for (let d = 0; d <= R.total; d += 10) { const q = routeAt(R, d), k = Math.floor(q.x / HS) + ',' + Math.floor(q.y / HS); (hash.get(k) || hash.set(k, []).get(k)).push(q); }
+    if (R.loop) for (let a = 0; a < 6.283; a += .12) { const q = { x: R.loop.x + Math.cos(a) * R.Rl, y: R.loop.y - R.Rl + Math.sin(a) * R.Rl }, k = Math.floor(q.x / HS) + ',' + Math.floor(q.y / HS); (hash.get(k) || hash.set(k, []).get(k)).push(q); } });
+  const nearOther = (x, y) => { const gx = Math.floor(x / HS), gy = Math.floor(y / HS), lim = th * .95;
+    for (let i = -2; i <= 2; i++) for (let j = -2; j <= 2; j++) { const b = hash.get((gx + i) + ',' + (gy + j)); if (b) for (const q of b) if (Math.abs(q.x - x) < lim && Math.abs(q.y - y) < lim) return true; } return false; };
+  const scorePt = (x, y, acc) => {
+    if (x < X0 || x > X1 || y < Y0 || y > Y1) { acc.out++; return; }
+    const [r, c] = cellOf(x, y), ch = cellAt(L, r, c);
+    if (ch !== '.' && !isEnd(r, c)) { if (KEY_CH.includes(ch) || treats.some(t => t.r === r && t.c === c)) acc.keys.add(r + ',' + c); else acc.tile++; }
+    if (nearOther(x, y)) acc.cross++;
+  };
+  const loopBonus = loop => loop ? (style === 'loop' ? 260 : 60) : 0;
+  const evalRoute = (pts, loop, cap) => {          // early-out once the running score can't beat the best so far
+    let len = 0; for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y); if (loop) len += 6.283 * Rl;
+    const base = len * .12 + (pts.length - 2) * 25 - loopBonus(loop); if (base >= cap) return null;
+    const acc = { keys: new Set(), tile: 0, cross: 0, out: 0 }, sc = () => base + acc.keys.size * 5000 + acc.cross * 40 + acc.tile * 6;
+    for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], l = Math.hypot(b.x - a.x, b.y - a.y);
+      for (let d = 0; d <= l; d += 10) { scorePt(a.x + (b.x - a.x) * d / l, a.y + (b.y - a.y) * d / l, acc); if (acc.out || sc() >= cap) return null; } }
+    if (loop) for (let a = 0; a < 6.283; a += .12) { scorePt(loop.x + Math.cos(a) * Rl, loop.y - Rl + Math.sin(a) * Rl, acc); if (acc.out || sc() >= cap) return null; }
+    return sc();
+  };
+  const cands = [], push = (pts, sty, loop) => { if (polyOK(pts, Re)) cands.push({ pts, sty, loop }); };
+  for (let yc = Y0; yc <= Y1; yc += 6) {              // vertical out, across, vertical in (U above/below, or Z between)
+    if (Math.abs(P0.y - yc) < Re + 14 || Math.abs(P1.y - yc) < Re + 14) continue;
+    const p = [P0, { x: P0.x, y: yc }, { x: P1.x, y: yc }, P1]; push(p, 'basic', null);
+    const xmin = Math.min(P0.x, P1.x) + Rl + th * .7, xmax = Math.max(P0.x, P1.x) - Rl - th * .7;
+    if (yc - 2 * Rl - th / 2 >= Y0 - th / 2) for (let x = xmin; x <= xmax; x += 14) push(p, 'loop', { x, y: yc });
+  }
+  for (let xc = X0; xc <= X1; xc += 6) {              // sideways out, up/down, sideways in
+    if (Math.abs(P0.x - xc) < Re + 14 || Math.abs(P1.x - xc) < Re + 14) continue;
+    push([P0, { x: xc, y: P0.y }, { x: xc, y: P1.y }, P1], 'side', null);
+  }
+  for (let ya = Y0; ya <= Y1; ya += 18) for (let yb = Y0; yb <= Y1; yb += 18) for (const f of [.3, .5, .7]) {   // 4-elbow steps
+    const xm = P0.x + (P1.x - P0.x) * f;
+    push([P0, { x: P0.x, y: ya }, { x: xm, y: ya }, { x: xm, y: yb }, { x: P1.x, y: yb }, P1], 'step', null);
+  }
+  push([P0, { x: P0.x, y: P1.y }, P1], 'ell', null); push([P0, { x: P1.x, y: P0.y }, P1], 'ell', null);    // one elbow
+  for (let ya = Y0; ya <= Y1; ya += 15) for (let xb = X0; xb <= X1; xb += 15) {                                  // three elbows, both ways round
+    push([P0, { x: P0.x, y: ya }, { x: xb, y: ya }, { x: xb, y: P1.y }, P1], 'step', null);
+    push([P0, { x: xb, y: P0.y }, { x: xb, y: ya }, { x: P1.x, y: ya }, P1], 'step', null);
+  }
+  cands.forEach(c => { let l = 0; for (let i = 1; i < c.pts.length; i++) l += Math.hypot(c.pts[i].x - c.pts[i - 1].x, c.pts[i].y - c.pts[i - 1].y); c.lb = l * .12 + (c.pts.length - 2) * 25 + (c.loop ? 6.283 * Rl * .12 : 0) - loopBonus(c.loop); });
+  cands.sort((a, b) => a.lb - b.lb);               // cheapest first, so the early-out bites fast
+  let best = null;
+  for (const c of cands) { if (best && c.lb >= best.sc) break; const sc = evalRoute(c.pts, c.loop, best ? best.sc : 1e9); if (sc != null && (!best || sc < best.sc)) best = Object.assign({ sc }, c); }
+  if (!best) return null;
+  const R = buildRoute(best.pts, best.loop, { s, th, Re, Rl, style: best.sty }); R.score = Math.round(best.sc); return R;
+}
 function routeTube(from, to, style){
   const s = tubeScale(G), th = 36 * s, Re = 36 * s, Rl = 60 * s, lift = G.TD * .12;
   const P0 = cellXY(G, from[0], from[1]), P1 = cellXY(G, to[0], to[1]); P0.y -= lift; P1.y -= lift;
@@ -893,7 +949,8 @@ function tubeFor(st){
   const key = levelIdx + ':' + diff + ':' + st + ':' + G.TW.toFixed(1) + ':' + scale.toFixed(2);
   const artNow = ['tube', 'tubeElbow', 'tubeLoop', 'tubeCollar'].map(sheetOK).join();
   if (!tubeCache[key] || tubeCache[key].artKey !== artNow) {
-    const R = routeTube(ends[0], ends[1], tubeStyle(st)) || arcRoute(ends[0], ends[1]);
+    const others = 'abc'.slice(0, 'abc'.indexOf(st)).split('').map(o => tubeFor(o)).filter(Boolean);   // earlier pairs are routed first; later ones avoid them
+    const R = routeTubeSmart(ends[0], ends[1], tubeStyle(st), others) || routeTube(ends[0], ends[1], tubeStyle(st)) || arcRoute(ends[0], ends[1]);
     R.st = st; R.key = key; R.artKey = artNow; tubeCache[key] = bakeTube(R, st);
   }
   return tubeCache[key];
@@ -904,13 +961,10 @@ function tracePath(T, skipLoop){
   ctx.beginPath(); const a = T.prims[0].a || T.pts[0]; ctx.moveTo(a.x, a.y);
   for (const p of T.prims) { if (p.type === 'line') ctx.lineTo(p.b.x, p.b.y); else if (!(p.loop && skipLoop)) ctx.arc(p.c.x, p.c.y, p.r, p.a0, p.a0 + p.sweep, p.sweep < 0); }
 }
-function drawTubeLinks(){            // faint marching dots along each pair's route (loop left out: less clutter)
-  for (const st of 'abc') {
-    const T = tubeFor(st); if (!T || (tubeFX && tubeFX.st === st)) continue;
-    ctx.save(); ctx.globalAlpha = .3; ctx.setLineDash([2, 14]); ctx.lineDashOffset = -(performance.now() / 1000) * 18; ctx.lineCap = 'round';
-    tracePath(T, true); ctx.strokeStyle = '#0c3d6b'; ctx.lineWidth = 9; ctx.stroke(); ctx.strokeStyle = TUBE_COL[st]; ctx.lineWidth = 5; ctx.stroke(); ctx.restore();
-  }
-}
+//  v9.4: every pair's full plumbing is ALWAYS on the board (pair 1 icy blue, 2 green, 3 violet: the colour is the pair letter,
+//  so two pairs can never share one). Drawn just above the tiles and below everything standing on them, slightly see-through.
+const PIPE_ALPHA = .86;
+function drawTubeLinks(){ for (const st of 'abc') drawTubeBody(tubeFor(st), PIPE_ALPHA); }
 function updateTubes(dt){
   if (tubeFX) { tubeFX.t += dt;
     if (tubeFX.state === 'grow') tubeFX.a = Math.min(1, tubeFX.a + dt / .16);
@@ -1194,7 +1248,8 @@ function placeTreats(){                // 1-2 treats on plain path tiles along t
   sol.forEach(d => { const r = stepSim(L, pos, d, mask); mask = r.mask; pos = r.type === 'warp' ? r.dest : r.to; if ('#='.includes(cellAt(L, pos[0], pos[1])) && r.type === 'move') cells.push(pos.slice()); });
   if (!cells.length) return;
   const c = cells[Math.floor((cells.length - 1) / 2)];                                     // v9.3: exactly ONE treat, mid-path
-  treats.push({ r: c[0], c: c[1], kind: TREATS[(levelIdx * 3 + diff) % 4], got: false });   // the next level gets a different treat
+  const gi = LEVELS.slice(0, diff).reduce((n, T) => n + T.levels.length, 0) + levelIdx;   // whole-game index: neighbours always differ, even across tiers
+  treats.push({ r: c[0], c: c[1], kind: TREATS[(gi * 3) % 4], got: false });   // the next level gets a different treat
 }
 function collectTreat(pos){
   const t = treats.find(t => !t.got && t.r === pos[0] && t.c === pos[1]); if (!t) return;
@@ -1424,24 +1479,24 @@ const DR = [0, 1, -1, 0], DC = [-1, 0, 0, 1], DIR_NAME = ['Left', 'Down', 'Up', 
 //  Grid legend:  .  open water (fail)   #  sand tile   S  start tile   G  goal tile (bubble)
 //                U  sea urchin (fail)   A/a  tube pair (icy blue)   B/b  tube pair (green)   C/c  tube pair (violet)
 const LEVELS = [
-  // v9: Little Fin follows the Hulk maze progression: short path -> obstacles -> grey pad + bridges -> long S-paths (7 slots max)
+  // v9.4: Little Fin is the v8 set again (10 originals + the 2 switch intros, appended below), then a gentle grey-pad bridge level as #13
   { name: 'Little Fin', color: '#3cc46b', hintDelay: 7, levels: [
-    { grid: ['S##G'], slots: 3 },                                   // RRR           short path
-    { grid: ['S##', '..#', '..G'], slots: 4 },                      // RRDD          first turn
-    { grid: ['S#U.', '.##G'], slots: 4 },                           // RDRR          urchin (spikes) in the way
-    { grid: ['.U#G', 'S##U', '.U..'], slots: 4 },                   // RRUR          urchins all around
-    { grid: ['SP==G'], slots: 4 },                                  // RRRR          grey pad -> bridges pop in
-    { grid: ['S#==G', '.P...'], slots: 6 },                         // RDURRR        detour to the pad
-    { grid: ['S##', '..#', '###', 'G..'], slots: 7 },               // RRDDLLD       long S-path, all 7 slots
-    { grid: ['S#U..', '.###.', 'U..#.', '..G#.'], slots: 7 },       // RDRRDDL       S-path with urchins + a decoy
-    { grid: ['S#P', '.U=', '.U=', 'G=='], slots: 7 },               // RRDDDLL       pad, then a bridge that turns
-    { grid: ['S#A..a#G'], slots: 4 },                               // RRRR          first tube
+    { grid: ['S##G'], slots: 4 },
+    { grid: ['S', '#', 'G'], slots: 3 },
+    { grid: ['G##S'], slots: 4 },
+    { grid: ['S##', '..#', '..G'], slots: 5 },
+    { grid: ['..G', '.##', 'S#.'], slots: 5 },
+    { grid: ['S#..', '.##.', '..#G'], slots: 5 },
+    { grid: ['S#A..a#G'], slots: 5 },
+    { grid: ['S#', '.#', 'G#'], slots: 5 },
+    { grid: ['S#A.', '....', '.a#G'], slots: 5 },
+    { grid: ['S#U.', '.##G'], slots: 5 },
   ] },
   { name: 'Big Fin', color: '#2e8ef0', hintDelay: 15, levels: BIG_LEVELS },
   { name: 'Mega Fin', color: '#9b4dff', hintDelay: 15, hintsDefault: false, levels: MEGA_LEVELS },
 ];
 const SET_SIZE = 5;
-LEVELS[0].levels.push(...SWITCH_LEVELS.little); LEVELS[1].levels.push(...SWITCH_LEVELS.big); LEVELS[2].levels.push(...SWITCH_LEVELS.mega);
+LEVELS[0].levels.push(...SWITCH_LEVELS.little, { grid: ['SP==G'], slots: 5 }); /* 13: RRRR grey pad -> bridges pop in */ LEVELS[1].levels.push(...SWITCH_LEVELS.big); LEVELS[2].levels.push(...SWITCH_LEVELS.mega);
 
 // ---------------------------------------------------------------- rules (shared by the game and the solver)
 //  '=' bridge: open water (a fall) until the grey pad P is pressed this run (mask bit GREY)
@@ -1517,7 +1572,8 @@ let later = [], parts = [], pops = [], bursts = [], bubbles = [], confetti = [],
 let card = null, reward = null, shake = 0, pressed = null, ptr = null, goalPop = -1, urchinBump = {};
 const prog = [0, 1, 2].map(i => store.get('v6prog' + i, i === 0 ? Math.min(9, store.get('maze0', 0)) : 0));   // highest unlocked level per tier
 const stars = [0, 1, 2].map(i => store.get('v6stars' + i, []));                                                   // best stars per level
-if (!store.get('v91littleStarsReset', false)) { stars[0] = []; store.set('v6stars0', []); store.set('v91littleStarsReset', true); }   // v9 reworked Little Fin: old stars belonged to other puzzles
+if (!store.get('v91littleStarsReset', false)) { stars[0] = []; store.set('v6stars0', []); store.set('v91littleStarsReset', true); }
+if (!store.get('v94littleStarsReset', false)) { stars[0] = []; store.set('v6stars0', []); store.set('v94littleStarsReset', true); }   // v9.4: Little Fin is the v8 set again   // v9 reworked Little Fin: old stars belonged to other puzzles
 let hintsOn = store.get('megaHints', false), runs = 0, winStars = null, slotPop = null;
 const starTotal = d => stars[d].reduce((a, b) => a + (b || 0), 0);
 function tubeShrink(){           // Benji shrinks a little so he fits inside the glass
@@ -1565,7 +1621,7 @@ function loadLevel(i){
   const s = findCh(L, 'S'), p = benjiSpot(G, s[0], s[1]);
   benji.pos = s; benji.x = p.x; benji.y = p.y; benji.sc = Math.min(G.TW, 165) / 140 * .54; benji.flip = findCh(L, 'G')[1] < s[1];
   benji.act = null; benji.alpha = 1; benji.spin = 0; benji.shrink = 1; benji.rot = 0;
-  prebuildTubes(); maybeTutorial(); placeTreats();
+  placeTreats(); prebuildTubes(); maybeTutorial();   // treats first: the pipe router steers around them
 }
 function openSelect(d){ runCard(() => { diff = d; state = 'select'; L = null; run = null; reward = null; confetti = []; later = []; benji.act = null; benji.alpha = 1; benji.shrink = 1; benji.spin = 0; benji.flip = false; }); }
 function playLevel(i){ runCard(() => { state = 'play'; reward = null; confetti = []; loadLevel(i); }); }
@@ -1637,17 +1693,20 @@ function pressPlay(){
     if (!queue.length) { SFX.full(); slotShake = .4; return; }
     SFX.go(); mode = 'run'; idle = 0; runs++;
     run = { cmds: queue.slice(), i: 0, pos: findCh(L, 'S'), seg: null, wait: .25 };
-  } else if (mode === 'run' || mode === 'fail') { SFX.tap(); resetRun(false); }   // no auto reset: the player taps Reset; the queue is kept
+  } else if (mode === 'run' || mode === 'fail') { SFX.tap(); resetRun(false); }   // Reset still works any time; the queue is kept
 }
 function resetRun(quick){           // Benji pops back onto the start tile (queue kept)
   const s = findCh(L, 'S'), p = benjiSpot(G, s[0], s[1]);
   mode = 'edit'; run = null; failInfo = null; idle = 0; benji.act = null; benji.alpha = 1; benji.spin = 0; benji.shrink = 1; benji.rot = 0; benji.inTube = false; if (tubeFX) tubeFX.state = 'fade'; benji.forceState = null; resetSwitchFX(); resetTreats();
-  benji.home = null; benji.pos = s; benji.x = p.x; benji.y = p.y; benji.hidden = false; benji.popIn = 0; benji.sortY = null; benji.ox = 0; benji.squat = 0; benji.moving = false;
-  benji.flip = findCh(L, 'G')[1] < s[1]; addPuff(p.x, p.y + G.TD * .2, .8); SFX.pop();
+  const gone = benji.hidden || benji.alpha < .5;
+  benji.pos = s; benji.hidden = false; benji.popIn = 0; benji.sortY = null; benji.ox = 0; benji.squat = 0; benji.moving = false;
+  if (gone || quick) { benji.home = null; benji.x = p.x; benji.y = p.y; benji.flip = findCh(L, 'G')[1] < s[1]; addPuff(p.x, p.y + G.TD * .2, .8); SFX.pop(); }
+  else { benji.home = { x: p.x, y: p.y, t: 0, sx: benji.x, sy: benji.y, dur: .5 }; if (p.x < benji.x - 4) benji.flip = true; else if (p.x > benji.x + 4) benji.flip = false; SFX.blub && SFX.blub(); }
 }
 
 // ---------------------------------------------------------------- running the program
-const STEP_T = .6, HOP_AT = .18, HOP_T = .34;   // turn + crouch, then the hop, then a little landing squash
+const AUTO_RESET = { water: .35, urchin: .9, blocked: 1.1, short: 1.1 };   // after the fail animation (the water sink already took ~1.3 s)
+const MOVE_T = .42;                 // v9.4: smooth swim again (v8 timing), turning to face the way he swims
 function nextSeg(){
   if (run.i >= run.cmds.length) return failRun('short');
   const d = run.cmds[run.i], res = stepSim(L, run.pos, d, run.mask || 0);
@@ -1655,6 +1714,7 @@ function nextSeg(){
   const was = benji.flip; if (d === 0) benji.flip = true; else if (d === 3) benji.flip = false;   // up/down keep last facing (side-on art)
   if (was !== benji.flip) benji.turnT = 0;
   run.seg = Object.assign({ d, t: 0, phase: 'go', from: run.pos.slice() }, res);
+  if (SFX.blub) SFX.blub();
 }
 function failRun(kind){
   mode = 'fail'; failInfo = { kind, at: run ? run.i : 0, t: 0 }; if (run) run.seg = null;
@@ -1667,19 +1727,16 @@ function updateRun(dt){
   const s = run.seg; s.t += dt;
   const A = benjiSpot(G, s.from[0], s.from[1]), B = benjiSpot(G, s.to[0], s.to[1]);
   if (s.phase === 'go') {
-    const short = s.type === 'urchin' || s.type === 'blocked', tx = short ? lerp(A.x, B.x, .42) : B.x, ty = short ? lerp(A.y, B.y, .42) : B.y;
-    const crouch = clamp((s.t - .04) / (HOP_AT - .04), 0, 1), h = clamp((s.t - HOP_AT) / (short ? HOP_T * .7 : HOP_T), 0, 1);
-    if (h <= 0) benji.squat = .2 * Math.sin(crouch * Math.PI / 2);
-    else { if (!s.hopped) { s.hopped = true; SFX.hop(); }
-      benji.squat = h < 1 ? -.1 * Math.sin(h * Math.PI) : 0;
-      const e = h < .5 ? 2 * h * h : 1 - 2 * (1 - h) * (1 - h);
-      benji.x = lerp(A.x, tx, e); benji.y = lerp(A.y, ty, e) - Math.sin(h * Math.PI) * G.TD * (short ? .35 : .55); benji.moving = h < 1;
-      const nose = s.d === 2 ? -1 : s.d === 1 ? 1 : 0; benji.rot = nose * (benji.flip ? -1 : 1) * .22 * Math.sin(h * Math.PI);
-      if (s.type === 'goal' && h > .55) { benji.forceState = 'chomp'; benji.forceValue = clamp((h - .55) * 2.4, 0, 1); }
-    }
-    if (h >= 1 && !s.landed) { s.landed = true; benji.qv += 5; benji.rot = 0; if (!short && s.type !== 'water') bubbleBurst(benji.x, benji.y + 30, 2, 20); }
-    if (h >= 1) {
-      if (s.type === 'move' && s.t >= STEP_T) { run.pos = s.to; run.i++; run.seg = null; run.wait = .02; benji.moving = false; run.mask = s.mask; collectTreat(s.to);
+    const short = s.type === 'urchin' || s.type === 'blocked', dur = short ? .24 : MOVE_T;
+    const tx = short ? lerp(A.x, B.x, .42) : B.x, ty = short ? lerp(A.y, B.y, .42) : B.y;
+    if (s.type === 'goal') { benji.forceState = 'chomp'; benji.forceValue = clamp(s.t / dur * 1.3, 0, 1); }
+    if (s.type === 'move' && s.sw && s.sw.kind === 'clam' && s.trig) { benji.forceState = 'chomp'; benji.forceValue = clamp(s.t / dur * 1.2, 0, 1); }
+    const k = clamp(s.t / dur, 0, 1), e = ease(k);
+    benji.x = lerp(A.x, tx, e); benji.y = lerp(A.y, ty, e) - Math.sin(k * Math.PI) * (short ? 6 : 14); benji.moving = k < 1; benji.squat = 0;
+    const nose = s.d === 0 ? -1 : s.d === 3 ? 1 : 0; benji.rot = nose * (benji.flip ? -1 : 1) * .12 * Math.sin(k * Math.PI);   // a little nose-up/down on vertical swims
+    if (k >= 1) { benji.rot = 0;
+      if (s.type === 'move') { if (benji.forceState === 'chomp') benji.forceState = null;
+        run.pos = s.to; run.i++; run.seg = null; run.wait = .07; benji.moving = false; bubbleBurst(benji.x, benji.y + 30, 2, 20); run.mask = s.mask; collectTreat(s.to);
         if (s.trig) { const w = triggerSwitch(s.trig, s.to); run.wait = typeof w === 'number' ? w : .22; } }
       else if (s.type === 'warp') { s.phase = 'in'; s.t = 0; SFX.tubeIn(); }
       else if (s.type === 'goal') { s.phase = 'chomp'; s.t = 0; chompGoal(s); }
@@ -1915,7 +1972,7 @@ function update(dt){
   T += dt; idle += dt; setTrack(state === 'reward' ? 'reward' : state === 'play' ? 'game' : 'title');
   for (let i = later.length - 1; i >= 0; i--) { later[i].t -= dt; if (later[i].t <= 0) { const f = later[i].fn; later.splice(i, 1); f(); } }
   updateCard(dt); updateRun(dt); updateBenji(dt);
-  if (failInfo) failInfo.t += dt; if (winStars) winStars.t += dt; updateTubes(dt); updateSwitches(dt); if (state === 'play' && L) { updateBridges(dt); updatePuffs(dt); updateTreats(dt); updateTrails(dt); } if (slotPop) { slotPop.t += dt; if (slotPop.t > .3) slotPop = null; } if (goalPop >= 0) goalPop += dt; slotShake = Math.max(0, slotShake - dt); shake = Math.max(0, shake - dt);
+  if (failInfo) { failInfo.t += dt; if (mode === 'fail' && state === 'play' && !card && failInfo.t >= AUTO_RESET[failInfo.kind]) resetRun(false); }   /* v9.4: back to start by itself, queue kept */ if (winStars) winStars.t += dt; updateTubes(dt); updateSwitches(dt); if (state === 'play' && L) { updateBridges(dt); updatePuffs(dt); updateTreats(dt); updateTrails(dt); } if (slotPop) { slotPop.t += dt; if (slotPop.t > .3) slotPop = null; } if (goalPop >= 0) goalPop += dt; slotShake = Math.max(0, slotShake - dt); shake = Math.max(0, shake - dt);
   for (const k in urchinBump) urchinBump[k] += dt;
   bubbles.forEach(b => { b.y -= b.s * dt; b.x += Math.sin(T + b.w) * 10 * dt; if (b.y < -20) { b.y = H + 20; b.x = rnd(0, W); } });
   parts.forEach(p => { p.t += dt; p.x += (p.vx || 0) * dt; p.y += (p.vy || 0) * dt; if (p.kind === 'star') p.vy += 500 * dt; if (p.kind === 'chunk') p.vy += 1100 * dt; if (p.kind === 'ring') p.r += p.vr * dt; }); parts = parts.filter(p => p.t < p.life);
@@ -1967,9 +2024,10 @@ function drawBoard(){
       drawToyTile(k < 1 ? 'bridge_rise' : 'bridge', k, p.x, p.y, Object.assign({}, o, { scale: ts * (k < 1 ? bounceOut(k) : 1) })); continue; }
     drawToyTile(ch === 'S' ? 'start' : ch === '#' && (r * 3 + c * 5 + levelIdx) % 3 === 0 ? 'disc' : 'sand', 0, p.x, p.y, Object.assign({ seed: r * 17 + c * 5 + 3 }, o));
     if ('123P'.includes(ch)) drawPadOn(ch, r, c, p);
-    if (TUBE_CH.includes(ch)) drawProp('tube_opening', pairOf(ch), loop4(T * 1.6 + (ch === ch.toUpperCase() ? 0 : .5)), p.x, p.y, flat);
   }
-  drawTubeLinks();
+  drawTubeLinks();                    // v9.4: permanent pipes, then the openings on top so each pipe plugs into its mouth
+  for (let r = 0; r < G.rows; r++) for (let c = 0; c < G.cols; c++) { const ch = cellAt(L, r, c), p = cellXY(G, r, c);
+    if (TUBE_CH.includes(ch)) drawProp('tube_opening', pairOf(ch), loop4(T * 1.6 + (ch === ch.toUpperCase() ? 0 : .5)), p.x, p.y, flat); }
   // things standing on tiles, back to front, with Benji in his row
   const items = [];
   for (let r = 0; r < G.rows; r++) for (let c = 0; c < G.cols; c++) {
@@ -1983,7 +2041,7 @@ function drawBoard(){
   splashes.forEach(sp => items.push({ y: cellXY(G, sp.r, sp.c).y - .5, draw: () => drawSplash(sp) }));
   if (!benji.inTube && !benji.hidden) items.push({ y: benji.sortY != null ? benji.sortY : benji.y + G.TD * .24 + 2, draw: drawBenjiNow });
   items.sort((a, b) => a.y - b.y).forEach(i => i.draw());
-  if (tubeFX) { drawTubeBody(tubeFX.T, tubeFX.a); if (benji.inTube) { drawBenjiNow(); drawTubeBody(tubeFX.T, tubeFX.a * .42); } }   // glass over Benji = he's inside
+  if (tubeFX && benji.inTube) { drawBenjiNow(); drawTubeBody(tubeFX.T, .42); }   // the pipe is always there; glass over Benji = he's inside
   drawOrbs(); drawPuffs(); drawTrails();
   treatFly.forEach(f => { const k = f.t / .7; drawTreatAt(f.kind, f.x, f.y - ease(k) * 40, G.TW / 140 * (.9 + k * .3), k, 1 - Math.max(0, k - .6) / .4, true); });
 }
