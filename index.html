@@ -1078,7 +1078,7 @@ function drawClam(ch, r, c, p){
 function drawOrbs(){}                  // v9.3: the bubble trail (drawTrails) replaces the flying orb
 // ---- first-time intro: wordless ~3 s demo (see maze_toy.js startDemo); any tap skips it
 function maybeTutorial(){ tutorial = null; if (L) startDemo(); }
-function closeTutorial(){ if (!tutorial) return; store.set('demo_' + tutorial.kind, true); tutorial = null; trails = []; }
+function closeTutorial(){ if (!tutorial) return; if (tutorial.kind === 'extra') { queue = []; slotPop = null; } store.set('demo_' + tutorial.kind, true); tutorial = null; trails = []; }
 function drawTutorial(){ drawDemo(); }
 // ============================================================================ procedural placeholder art
 // (painted-style: chunky shapes, thick navy outline 3.5). Anchor = tile top-face centre. Authored for TW 140.
@@ -1429,6 +1429,7 @@ PROCEDURAL.finger = function(state, value){      // pointing finger, tip at (0,0
 const DEMO_T = 3.2, DEMO_TAP = .85;
 const DEMO_LIFT = { bridge: 7, pad: 7, clam: 30, urchin: 20, tube: 4 };   // game px above the target's anchor where the fingertip lands (pad top, clam lid, urchin body, tube mouth)
 function startDemo(){
+  if (L.lesson === 'extra' && !store.get('demo_extra', false) && startExtraDemo()) return;
   const has = f => L.grid.some(row => [...row].some(f));
   const test = { bridge: ch => ch === 'P', pad: ch => '123'.includes(ch), clam: ch => '456'.includes(ch), urchin: ch => ch === 'U', tube: ch => TUBE_CH.includes(ch) && ch === ch.toUpperCase() };
   const kind = Object.keys(test).find(k => has(test[k]) && !store.get('demo_' + k, false)); if (!kind) return;
@@ -1442,6 +1443,7 @@ function startDemo(){
 }
 function updateDemo(dt){
   const d = tutorial; if (!d || state !== 'play' || card) return; d.t += dt;
+  if (d.kind === 'extra') return updateExtraDemo(d, dt);
   const P = cellXY(G, d.src[0], d.src[1]);
   if (!d.tapped && d.t >= DEMO_TAP) { d.tapped = true; SFX.tap(); ring(P.x, P.y, 40);
     if (d.kind === 'urchin') { urchinBump[d.src.join(',')] = 0; SFX.ouch(); }
@@ -1452,6 +1454,7 @@ function updateDemo(dt){
 }
 function drawDemo(){
   const d = tutorial; if (!d || state !== 'play' || card) return;
+  if (d.kind === 'extra') return drawExtraDemo(d);
   const P = cellXY(G, d.src[0], d.src[1]), sc = G.TW / 140, k0 = d.t - DEMO_TAP - TRAIL_T;
   ctx.save(); ctx.globalAlpha = clamp((DEMO_T - d.t) / .35, 0, 1);
   d.targets.forEach(([r, c], i) => { const q = cellXY(G, r, c), k = clamp((k0 - i * .1) / .3, 0, 1); if (k <= 0) return;
@@ -1470,6 +1473,61 @@ Object.assign(SFX, {
   trail(){ [660, 880, 1100, 1320, 1560].forEach((f, k) => tone(f, .07, 'sine', .07, f * 1.3, k * .08)); },
   unlock(){ tone(1200, .05, 'square', .05, 900); tone(880, .12, 'triangle', .12, 1320, .06); },
 });
+
+// ---------------------------------------------------------------- v9.5 lesson demo: "extra arrows carry Benji past the pearls"
+//  The tray fills with the right arrows plus ONE extra. A ghost Benji swims them, passes over the pearls, the extra arrow
+//  takes him into the water and he sinks; the extra slot flashes red, the finger taps it away, then the ghost swims the
+//  fixed program onto the pearls (sparkle + chime). Wordless, ~5 s, any tap skips. The tray is empty again afterwards.
+const EXTRA_T = 5.1, EX_STEP = .45, EX_FAST = .3;
+function startExtraDemo(){
+  const sol = solve(L); if (!sol) return false;
+  const cmds = sol.concat(sol[sol.length - 1]), cells = [findCh(L, 'S')];
+  cmds.forEach(d => { const q = cells[cells.length - 1]; cells.push([q[0] + DR[d], q[1] + DC[d]]); });
+  const n = sol.length, tB = .5 + (n + 1) * EX_STEP;
+  tutorial = { kind: 'extra', t: 0, cmds, cells, n, tB, tSink: tB + .6, tTap: tB + 1.1, tD: tB + 1.3, src: findCh(L, 'S'), targets: [] };
+  queue = []; return true;
+}
+function updateExtraDemo(d, dt){
+  const fill = Math.min(d.cmds.length, Math.floor(d.t / .08));
+  if (!d.removed) while (queue.length < fill) { queue.push(d.cmds[queue.length]); SFX.add(queue.length - 1); }
+  if (!d.sank && d.t >= d.tB) { d.sank = true; SFX.splash(); after(.15, SFX.slide); const p = benjiSpot(G, ...d.cells[d.cells.length - 1]); bubbleBurst(p.x, p.y + 10, 10, 40); addPuff(p.x, p.y + 10, 1); }
+  if (!d.removed && d.t >= d.tTap) { d.removed = true; queue.pop(); SFX.remove(); slotPop = { i: d.cmds.length - 1, t: 0 }; }
+  const tEnd = d.tD + d.n * EX_FAST;
+  if (!d.won && d.t >= tEnd) { d.won = true; const g = goalSpot(G, ...d.cells[d.n]); sparkle(g.x, g.y - 10, 16); SFX.goalChime(); }
+  if (d.t >= EXTRA_T) closeTutorial();
+}
+function ghostAt(d, t, steps, dur, t0){        // position + facing of the ghost after (t - t0) along cells[0..steps]
+  const u = clamp((t - t0) / dur, 0, steps), i = Math.min(steps - 1, Math.floor(u)), k = ease(u - i);
+  const a = benjiSpot(G, ...d.cells[i]), b = benjiSpot(G, ...d.cells[i + 1]), dir = d.cmds[i];
+  return { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) - Math.sin(k * Math.PI) * 10, dir, step: i };
+}
+function drawGhostBenji(x, y, flip, alpha, extra = {}){
+  const keep = { x: benji.x, y: benji.y, flip: benji.flip, alpha: benji.alpha, shrink: benji.shrink, rot: benji.rot, spin: benji.spin, ox: benji.ox, state: benji.state, value: benji.value };
+  Object.assign(benji, { x, y, flip, alpha, ox: 0, spin: 0, rot: 0 }, extra); drawBenjiNow(); Object.assign(benji, keep);
+}
+function drawExtraDemo(d){
+  const n = d.n, last = d.cmds.length - 1, fade = clamp((EXTRA_T - d.t) / .35, 0, 1);
+  ctx.save(); ctx.globalAlpha = fade;
+  let g = null, flipNow = benji.flip;
+  if (d.t >= .5 && d.t < d.tB) g = ghostAt(d, d.t, n + 1, EX_STEP, .5);
+  else if (d.t >= d.tB && d.t < d.tSink + .2) { const p = benjiSpot(G, ...d.cells[last + 1]), k = clamp((d.t - d.tB) / .7, 0, 1); g = { x: p.x + Math.sin(d.t * 30) * 4 * (1 - k), y: p.y + k * k * 90, dir: d.cmds[last], step: last, sink: k }; }
+  else if (d.t >= d.tD) g = ghostAt(d, d.t, n, EX_FAST, d.tD);
+  if (g) { const flip = g.dir === 0 ? true : g.dir === 3 ? false : flipNow;
+    drawGhostBenji(g.x, g.y, flip, .62 * fade * (g.sink != null ? 1 - .75 * g.sink : 1), g.sink != null ? { shrink: 1 - .4 * g.sink, rot: g.sink * 1.2, state: 'oops', value: (d.t * 3) % 1 } : {});
+    const sx = slotX(g.step, L.slots), r = slotR(L.slots);           // the running-slot marker follows the ghost
+    if (d.t < d.tSink + .2 || d.t < d.tD + n * EX_FAST) { ctx.fillStyle = '#ff7a1a'; rr(sx - 11, SLOT.y - r - 30, 22, 20, 3); ctx.fill(); } }
+  if (d.t >= d.tB && !d.removed) {                                    // the extra arrow is the culprit: red pulse on its slot
+    const x = slotX(last, L.slots), r = slotR(L.slots), k = .5 + .5 * Math.sin(d.t * 14);
+    ctx.save(); ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(255,60,70,' + (.55 + .45 * k) + ')'; ctx.beginPath(); ctx.arc(x, SLOT.y, r + 9, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  }
+  if (d.t >= d.tSink - .1 && d.t < d.tD + .2) {                        // finger glides to the extra slot and taps it away
+    const x = slotX(last, L.slots), y = SLOT.y - 8, sc = G.TW / 140, mv = ease(clamp((d.t - d.tSink + .1) / .4, 0, 1));
+    const fr = d.t < d.tTap - .2 ? 0 : Math.floor((d.t - (d.tTap - .2)) * 10) % 6;
+    const fx = lerp(x + 220, x, mv), fy = lerp(y - 160, y, mv);
+    if (hasArt('finger', 'tap')) drawProp('finger', 'tap', 0, fx, fy, { scale: Math.max(sc, .9), frame: fr }); else drawStrict('finger', 'tap', fr === 2 || fr === 3 ? 1 : 0, fx, fy, { scale: Math.max(sc, .9) * 1.1 });
+  }
+  ctx.restore();
+}
 // ============================================================================
 //  GAME (v4): coding maze.  Tap arrows to fill the program queue, press Play,
 //  Benji swims the queue one step at a time.  Reach the glowing bubble to free a baby sea friend.
@@ -1481,9 +1539,9 @@ const DR = [0, 1, -1, 0], DC = [-1, 0, 0, 1], DIR_NAME = ['Left', 'Down', 'Up', 
 const LEVELS = [
   // v9.4: Little Fin is the v8 set again (10 originals + the 2 switch intros, appended below), then a gentle grey-pad bridge level as #13
   { name: 'Little Fin', color: '#3cc46b', hintDelay: 7, levels: [
-    { grid: ['S##G'], slots: 4 },
-    { grid: ['S', '#', 'G'], slots: 3 },
-    { grid: ['G##S'], slots: 4 },
+    { grid: ['S##G'], slots: 3 },                  // v9.5: exact length, no room to over-program yet
+    { grid: ['S', '#', 'G'], slots: 2 },           // exact length
+    { grid: ['G##S'], slots: 4, lesson: 'extra' },  // the lesson: one spare slot; the demo shows an extra arrow carrying Benji past the pearls
     { grid: ['S##', '..#', '..G'], slots: 5 },
     { grid: ['..G', '.##', 'S#.'], slots: 5 },
     { grid: ['S#..', '.##.', '..#G'], slots: 5 },
@@ -1516,12 +1574,12 @@ const FAILS = ['water', 'urchin', 'blocked'];
 function runSim(L, cmds){        // whole-program result, used by tests + hints
   let pos = findCh(L, 'S'), mask = 0; const warps = [], trig = [];
   for (let i = 0; i < cmds.length; i++) { const r = stepSim(L, pos, cmds[i], mask);
-    if (r.type === 'goal') return { result: 'goal', at: i, warps, trig };
+    if (r.type === 'goal' && i === cmds.length - 1) return { result: 'goal', at: i, warps, trig };   // v9.5: no early win
     if (FAILS.includes(r.type)) return { result: r.type, at: i, warps, trig };
     if (r.type === 'warp') warps.push(i);
     if (r.trig) trig.push(i);
     mask = r.mask; pos = r.type === 'warp' ? r.dest : r.to; }
-  return { result: 'short', at: cmds.length, warps, trig };
+  return { result: 'short', at: cmds.length, warps, trig };      // every placed arrow ran and he isn't on the pearls: a miss
 }
 function solve(L, opt = {}){     // BFS over (position, switches-on): shortest program within L.slots
   const start = findCh(L, 'S'), key = (p, m) => p[0] + ',' + p[1] + '|' + m, seen = new Set([key(start, 0)]), off = opt.disable || 0;
@@ -1682,11 +1740,11 @@ function drawCard(){
 function canEdit(){ return state === 'play' && !card && !tutorial && (mode === 'edit' || mode === 'fail'); }
 function addCmd(d){
   if (!canEdit()) return;
-  if (mode === 'fail') resetRun(true);
+  if (mode === 'fail') resetRun(true, true);       // tapping during the fail animation = the reset (empty tray) happens now
   if (queue.length >= L.slots) { SFX.full(); slotShake = .4; return; }
   queue.push(d); SFX.add(queue.length - 1); idle = 0;
 }
-function removeFrom(i){ if (!canEdit() || i >= queue.length) return; if (mode === 'fail') resetRun(true); queue.splice(i, 1); SFX.remove(); idle = 0; slotPop = { i, t: 0 }; }
+function removeFrom(i){ if (!canEdit() || i >= queue.length) return; if (mode === 'fail') { resetRun(true, true); return; } queue.splice(i, 1); SFX.remove(); idle = 0; slotPop = { i, t: 0 }; }
 function pressPlay(){
   if (state !== 'play' || card || tutorial) return;
   if (mode === 'edit') {
@@ -1695,8 +1753,9 @@ function pressPlay(){
     run = { cmds: queue.slice(), i: 0, pos: findCh(L, 'S'), seg: null, wait: .25 };
   } else if (mode === 'run' || mode === 'fail') { SFX.tap(); resetRun(false); }   // Reset still works any time; the queue is kept
 }
-function resetRun(quick){           // Benji pops back onto the start tile (queue kept)
+function resetRun(quick, clearTray){   // Benji back on the start tile; the Reset button keeps the queue, the automatic reset after a miss empties it
   const s = findCh(L, 'S'), p = benjiSpot(G, s[0], s[1]);
+  if (clearTray && queue.length) { queue = []; SFX.remove(); slotPop = null; }
   mode = 'edit'; run = null; failInfo = null; idle = 0; benji.act = null; benji.alpha = 1; benji.spin = 0; benji.shrink = 1; benji.rot = 0; benji.inTube = false; if (tubeFX) tubeFX.state = 'fade'; benji.forceState = null; resetSwitchFX(); resetTreats();
   const gone = benji.hidden || benji.alpha < .5;
   benji.pos = s; benji.hidden = false; benji.popIn = 0; benji.sortY = null; benji.ox = 0; benji.squat = 0; benji.moving = false;
@@ -1713,6 +1772,7 @@ function nextSeg(){
   if (benji.forceState === 'chomp' && mode === 'run') benji.forceState = null;
   const was = benji.flip; if (d === 0) benji.flip = true; else if (d === 3) benji.flip = false;   // up/down keep last facing (side-on art)
   if (was !== benji.flip) benji.turnT = 0;
+  if (res.type === 'goal' && run.i < run.cmds.length - 1) res.type = 'move';   // v9.5: more arrows to go -> swim on over the pearls
   run.seg = Object.assign({ d, t: 0, phase: 'go', from: run.pos.slice() }, res);
   if (SFX.blub) SFX.blub();
 }
@@ -1972,7 +2032,7 @@ function update(dt){
   T += dt; idle += dt; setTrack(state === 'reward' ? 'reward' : state === 'play' ? 'game' : 'title');
   for (let i = later.length - 1; i >= 0; i--) { later[i].t -= dt; if (later[i].t <= 0) { const f = later[i].fn; later.splice(i, 1); f(); } }
   updateCard(dt); updateRun(dt); updateBenji(dt);
-  if (failInfo) { failInfo.t += dt; if (mode === 'fail' && state === 'play' && !card && failInfo.t >= AUTO_RESET[failInfo.kind]) resetRun(false); }   /* v9.4: back to start by itself, queue kept */ if (winStars) winStars.t += dt; updateTubes(dt); updateSwitches(dt); if (state === 'play' && L) { updateBridges(dt); updatePuffs(dt); updateTreats(dt); updateTrails(dt); } if (slotPop) { slotPop.t += dt; if (slotPop.t > .3) slotPop = null; } if (goalPop >= 0) goalPop += dt; slotShake = Math.max(0, slotShake - dt); shake = Math.max(0, shake - dt);
+  if (failInfo) { failInfo.t += dt; if (mode === 'fail' && state === 'play' && !card && failInfo.t >= AUTO_RESET[failInfo.kind]) resetRun(false, true); }   /* v9.4: back to start by itself, queue kept */ if (winStars) winStars.t += dt; updateTubes(dt); updateSwitches(dt); if (state === 'play' && L) { updateBridges(dt); updatePuffs(dt); updateTreats(dt); updateTrails(dt); } if (slotPop) { slotPop.t += dt; if (slotPop.t > .3) slotPop = null; } if (goalPop >= 0) goalPop += dt; slotShake = Math.max(0, slotShake - dt); shake = Math.max(0, shake - dt);
   for (const k in urchinBump) urchinBump[k] += dt;
   bubbles.forEach(b => { b.y -= b.s * dt; b.x += Math.sin(T + b.w) * 10 * dt; if (b.y < -20) { b.y = H + 20; b.x = rnd(0, W); } });
   parts.forEach(p => { p.t += dt; p.x += (p.vx || 0) * dt; p.y += (p.vy || 0) * dt; if (p.kind === 'star') p.vy += 500 * dt; if (p.kind === 'chunk') p.vy += 1100 * dt; if (p.kind === 'ring') p.r += p.vr * dt; }); parts = parts.filter(p => p.t < p.life);
