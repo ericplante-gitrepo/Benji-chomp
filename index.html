@@ -2082,7 +2082,7 @@ function drawBoard(){
     const p = cellXY(G, r, c);
     if (ch === BRIDGE_CH) { const k = bridgeK(r, c); if (k < 0) { drawGhostBridge(p); continue; }
       drawToyTile(k < 1 ? 'bridge_rise' : 'bridge', k, p.x, p.y, Object.assign({}, o, { scale: ts * (k < 1 ? bounceOut(k) : 1) })); continue; }
-    drawToyTile(ch === 'S' ? 'start' : ch === '#' && (r * 3 + c * 5 + levelIdx) % 3 === 0 ? 'disc' : 'sand', 0, p.x, p.y, Object.assign({ seed: r * 17 + c * 5 + 3 }, o));
+    drawToyTile(ch === 'S' ? 'start' : 'sand', 0, p.x, p.y,   /* v9.6: no decorative swirl discs (they read as Hulk teleporter pads) */ Object.assign({ seed: r * 17 + c * 5 + 3 }, o));
     if ('123P'.includes(ch)) drawPadOn(ch, r, c, p);
   }
   drawTubeLinks();                    // v9.4: permanent pipes, then the openings on top so each pipe plugs into its mouth
