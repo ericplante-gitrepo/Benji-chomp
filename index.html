@@ -1110,23 +1110,40 @@ function drawStrict(name, state, value, x, y, o = {}){      // painted frame onl
   ctx.scale(sc * (o.sx || 1), sc * (o.sy || 1)); if (o.alpha != null) ctx.globalAlpha *= o.alpha;
   PROCEDURAL[name] && PROCEDURAL[name](state, value, o); ctx.restore();
 }
-const tileRatio = () => hasArt('toytile', 'sand') ? .66 : .8;      // painted toy tiles use the v3 272x208 frame      // painted toy tiles keep the v3 frame; procedural = closer to top-down
+// v9.1: the video's tiles have ORANGE edges and some carry a big white swirl disc. The v4 sheet (white sides, no disc) is
+// only used once it has a 'disc' state (= the v9.1 repaint); until then every tile is drawn in code to match the video.
+const toyArt = () => hasArt('toytile', 'disc');
+const tileRatio = () => toyArt() ? .66 : .74;
+function drawToyTile(state, value, x, y, o){ toyArt() ? drawProp('toytile', state, value, x, y, o) : drawStrict('_toytile', state, value, x, y, o); }      // painted toy tiles keep the v3 frame; procedural = closer to top-down
 
 // ---------------------------------------------------------------- toy tile: yellow top, thick white sides, faint swirl
-PROCEDURAL.toytile = function(state, value, o){
-  const w = o.w - 8, d = o.d - 8, th = o.th, r = Math.min(14, w * .1), x = -w / 2, y = -d / 2;
-  ctx.fillStyle = 'rgba(0,25,60,.22)'; rr(x + 5, y + 12, w, d + th, r); ctx.fill();
-  const gs = ctx.createLinearGradient(0, y + d - r, 0, y + d + th); gs.addColorStop(0, '#ffffff'); gs.addColorStop(1, '#d6e0ea');
-  ctx.fillStyle = gs; rr(x, y, w, d + th, r); ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = '#b7c4d2'; ctx.stroke();
-  const gt = ctx.createLinearGradient(0, y, 0, y + d); gt.addColorStop(0, '#ffe766'); gt.addColorStop(1, '#ffd21f');
-  ctx.fillStyle = gt; rr(x, y, w, d, r); ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#e6a800'; ctx.stroke();
-  ctx.fillStyle = 'rgba(255,255,255,.45)'; rr(x + 8, y + 5, w - 16, 6, 3); ctx.fill();
-  if (state === 'sand') {                       // faint white swirl
-    ctx.save(); ctx.scale(1, d / w); ctx.beginPath();
-    for (let a = 0; a < Math.PI * 4.2; a += .15) { const rad = 4 + a * w * .03; ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); }
-    ctx.restore(); ctx.lineCap = 'round'; ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.stroke();
+PROCEDURAL._toytile = function(state, value, o){     // abutting tiles: the face fills the whole cell; the next row covers this row's side
+  const w = o.w, d = o.d, th = o.th, x = -w / 2, y = -d / 2, r = 3;
+  const gs = ctx.createLinearGradient(0, y + d, 0, y + d + th); gs.addColorStop(0, '#f2a42a'); gs.addColorStop(1, '#b8650f');
+  ctx.fillStyle = gs; rr(x, y + d - 6, w, th + 6, r); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#8a4a0c'; ctx.stroke();
+  const gt = ctx.createLinearGradient(0, y, 0, y + d); gt.addColorStop(0, '#fff055'); gt.addColorStop(1, '#f8dc1e');
+  ctx.fillStyle = gt; rr(x, y, w, d, r); ctx.fill();
+  ctx.lineWidth = 3; ctx.strokeStyle = '#e39a12'; rr(x + 1.5, y + 1.5, w - 3, d - 3, r); ctx.stroke();       // orange rim
+  ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(140,80,10,.55)'; rr(x, y, w, d, r); ctx.stroke();               // seam
+  let sd = (o.seed || 1) * 9301 % 233280; const R = () => (sd = (sd * 9301 + 49297) % 233280) / 233280;
+  if (state === 'sand' || state === 'disc') {           // faint leafy brush strokes, like the video's plain tiles
+    ctx.save(); ctx.strokeStyle = 'rgba(190,170,40,.35)'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    for (let i = 0; i < 2; i++) { const sx = x + w * (.2 + R() * .6), sy = y + d * (.25 + R() * .5); ctx.beginPath(); ctx.moveTo(sx, sy); ctx.quadraticCurveTo(sx + w * .15, sy - d * .2, sx + w * .3 * (R() < .5 ? -1 : 1), sy - d * .35); ctx.stroke(); }
+    ctx.restore();
   }
-  if (state === 'bridge' || state === 'bridge_rise') { ctx.fillStyle = 'rgba(255,255,255,.18)'; rr(x + 10, y + d * .45, w - 20, d * .12, 4); ctx.fill(); }
+  if (state === 'disc') {                                // big white swirl disc + 4 corner screws
+    const rx = w * .4, ry = d * .4;
+    ctx.fillStyle = 'rgba(120,90,10,.25)'; ellipse(0, 3, rx + 3, ry + 3); ctx.fill();
+    ctx.fillStyle = '#c9ced8'; ellipse(0, 0, rx + 2, ry + 2); ctx.fill();
+    const g = ctx.createRadialGradient(-rx * .2, -ry * .3, 2, 0, 0, rx); g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#e4e9f2');
+    ctx.fillStyle = g; ellipse(0, 0, rx, ry); ctx.fill();
+    ctx.save(); ctx.scale(1, ry / rx); ctx.beginPath();
+    for (let a = 0; a < Math.PI * 5; a += .12) { const rad = 3 + a * rx * .055; ctx.lineTo(Math.cos(a + 1) * rad, Math.sin(a + 1) * rad); }
+    ctx.restore(); ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(150,165,190,.75)'; ctx.lineCap = 'round'; ctx.stroke();
+    ctx.fillStyle = '#7d7466'; [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sy]) => { ellipse(sx * (w / 2 - 9), sy * (d / 2 - 8), 3, 2.5); ctx.fill(); });
+  }
+  if (state === 'start') { ctx.fillStyle = 'rgba(255,255,255,.22)'; rr(x + 6, y + 5, w - 12, 6, 3); ctx.fill(); }
+  if (state === 'bridge' || state === 'bridge_rise') { ctx.strokeStyle = 'rgba(200,120,10,.4)'; ctx.lineWidth = 2; for (let i = 1; i < 3; i++) { ctx.beginPath(); ctx.moveTo(x + 8, y + d * i / 3); ctx.lineTo(x + w - 8, y + d * i / 3); ctx.stroke(); } }
 };
 // ---------------------------------------------------------------- grey pad (Hulk-style round pressure pad)
 const _padProc = PROCEDURAL.pad;
@@ -1230,14 +1247,28 @@ function slimeFill(v){
   ctx.fillStyle = 'rgba(255,255,255,.09)'; for (let i = 0; i < 14; i++) { ctx.beginPath(); ctx.arc(v.x0 + (i * 211) % (v.x1 - v.x0), v.y0 + (i * 271) % (v.y1 - v.y0), 26 + (i % 4) * 18, 0, Math.PI * 2); ctx.fill(); }
 }
 // ---------------------------------------------------------------- the white UI bar with a wavy yellow top
-const BAR_Y = 616;
-function drawToyBar(){
-  const v = viewRect(), wave = (x, a, o) => BAR_Y + o + Math.sin(x * .028 + a) * 6 + Math.sin(x * .011 + a * 2) * 3;
+const BAR_Y = 622;
+function drawToyBar(){              // v9.1: mostly yellow, gently wavy top edge with a white line (as in the video)
+  const v = viewRect(), wave = x => BAR_Y + Math.sin(x * .02) * 4 + Math.sin(x * .007 + 1) * 3;
+  const top = () => { ctx.beginPath(); ctx.moveTo(v.x0 - 10, v.y1 + 10); for (let x = v.x0 - 10; x <= v.x1 + 20; x += 16) ctx.lineTo(x, wave(x)); ctx.lineTo(v.x1 + 20, v.y1 + 10); ctx.closePath(); };
   ctx.save();
-  ctx.fillStyle = 'rgba(0,30,70,.18)'; ctx.beginPath(); ctx.moveTo(v.x0, v.y1); for (let x = v.x0; x <= v.x1 + 20; x += 20) ctx.lineTo(x, wave(x, .4, -10)); ctx.lineTo(v.x1, v.y1); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#ffd93b'; ctx.beginPath(); ctx.moveTo(v.x0, v.y1); for (let x = v.x0; x <= v.x1 + 20; x += 20) ctx.lineTo(x, wave(x, 0, -4)); ctx.lineTo(v.x1, v.y1); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(v.x0, v.y1); for (let x = v.x0; x <= v.x1 + 20; x += 20) ctx.lineTo(x, wave(x, 1.3, 12)); ctx.lineTo(v.x1, v.y1); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(0,30,70,.2)'; ctx.translate(0, -6); top(); ctx.fill(); ctx.translate(0, 6);
+  const g = ctx.createLinearGradient(0, BAR_Y, 0, v.y1); g.addColorStop(0, '#fbf37a'); g.addColorStop(1, '#efe24a');
+  top(); ctx.fillStyle = g; ctx.fill(); ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,.16)'; for (let i = 0; i < 9; i++) { const x0 = v.x0 + i * (v.x1 - v.x0) / 8; ctx.beginPath(); ctx.moveTo(x0, v.y1); ctx.lineTo(x0 + 120, BAR_Y); ctx.lineTo(x0 + 175, BAR_Y); ctx.lineTo(x0 + 70, v.y1); ctx.closePath(); ctx.fill(); }
+  ctx.fillStyle = 'rgba(200,190,40,.12)'; for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(v.x0 + i * 260 + 60, v.y1); ctx.lineTo(v.x0 + i * 260 + 150, BAR_Y + 30); ctx.lineTo(v.x0 + i * 260 + 175, BAR_Y + 34); ctx.lineTo(v.x0 + i * 260 + 90, v.y1); ctx.closePath(); ctx.fill(); }
   ctx.restore();
+  ctx.save(); ctx.beginPath(); for (let x = v.x0 - 10; x <= v.x1 + 20; x += 16) ctx.lineTo(x, wave(x) + 2); ctx.lineWidth = 6; ctx.strokeStyle = '#ffffff'; ctx.stroke(); ctx.restore();
+}
+// direction colours from the video: left purple, down yellow, up blue, right green  (index = command: 0 L, 1 D, 2 U, 3 R)
+const DIR_COL = [{ fill: '#d68bea', ring: '#a24fcf', arrow: '#ffffff' }, { fill: '#f7c62a', ring: '#c98a00', arrow: '#ffffff' },
+                 { fill: '#93d3f7', ring: '#3d8fd6', arrow: '#ffffff' }, { fill: '#9fe6b8', ring: '#38ad6a', arrow: '#ffffff' }];
+function dirDisc(d, x, y, r, big){
+  const C = DIR_COL[d];
+  ctx.beginPath(); ctx.arc(x, y + (big ? 5 : 3), r, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,0,.22)'; ctx.fill();
+  const g = ctx.createRadialGradient(x - r * .3, y - r * .4, r * .1, x, y, r); g.addColorStop(0, '#ffffff'); g.addColorStop(.35, C.fill); g.addColorStop(1, C.fill);
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = big ? 5 : 4; ctx.strokeStyle = C.ring; ctx.stroke();
+  ctx.save(); ctx.translate(x, y); arrowGlyph(d, r * 1.15, C.arrow, C.ring); ctx.restore();
 }
 // ---------------------------------------------------------------- v9 sounds (Hulk-style: pop/click taps, springy boing per hop, chimes, slide whistle)
 Object.assign(SFX, {
@@ -1328,23 +1359,26 @@ function solve(L, opt = {}){     // BFS over (position, switches-on): shortest p
 
 // ---------------------------------------------------------------- layout (1280x800 game px)
 // v9 (Hulk layout): board fills the top ~77%; white UI bar with a wavy yellow top below it
-const BOARD = { x0: 40, x1: 1240, y0: 40, y1: 596, maxTW: 210 };
-const ARROWS = [0, 1, 2, 3].map(i => ({ id: 'arrow' + i, dir: i, x: 22 + i * 110, y: 660, w: 104, h: 104 }));   // 4 permanent yellow round buttons: L D U R
-const SLOT = { cx: 790, y: 712, r: 37, gap: 84 };
+// v9.1 (from the video frames): the board fills the play area; the 4 arrow buttons are a column on the right edge
+// (up blue, right green, left purple, down yellow); the slots sit left-aligned in the yellow bar; Play/Reset far right.
+const BOARD = { x0: 128, x1: 1112, y0: 78, y1: 606, maxTW: 230 };
+const PALETTE_ORDER = [2, 3, 0, 1];
+const ARROWS = PALETTE_ORDER.map((d, i) => ({ id: 'arrow' + d, dir: d, x: 1140, y: 104 + i * 124, w: 112, h: 112 }));
+const SLOT = { x0: 74, y: 712, r: 38, gap: 92 };
 const PLAY = { x: 1136, y: 650, w: 124, h: 124 };   // one purple square: Play, becomes Reset the moment the run starts
 const FRIEND_SLOT = i => ({ x: 640 + (i - 2) * 80, y: 64 });
 const REWARD_POS = [[300, 300], [320, 560], [640, 660], [960, 560], [980, 300]];
-const slotGap = n => Math.min(SLOT.gap, 640 / n), slotR = n => Math.min(SLOT.r, slotGap(n) * .45);
-const slotX = (i, n) => SLOT.cx + (i - (n - 1) / 2) * slotGap(n);
+const slotGap = n => Math.min(SLOT.gap, 960 / n), slotR = n => Math.min(SLOT.r, slotGap(n) * .45);
+const slotX = (i, n) => SLOT.x0 + i * slotGap(n);
 function geom(L){
   const rows = L.grid.length, cols = L.grid[0].length;
   const R = tileRatio(), TW = Math.min(BOARD.maxTW, (BOARD.x1 - BOARD.x0) / cols, (BOARD.y1 - BOARD.y0 - 30) / (rows * R + .2));
-  const TD = TW * R, TH = TW * .2, bw = cols * TW, bh = rows * TD + TH;
-  return { rows, cols, TW, TD, TH, bx: 640 - bw / 2, by: BOARD.y0 + (BOARD.y1 - BOARD.y0 - bh) / 2 };
+  const TD = TW * R, TH = TW * (toyArt() ? .2 : .11), bw = cols * TW, bh = rows * TD + TH;
+  return { rows, cols, TW, TD, TH, bx: (BOARD.x0 + BOARD.x1) / 2 - bw / 2, by: BOARD.y0 + (BOARD.y1 - BOARD.y0 - bh) / 2 };
 }
 const cellXY = (G, r, c) => ({ x: G.bx + c * G.TW + G.TW / 2, y: G.by + r * G.TD + G.TD / 2 });
 const benjiSpot = (G, r, c) => { const p = cellXY(G, r, c); return { x: p.x, y: p.y - G.TD * .24 }; };
-const goalSpot = (G, r, c) => { const p = cellXY(G, r, c); return { x: p.x, y: p.y - G.TD * .45 }; };
+const goalSpot = (G, r, c) => { const p = cellXY(G, r, c); return { x: p.x, y: p.y - Math.min(G.TD * .3, 34) }; };
 
 // ---------------------------------------------------------------- state
 let state = 'title', T = 0, diff = 0, levelIdx = 0, L = null, G = null;
@@ -1353,6 +1387,7 @@ let later = [], parts = [], pops = [], bursts = [], bubbles = [], confetti = [],
 let card = null, reward = null, shake = 0, pressed = null, ptr = null, goalPop = -1, urchinBump = {};
 const prog = [0, 1, 2].map(i => store.get('v6prog' + i, i === 0 ? Math.min(9, store.get('maze0', 0)) : 0));   // highest unlocked level per tier
 const stars = [0, 1, 2].map(i => store.get('v6stars' + i, []));                                                   // best stars per level
+if (!store.get('v91littleStarsReset', false)) { stars[0] = []; store.set('v6stars0', []); store.set('v91littleStarsReset', true); }   // v9 reworked Little Fin: old stars belonged to other puzzles
 let hintsOn = store.get('megaHints', false), runs = 0, winStars = null, slotPop = null;
 const starTotal = d => stars[d].reduce((a, b) => a + (b || 0), 0);
 function tubeShrink(){           // Benji shrinks a little so he fits inside the glass
@@ -1398,7 +1433,7 @@ function loadLevel(i){
   levelIdx = i; L = LEVELS[diff].levels[i]; G = geom(L);
   queue = []; run = null; mode = 'edit'; idle = 0; failInfo = null; runs = 0; winStars = null; tubeFX = null; splashes = []; benji.inTube = false; swFX = { pressed: {}, cleared: {}, orbs: [], bump: {} }; goalPop = -1; urchinBump = {}; bursts = []; pops = []; parts = []; confetti = []; benji.home = null; benji.forceState = null; benji.moving = false; puffs = []; benji.hidden = false; benji.popIn = 1; benji.squat = 0; benji.turnT = 1; benji.sortY = null;
   const s = findCh(L, 'S'), p = benjiSpot(G, s[0], s[1]);
-  benji.pos = s; benji.x = p.x; benji.y = p.y; benji.sc = Math.min(G.TW, 175) / 140 * .6; benji.flip = findCh(L, 'G')[1] < s[1];
+  benji.pos = s; benji.x = p.x; benji.y = p.y; benji.sc = Math.min(G.TW, 165) / 140 * .54; benji.flip = findCh(L, 'G')[1] < s[1];
   benji.act = null; benji.alpha = 1; benji.spin = 0; benji.shrink = 1; benji.rot = 0;
   prebuildTubes(); maybeTutorial(); placeTreats();
 }
@@ -1793,13 +1828,12 @@ function drawBackground(soft){
 }
 function drawBoard(){
   const ts = G.TW / 140, o = { w: 140, d: G.TD / ts, th: G.TH / ts, scale: ts }, flat = Object.assign({}, o, { sy: G.TD / G.TW / .66 });   // flat art authored for the .66 tile
-  ctx.fillStyle = 'rgba(0,30,70,.07)'; rr(G.bx - 18, G.by - 14, G.cols * G.TW + 36, G.rows * G.TD + G.TH + 34, 30); ctx.fill();   // playset mat
   for (let r = 0; r < G.rows; r++) for (let c = 0; c < G.cols; c++) {
     const ch = cellAt(L, r, c); if (ch === '.') continue;
     const p = cellXY(G, r, c);
     if (ch === BRIDGE_CH) { const k = bridgeK(r, c); if (k < 0) continue;
-      drawStrict('toytile', k < 1 ? 'bridge_rise' : 'bridge', k, p.x, p.y, Object.assign({}, o, { scale: ts * (k < 1 ? bounceOut(k) : 1) })); continue; }
-    drawStrict('toytile', ch === 'S' ? 'start' : 'sand', 0, p.x, p.y, Object.assign({ seed: r * 17 + c * 5 + 3 }, o));
+      drawToyTile(k < 1 ? 'bridge_rise' : 'bridge', k, p.x, p.y, Object.assign({}, o, { scale: ts * (k < 1 ? bounceOut(k) : 1) })); continue; }
+    drawToyTile(ch === 'S' ? 'start' : ch === '#' && (r * 3 + c * 5 + levelIdx) % 3 === 0 ? 'disc' : 'sand', 0, p.x, p.y, Object.assign({ seed: r * 17 + c * 5 + 3 }, o));
     if ('123P'.includes(ch)) drawPadOn(ch, r, c, p);
     if (TUBE_CH.includes(ch)) drawProp('tube_opening', pairOf(ch), loop4(T * 1.6 + (ch === ch.toUpperCase() ? 0 : .5)), p.x, p.y, flat);
   }
@@ -1823,8 +1857,8 @@ function drawBoard(){
 }
 function drawGoal(g, r, c){        // three glowing pearls pulsing over the final tile; they scatter when Benji gets there
   const sc = G.TW / 140, p = cellXY(G, r, c), y = g.y + Math.sin(T * 2.5) * 5;
-  if (goalPop < 0) { ctx.fillStyle = 'rgba(40,140,120,.22)'; ellipse(p.x, p.y + 2, 40 * sc, 11 * sc); ctx.fill(); drawStrict('pearls', 'idle', loop4(T * 1.2), g.x, y, { scale: sc * 1.5, t: T }); }
-  else if (goalPop < .6) drawStrict('pearls', 'pop', goalPop / .6, g.x, y, { scale: sc * 1.5, t: T });
+  if (goalPop < 0) { ctx.fillStyle = 'rgba(40,140,120,.22)'; ellipse(p.x, p.y + 2, 40 * sc, 11 * sc); ctx.fill(); drawStrict('pearls', 'idle', loop4(T * 1.2), g.x, y, { scale: Math.min(sc, 1.2) * 1.45, t: T }); }
+  else if (goalPop < .6) drawStrict('pearls', 'pop', goalPop / .6, g.x, y, { scale: Math.min(sc, 1.2) * 1.45, t: T });
 }
 function drawBenjiNow(){
   const pin = benji.popIn < 1 ? bounceOut(benji.popIn) : 1, turn = benji.turnT < 1 ? Math.max(.2, Math.abs(1 - 2 * benji.turnT)) : 1;
@@ -1841,28 +1875,22 @@ function drawControls(){
   ARROWS.forEach(a => {
     const down = pressed === a.id, glow = h && h.arrow === a.dir, R = a.w / 2;
     ctx.save(); ctx.translate(a.x + R, a.y + R); if (down) ctx.scale(.9, .9); if (glow) ctx.scale(1 + pulse * .08, 1 + pulse * .08);
-    if (glow) { ctx.fillStyle = 'rgba(255,200,40,' + (.3 + pulse * .4) + ')'; ctx.beginPath(); ctx.arc(0, 0, R + 12, 0, Math.PI * 2); ctx.fill(); }
-    ctx.fillStyle = 'rgba(160,110,0,.35)'; ctx.beginPath(); ctx.arc(0, 6, R, 0, Math.PI * 2); ctx.fill();
-    const g = ctx.createRadialGradient(-R * .3, -R * .4, R * .1, 0, 0, R); g.addColorStop(0, '#fff07a'); g.addColorStop(1, '#ffc414');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = '#e09a00'; ctx.stroke();
-    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(0, 0, R - 7, Math.PI * 1.1, Math.PI * 1.6); ctx.stroke();
-    arrowGlyph(a.dir, 60, '#fff', '#c27800');
+    if (glow) { ctx.fillStyle = 'rgba(255,255,255,' + (.45 + pulse * .4) + ')'; ctx.beginPath(); ctx.arc(0, 0, R + 12, 0, Math.PI * 2); ctx.fill(); }
+    dirDisc(a.dir, 0, 0, R * .92, true);
     ctx.restore();
   });
-  // program queue: purple round slots
-  const n = L.slots, sh = slotShake > 0 ? Math.sin(slotShake * 60) * 8 * slotShake : 0, ran = run ? run.i : 0;
+  // program queue: lavender empty slots; filled slots take their direction colour; an orange marker sits over the running one
+  const n = L.slots, sh = slotShake > 0 ? Math.sin(slotShake * 60) * 8 * slotShake : 0;
   for (let i = 0; i < n; i++) {
     const x = slotX(i, n) + sh, y = SLOT.y, filled = i < queue.length;
-    const active = mode === 'run' && run && run.i === i && run.seg, lit = run && (active || i < ran || (mode === 'fail' && failInfo && i === failInfo.at && failInfo.kind !== 'short'));
+    const active = mode === 'run' && run && run.i === i && run.seg;
     const hinted = h && h.slot === i, popK = slotPop && slotPop.i === i ? slotPop.t / .3 : 1;
-    let r = slotR(n) * (active ? 1.16 : 1) * (pressed === 'slot' + i ? .9 : 1) * (filled && popK < 1 ? .8 + .2 * bounceOut(popK) : 1);
-    if (active) { ctx.fillStyle = '#ff8a1c'; rr(x - 11, y - r - 30, 22, 18, 4); ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#c95a00'; ctx.stroke(); }   // orange marker over the running slot (as in the video)
+    let r = slotR(n) * (active ? 1.1 : 1) * (pressed === 'slot' + i ? .9 : 1) * (filled && popK < 1 ? .8 + .2 * bounceOut(popK) : 1);
     if (hinted) { ctx.beginPath(); ctx.arc(x, y, r + 10, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,90,90,' + (.4 + pulse * .4) + ')'; ctx.fill(); }
-    ctx.beginPath(); ctx.arc(x, y + 4, r, 0, Math.PI * 2); ctx.fillStyle = 'rgba(80,40,140,.18)'; ctx.fill();
-    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-    if (filled && lit) { ctx.fillStyle = '#2fc25b'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#1c8f3f'; ctx.stroke(); ctx.save(); ctx.translate(x, y); arrowGlyph(queue[i], r * 1.15, '#fff'); ctx.restore(); }
-    else if (filled) { ctx.fillStyle = '#8a5ae6'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#6a3cc8'; ctx.stroke(); ctx.save(); ctx.translate(x, y); arrowGlyph(queue[i], r * 1.15, '#fff'); ctx.restore(); }
-    else { ctx.fillStyle = '#c9b6f2'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#a58ae0'; ctx.stroke(); }
+    if (filled) dirDisc(queue[i], x, y, r);
+    else { ctx.beginPath(); ctx.arc(x, y + 3, r, 0, Math.PI * 2); ctx.fillStyle = 'rgba(90,70,0,.18)'; ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fillStyle = '#c7bde6'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#9a8cc9'; ctx.stroke(); }
+    if (active) { ctx.fillStyle = '#ff7a1a'; rr(x - 11, y - r - 30, 22, 20, 3); ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = '#c4520a'; ctx.stroke(); }
   }
   // play / reset: one purple square
   if (mode !== 'win') {
