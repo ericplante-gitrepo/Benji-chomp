@@ -62,6 +62,9 @@ const store = {
   get(k, d){ try { const v = localStorage.getItem('benji_' + k); return v === null ? d : JSON.parse(v); } catch(e){ return d; } },
   set(k, v){ try { localStorage.setItem('benji_' + k, JSON.stringify(v)); } catch(e){} }
 };
+// v9.9: one-time full reset - every device starts as a brand-new player (progress, stars, unlocks, demos seen, settings)
+try { if (!store.get('v99fullReset', false)) { Object.keys(localStorage).filter(k => k.startsWith('benji_')).forEach(k => localStorage.removeItem(k));
+  ['v91littleStarsReset', 'v94littleStarsReset', 'v98starsReset', 'v99fullReset'].forEach(k => store.set(k, true)); } } catch(e){}
 
 // ============================================================================
 //  SPRITE HOOKUP
@@ -527,7 +530,7 @@ const SWITCH_LEVELS = {
   ],
   big: [
     { grid: ["...X#G", "S###U.", "..1#.."], slots: 8 },            // RRDURURR    detour to the pad (v9.8: was 3x7)
-    { grid: ["S#5##xG", "...#Y1U"], slots: 8 },                     // RRRDRRUR    clam opens gold gate, then pad opens coral rocks
+    { grid: ["S5#U.", "..Y#1", "..U.x", "...G#"], slots: 8 },  /* v9.9: compact 4x5 (was 2x7): RRDRRDDL clam -> gold gate -> pad -> coral rocks */                     // RRRDRRUR    clam opens gold gate, then pad opens coral rocks
   ],
   mega: [
     { grid: ["a1#B.", ".U..G", "#A.U#", "S.bX#"], slots: 9 },   /* v9.8: was 5x8 */     // URDRRRRUU  pad only reachable through tube a, tube b back to the gate
@@ -1247,6 +1250,7 @@ function placeTreats(){                // 1-2 treats on plain path tiles along t
   let pos = findCh(L, 'S'), mask = 0; const cells = [];
   sol.forEach(d => { const r = stepSim(L, pos, d, mask); mask = r.mask; pos = r.type === 'warp' ? r.dest : r.to; if ('#='.includes(cellAt(L, pos[0], pos[1])) && r.type === 'move') cells.push(pos.slice()); });
   if (!cells.length) return;
+  const plain = cells.filter(q => cellAt(L, q[0], q[1]) === '#'); if (plain.length) cells.splice(0, cells.length, ...plain);   // v9.9: never on a bridge tile (invisible until the pad pops it in)
   const c = cells[Math.floor((cells.length - 1) / 2)];                                     // v9.3: exactly ONE treat, mid-path
   const gi = LEVELS.slice(0, diff).reduce((n, T) => n + T.levels.length, 0) + levelIdx;   // whole-game index: neighbours always differ, even across tiers
   treats.push({ r: c[0], c: c[1], kind: TREATS[(gi * 3) % 4], got: false });   // the next level gets a different treat
@@ -1542,19 +1546,23 @@ const LEVELS = [
     { grid: ['S##G'], slots: 3 },                  // v9.5: exact length, no room to over-program yet
     { grid: ['S', '#', 'G'], slots: 2 },           // exact length
     { grid: ['G##S'], slots: 4, lesson: 'extra' },  // the lesson: one spare slot; the demo shows an extra arrow carrying Benji past the pearls
-    { grid: ['S##', '..#', '..G'], slots: 5 },
-    { grid: ['..G', '.##', 'S#.'], slots: 5 },
-    { grid: ['S#..', '.##.', '..#G'], slots: 5 },
-    { grid: ['S#A..a#G'], slots: 5 },
-    { grid: ['S#A', '...', 'a#G'], slots: 5 },   // v9.8: + tube (RRRR)
-    { grid: ['S#A.', '....', '.a#G'], slots: 5 },
-    { grid: ['S#A', '...', 'a#U', '.#G'], slots: 6 },   // v9.8: + tube (RRRDR); the urchin sits straight ahead after the exit
+    // v9.9: new elements arrive early, one per level, each with its wordless demo the first time it appears
+    { grid: ['S#U', '.##', '..G'], slots: 5 },      // 4  urchin (demo)        RDRD
+    { grid: ['S#A', '...', 'a#G'], slots: 5 },      // 5  tube (demo)          RRRR
+    { grid: ['S#P==G'], slots: 6 },                 // 6  grey pad -> bridge (demo)  RRRRR (plain tile first so the treat is visible)
+    { grid: ['1#X#G', 'S....'], slots: 6 },         // 7  shell pad -> coral gate (demo, finger on the pad)  URRRR
+    { grid: ['S#A', '...', 'a#U', '.#G'], slots: 6 },   // 8  tube + urchin       RRRDR
+    { grid: ['S#A.', '....', '.a#G'], slots: 5 },   // 9  tube                 RRRR
+    { grid: ['S#..', '.##.', '..#G'], slots: 6 },   // 10 turns                RDRDR
+    { grid: ['S#5A', '....', 'ay#G'], slots: 7 },   // 11 clam -> rocks (demo) + tube   RRRRRR
+    { grid: ['SP=A', '....', '.a#G'], slots: 6 },   // 12 grey pad + tube      RRRRR
+    { grid: ['S1A.', '....', 'aX#G'], slots: 6 },   // 13 pad + tube + gate    RRRRR
   ] },
   { name: 'Big Fin', color: '#2e8ef0', hintDelay: 15, levels: BIG_LEVELS },
   { name: 'Mega Fin', color: '#9b4dff', hintDelay: 15, hintsDefault: false, levels: MEGA_LEVELS },
 ];
 const SET_SIZE = 5;
-LEVELS[0].levels.push(...SWITCH_LEVELS.little, { grid: ['SP=A', '....', '.a#G'], slots: 6 }); /* 13: RRRRR grey pad -> bridge pops in -> tube (v9.8) */ LEVELS[1].levels.push(...SWITCH_LEVELS.big); LEVELS[2].levels.push(...SWITCH_LEVELS.mega);
+/* v9.9: Little Fin is fully listed above (switch intros folded in) */ LEVELS[1].levels.push(...SWITCH_LEVELS.big); LEVELS[2].levels.push(...SWITCH_LEVELS.mega);
 
 // ---------------------------------------------------------------- rules (shared by the game and the solver)
 //  '=' bridge: open water (a fall) until the grey pad P is pressed this run (mask bit GREY)
