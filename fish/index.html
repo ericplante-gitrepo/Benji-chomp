@@ -20,7 +20,7 @@
 <canvas id="c"></canvas>
 <!-- SPRITE HOOK: the Game Art Director's sprite sheets drop in here (see SPRITES.md). Empty = vector placeholder art. -->
 <!-- LEVELS: inlined from levels.json by build.sh (format: LEVEL-FORMAT.md) -->
-<script id="ff-levels" type="application/json">{"format":"fish-friends-levels/1","levels":[{"id":"p-first-pin","ref":"Save The Fish L1-2 (mechanic)","teaches":"Tap the pin: the water drops down the pipe to Finn.","space":[{"rect":[18,8,28,26],"r":5},{"path":[[32,30],[32,64],[24,80]],"w":8},{"rect":[10,74,34,26],"r":11}],"pins":[{"id":"a","tip":[26,37],"end":[42,37]}],"fill":[["water",18,15,28,21]],"fish":[26,92],"solution":["a"]},{"id":"p-v-choice","ref":"Save The Fish L3/L6 (mechanic)","teaches":"Two slanted pins make a V: pull the one on Finn's side so the water slides his way, not into the empty cup.","space":[{"rect":[20,6,24,20],"r":5},{"path":[[32,22],[32,36]],"w":8},{"rect":[13,32,38,16],"r":6},{"path":[[18,44],[12,58],[12,74]],"w":8},{"path":[[46,44],[52,56]],"w":8},{"rect":[40,52,22,28],"r":7},{"rect":[4,72,26,28],"r":10}],"pins":[{"id":"l","tip":[32,47],"end":[10,33]},{"id":"r","tip":[32,47],"end":[54,33]}],"fill":[["water","flood",32,40,18]],"fish":[17,92],"solution":["l"]},{"id":"p-cool-goo","ref":"Save The Fish L4-5 (mechanic)","teaches":"Water first: it cools the hot goo into a rock, then open the goo pin and the water follows down to Finn.","space":[{"rect":[4,8,24,20],"r":5},{"path":[[16,24],[16,34],[40,38],[40,44]],"w":7},{"rect":[30,40,20,14],"r":4},{"path":[[40,50],[40,78]],"w":8},{"rect":[6,74,38,26],"r":10}],"pins":[{"id":"w","tip":[11,30],"end":[26,30]},{"id":"g","tip":[33,55],"end":[52,55],"style":"grip"}],"fill":[["water",4,12,24,17],["lava",30,48,20,6]],"fish":[17,92],"solution":["w","g"]},{"id":"p-keep-safe","ref":"Save The Fish L7-8 (mechanic)","teaches":"Finn is already swimming: send the hot goo to Grumbles' side, not Finn's. Grumbles swims off grumpy.","space":[{"rect":[18,8,28,22],"r":5},{"path":[[24,28],[24,40],[14,52],[14,62]],"w":7},{"path":[[40,28],[40,40],[50,52],[50,60]],"w":7},{"rect":[3,58,25,40],"r":8},{"rect":[37,56,24,40],"r":8}],"pins":[{"id":"a","tip":[28,36],"end":[13,36],"style":"grip"},{"id":"b","tip":[36,36],"end":[51,36],"style":"grip"}],"fill":[["lava",18,17,28,19],["water",3,80,25,18],["water",37,78,24,18]],"fish":[15,90],"shark":[49,87],"fishStartsWet":true,"goal":"safe","solution":["b"]},{"id":"p-gas-bar","ref":"Save The Fish L19 + L23 (mechanic)","teaches":"Stinky gas floats UP: let it rise to Grumbles first so he swims away, then slide the green bar so the water can reach Finn.","space":[{"rect":[28,4,24,20],"r":5},{"path":[[40,20],[40,44]],"w":8},{"rect":[26,42,23,24],"r":6},{"path":[[28,47],[14,62],[14,76]],"w":7},{"rect":[4,72,28,28],"r":10},{"rect":[42,80,18,14],"r":5},{"path":[[54,82],[58,70],[58,54]],"w":5},{"path":[[58,52],[42,52]],"w":3}],"pins":[{"id":"g","tip":[62,72],"end":[49,72]},{"id":"w","tip":[35,28],"end":[50,28],"style":"bar"}],"fill":[["water",28,8,24,19],["water",26,56,26,10],["gas","flood",50,88,0]],"fish":[16,92],"shark":[40,59],"solution":["g","w"]},{"id":"p-u-tube","ref":"Save The Fish L14-16 (mechanic: water finds its level through a pipe)","teaches":"Water goes down the pipe and comes back UP on Finn's side: it finds the same level.","space":[{"rect":[4,10,22,46],"r":6},{"path":[[15,54],[15,104],[54,104],[54,96]],"w":6},{"rect":[35,74,22,26],"r":6}],"pins":[{"id":"a","tip":[10,60],"end":[26,60]}],"fill":[["water","flood",15,30,17]],"fish":[42,92],"solution":["a"],"need":28,"over":3},{"id":"p-three-steps","ref":"Save The Fish L9-12 (mechanics: goo scares the shark, water cools goo, a water trap)","teaches":"Three steps in order: hot goo to Grumbles first (while the little cup is dry), then water on the goo above Finn, then open Finn's pipe.","space":[{"rect":[4,8,26,14],"r":5},{"path":[[16,20],[16,32]],"w":6},{"rect":[12,30,20,24],"r":5},{"path":[[30,40],[37,40],[37,44]],"w":4},{"rect":[36,22,16,8],"r":3},{"path":[[44,28],[44,43]],"w":5},{"rect":[34,42,24,6],"r":2},{"rect":[34,44,10,6],"r":3},{"path":[[54,46],[54,68]],"w":5},{"rect":[38,66,24,32],"r":8},{"path":[[28,52],[28,62],[28,72]],"w":6},{"rect":[4,72,28,22],"r":9}],"pins":[{"id":"c","tip":[39,33],"end":[54,33]},{"id":"a","tip":[11,27],"end":[26,27]},{"id":"b","tip":[33,58],"end":[17,58],"style":"grip"}],"fill":[["water","flood",16,16,15],["lava","flood",20,52,50],["lava","flood",44,27,27],["water","flood",50,90,80]],"fish":[13,86],"shark":[50,90],"solution":["c","a","b"]},{"id":"p-fork-goo","ref":"template: Y-choice lava-to-shark","teaches":"Hot goo can fall two ways. Open Grumbles' way and leave Finn's way shut.","space":[{"rect":[18,4,28,18],"r":5},{"path":[[32,20],[32,34]],"w":8},{"rect":[10,30,44,12],"r":5},{"path":[[18,40],[14,58],[14,76]],"w":8},{"rect":[2,72,26,32],"r":10},{"path":[[46,40],[54,52],[54,64]],"w":8},{"rect":[42,60,20,30],"r":8}],"pins":[{"id":"l","tip":[24,44],"end":[4,32]},{"id":"r","tip":[40,44],"end":[60,32]}],"fill":[["lava","flood",32,28,8],["water","flood",52,82,74]],"fish":[13,96],"shark":[52,82],"fishStartsWet":true,"goal":"safe","solution":["r"]},{"id":"p-gas-rises","teaches":"Green gas floats up. Open the chimney over Grumbles and leave Finn's shut.","ref":"template: gas-rises-to-shark","space":[{"rect":[4,8,24,36],"r":8},{"rect":[36,8,24,36],"r":8},{"path":[[16,42],[16,78]],"w":8},{"path":[[48,42],[48,78]],"w":8},{"rect":[6,74,52,30],"r":12}],"pins":[{"id":"f","tip":[6,56],"end":[26,56],"style":"grip"},{"id":"g","tip":[38,56],"end":[58,56],"style":"grip"}],"fill":[["gas","flood",30,92,57]],"fish":[15,32],"shark":[48,32],"fishStartsWet":true,"goal":"safe","solution":["g"]},{"id":"p-cool-cup","ref":"template: water then goo","teaches":"Let the water down onto the goo so it turns to rock, then open the lower pin.","space":[{"rect":[26,4,24,16],"r":4},{"path":[[38,18],[38,36]],"w":8},{"rect":[26,34,26,16],"r":4},{"path":[[40,48],[40,78]],"w":8},{"rect":[2,72,52,32],"r":11},{"rect":[2,4,14,12],"r":4},{"path":[[8,14],[8,78]],"w":4}],"pins":[{"id":"a","tip":[26,22],"end":[50,22]},{"id":"b","tip":[28,50],"end":[52,50],"style":"grip"},{"id":"t","tip":[-4,16],"end":[20,16],"style":"grip"}],"fill":[["water","flood",38,12,6],["lava","flood",38,46,42],["lava","flood",8,10,6]],"fish":[16,96],"solution":["a","b"]},{"id":"p-bar-cup","ref":"template: sliding bar then goo","teaches":"Slide the green bar so the water lands on the goo, then open the lower pin.","space":[{"rect":[24,4,30,16],"r":4},{"path":[[40,18],[40,36]],"w":8},{"rect":[28,34,26,16],"r":4},{"path":[[42,48],[42,78]],"w":8},{"rect":[2,72,54,32],"r":11},{"rect":[2,28,14,12],"r":4},{"path":[[8,38],[8,78]],"w":4}],"pins":[{"id":"s","tip":[28,22],"end":[52,22],"style":"bar"},{"id":"b","tip":[30,50],"end":[54,50],"style":"grip"},{"id":"t","tip":[-4,40],"end":[20,40],"style":"grip"}],"fill":[["water","flood",40,12,6],["lava","flood",40,46,42],["lava","flood",8,34,30]],"fish":[16,96],"solution":["s","b"]},{"id":"p-u-trap","ref":"template: U-tube","teaches":"Water runs down and climbs back up to Finn. Leave the goo pin in.","space":[{"rect":[4,10,22,46],"r":6},{"path":[[15,54],[15,104],[54,104],[54,96]],"w":6},{"rect":[35,74,22,26],"r":6},{"rect":[40,16,16,12],"r":3},{"path":[[48,26],[48,70],[46,76]],"w":6}],"pins":[{"id":"a","tip":[10,60],"end":[26,60]},{"id":"t","tip":[38,34],"end":[58,34],"style":"grip"}],"fill":[["water","flood",15,30,17],["lava","flood",48,20,18]],"fish":[42,92],"solution":["a"],"need":28,"over":3},{"id":"p-bend-shark","ref":"template: lava bend to shark","teaches":"Finn is already swimming. Open the right-hand pin so the goo follows the bend to Grumbles.","space":[{"rect":[6,4,52,14],"r":5},{"path":[[16,16],[16,78]],"w":6},{"path":[[32,16],[32,40],[18,52]],"w":6},{"path":[[50,16],[50,34],[58,48],[58,68]],"w":6},{"rect":[2,74,28,30],"r":10},{"rect":[44,64,18,30],"r":8}],"pins":[{"id":"a","tip":[4,22],"end":[28,22],"style":"grip"},{"id":"c","tip":[20,22],"end":[44,22],"style":"grip"},{"id":"b","tip":[38,22],"end":[62,22],"style":"grip"}],"fill":[["lava","flood",32,12,6],["water","flood",52,86,76]],"fish":[14,96],"shark":[53,86],"fishStartsWet":true,"goal":"safe","solution":["b"]},{"id":"p-comb","ref":"template: comb of columns","teaches":"One green bar holds both water columns. Slide it, then open the goo pin.","space":[{"rect":[20,4,14,18],"r":4},{"rect":[38,4,14,18],"r":4},{"path":[[27,20],[27,38]],"w":6},{"path":[[45,20],[45,38]],"w":6},{"rect":[20,36,36,14],"r":4},{"path":[[42,48],[42,78]],"w":8},{"rect":[2,72,54,32],"r":11},{"rect":[2,4,14,12],"r":4},{"path":[[8,14],[8,78]],"w":4}],"pins":[{"id":"s","tip":[18,24],"end":[58,24],"style":"bar"},{"id":"b","tip":[30,50],"end":[54,50],"style":"grip"},{"id":"t","tip":[-4,16],"end":[20,16],"style":"grip"}],"fill":[["water","flood",27,12,6],["water","flood",45,12,6],["lava","flood",38,46,42],["lava","flood",8,10,6]],"fish":[16,96],"solution":["s","b"]},{"id":"p-spiral","ref":"template: square spiral","teaches":"The water curls around the spiral, cools the goo, then the lower pin lets it down.","space":[{"rect":[2,2,20,22],"r":4},{"path":[[12,22],[12,28],[48,28],[48,40],[30,40],[30,50]],"w":6},{"rect":[22,48,26,16],"r":4},{"path":[[42,62],[42,84]],"w":8},{"rect":[2,80,52,26],"r":10},{"rect":[2,64,14,12],"r":3},{"path":[[8,74],[8,90]],"w":4}],"pins":[{"id":"a","tip":[0,26],"end":[24,26]},{"id":"b","tip":[30,64],"end":[54,64],"style":"grip"},{"id":"t","tip":[-4,76],"end":[20,76],"style":"grip"}],"fill":[["water","flood",12,14,4],["lava","flood",36,60,56],["lava","flood",8,70,66]],"fish":[16,96],"solution":["a","b"]},{"id":"p-cross-gates","ref":"template: crossing pins","teaches":"Open the upper slanted pin first, so the water turns the goo into rock, then the lower one.","space":[{"rect":[24,4,22,16],"r":4},{"path":[[34,18],[34,38]],"w":7},{"rect":[24,36,26,16],"r":4},{"path":[[40,50],[40,94]],"w":8},{"rect":[8,88,42,16],"r":6},{"rect":[2,4,14,12],"r":4},{"path":[[8,14],[12,96]],"w":4}],"pins":[{"id":"a","tip":[22,34],"end":[48,18]},{"id":"b","tip":[24,56],"end":[52,42],"style":"grip"},{"id":"t","tip":[-4,16],"end":[20,16],"style":"grip"}],"fill":[["water","flood",34,12,6],["lava","flood",36,48,44],["lava","flood",8,10,6]],"fish":[16,96],"solution":["a","b"]},{"id":"p-two-bars","ref":"template: two sliding bars","teaches":"Slide the top bar, let the water cool the goo, then slide the lower bar.","space":[{"rect":[26,4,26,16],"r":4},{"path":[[38,18],[38,36]],"w":8},{"rect":[26,34,26,16],"r":4},{"path":[[40,48],[40,78]],"w":8},{"rect":[2,72,54,32],"r":11},{"rect":[2,4,14,12],"r":4},{"path":[[8,14],[8,78]],"w":4}],"pins":[{"id":"s","tip":[26,22],"end":[50,22],"style":"bar"},{"id":"u","tip":[28,50],"end":[52,50],"style":"bar"},{"id":"t","tip":[-4,16],"end":[20,16],"style":"grip"}],"fill":[["water","flood",38,12,6],["lava","flood",38,46,42],["lava","flood",8,10,6]],"fish":[16,96],"solution":["s","u"]},{"id":"p-long-goo","ref":"template: long lava-to-shark","teaches":"Finn is already swimming. Leave the straight pin in and open the one over the long pipe.","space":[{"rect":[8,4,40,14],"r":5},{"path":[[18,16],[18,80]],"w":6},{"path":[[40,16],[40,36],[56,50],[56,70]],"w":6},{"rect":[4,76,26,28],"r":10},{"rect":[44,66,18,28],"r":8}],"pins":[{"id":"a","tip":[6,22],"end":[30,22],"style":"grip"},{"id":"b","tip":[28,22],"end":[52,22]}],"fill":[["lava","flood",28,12,6],["water","flood",52,86,76]],"fish":[15,96],"shark":[53,86],"fishStartsWet":true,"goal":"safe","solution":["b"]},{"id":"p-gas-then","ref":"template: gas then water","teaches":"Let the gas rise to Grumbles first. Then open the water. The side pin stays in.","space":[{"rect":[20,2,30,20],"r":4},{"path":[[36,20],[36,40]],"w":6},{"rect":[12,36,30,30],"r":5},{"path":[[16,50],[3,50]],"w":5},{"path":[[3,50],[3,82]],"w":4},{"rect":[2,78,26,28],"r":10},{"path":[[40,42],[58,42],[58,104]],"w":5},{"rect":[50,84,12,22],"r":4},{"rect":[14,68,12,10],"r":3},{"path":[[18,76],[18,88]],"w":4}],"pins":[{"id":"g","tip":[46,70],"end":[70,70],"style":"grip"},{"id":"w","tip":[24,24],"end":[48,24]},{"id":"t","tip":[6,78],"end":[30,78],"style":"grip"}],"fill":[["water","flood",36,12,4],["water","flood",26,62,58],["gas","flood",56,98,0],["lava","flood",18,74,70]],"fish":[12,98],"shark":[26,54],"solution":["g","w"]},{"id":"p-little-finale","ref":"template: gentle mix","teaches":"Gas to Grumbles, then the water. Both goo pins stay in.","space":[{"rect":[20,2,30,20],"r":4},{"path":[[36,20],[36,40]],"w":6},{"rect":[12,36,30,30],"r":5},{"path":[[16,50],[3,50]],"w":5},{"path":[[3,50],[8,96]],"w":5},{"rect":[4,90,40,16],"r":6},{"path":[[40,42],[58,42],[58,104]],"w":5},{"rect":[50,84,12,22],"r":4},{"rect":[14,68,12,10],"r":3},{"path":[[18,76],[18,96]],"w":4},{"rect":[30,68,12,10],"r":3},{"path":[[36,76],[36,96],[14,96]],"w":4}],"pins":[{"id":"g","tip":[46,70],"end":[70,70],"style":"grip"},{"id":"w","tip":[24,24],"end":[48,24]},{"id":"t","tip":[6,78],"end":[30,78],"style":"grip"},{"id":"u","tip":[24,78],"end":[48,78],"style":"grip"}],"fill":[["water","flood",36,12,4],["water","flood",26,62,58],["gas","flood",56,98,0],["lava","flood",18,74,70],["lava","flood",36,74,70]],"fish":[12,98],"shark":[26,54],"solution":["g","w"]}]}</script>
+<script id="ff-levels" type="application/json">{"format":"fish-friends-levels/1","levels":[{"id":"p-first-pin","ref":"Save The Fish L1-2 (mechanic)","teaches":"Tap the pin: the water drops down the pipe to Finn.","space":[{"rect":[18,8,28,26],"r":5},{"path":[[32,30],[32,64],[24,80]],"w":8},{"rect":[10,74,34,26],"r":11}],"pins":[{"id":"a","tip":[26,37],"end":[42,37]}],"fill":[["water",18,15,28,21]],"fish":[26,92],"solution":["a"]},{"id":"p-v-choice","ref":"Save The Fish L3/L6 (mechanic)","teaches":"Two slanted pins make a V: pull the one on Finn's side so the water slides his way, not into the empty cup.","space":[{"rect":[20,6,24,20],"r":5},{"path":[[32,22],[32,36]],"w":8},{"rect":[13,32,38,16],"r":6},{"path":[[18,44],[12,58],[12,74]],"w":8},{"path":[[46,44],[52,56]],"w":8},{"rect":[40,52,22,58],"r":7},{"rect":[4,72,26,28],"r":10}],"pins":[{"id":"l","tip":[32,47],"end":[10,33]},{"id":"r","tip":[32,47],"end":[54,33]}],"fill":[["water","flood",32,40,18]],"fish":[17,92],"solution":["l"]},{"id":"p-cool-goo","ref":"Save The Fish L4-5 (mechanic)","teaches":"Water first: it cools the hot goo into a rock, then open the goo pin and the water follows down to Finn.","space":[{"rect":[4,8,24,20],"r":5},{"path":[[16,24],[16,34],[40,38],[40,44]],"w":7},{"rect":[30,40,20,14],"r":4},{"rect":[6,74,38,26],"r":10},{"rect":[30,40,20,24]},{"rect":[50,44,2,4]},{"rect":[52,44,8,4]},{"rect":[52,44,8,32]},{"path":[[58,70],[42,78]],"w":6}],"pins":[{"id":"w","tip":[11,30],"end":[26,30]},{"id":"g","tip":[51,49],"end":[51,42],"style":"grip"}],"fill":[["water",4,12,24,17],["lava",30,46,20,18]],"fish":[17,92],"solution":["w","g"]},{"id":"p-keep-safe","ref":"Save The Fish L7-8 (mechanic)","teaches":"Finn is already swimming: send the hot goo to Grumbles' side, not Finn's. Grumbles swims off grumpy.","space":[{"rect":[18,8,28,22],"r":5},{"path":[[24,28],[24,40],[14,52],[14,62]],"w":7},{"path":[[40,28],[40,40],[50,52],[50,60]],"w":7},{"rect":[3,58,25,40],"r":8},{"rect":[37,56,24,40],"r":8}],"pins":[{"id":"a","tip":[28,36],"end":[13,36],"style":"grip"},{"id":"b","tip":[36,36],"end":[51,36],"style":"grip"}],"fill":[["lava",18,17,28,19],["water",3,80,25,18],["water",37,78,24,18]],"fish":[15,90],"shark":[49,87],"fishStartsWet":true,"goal":"safe","solution":["b"]},{"id":"p-gas-bar","ref":"Save The Fish L19 + L23 (mechanic)","teaches":"Stinky gas floats UP: let it rise to Grumbles first so he swims away, then slide the green bar so the water can reach Finn.","space":[{"rect":[28,4,24,20],"r":5},{"path":[[40,20],[40,44]],"w":8},{"rect":[26,42,23,24],"r":6},{"path":[[28,47],[14,62],[14,76]],"w":7},{"rect":[4,72,28,28],"r":10},{"rect":[42,80,18,14],"r":5},{"path":[[54,82],[58,70],[58,54]],"w":5},{"path":[[58,52],[42,52]],"w":3}],"pins":[{"id":"g","tip":[62,72],"end":[49,72]},{"id":"w","tip":[35,28],"end":[50,28],"style":"bar"}],"fill":[["water",28,8,24,19],["water",26,56,26,10],["gas","flood",50,88,0]],"fish":[16,92],"shark":[40,59],"solution":["g","w"]},{"id":"p-u-tube","ref":"Save The Fish L14-16 (mechanic: water finds its level through a pipe)","teaches":"Water goes down the pipe and comes back UP on Finn's side: it finds the same level.","space":[{"rect":[4,10,22,46],"r":6},{"path":[[15,54],[15,104],[54,104],[54,96]],"w":6},{"rect":[35,74,22,26],"r":6}],"pins":[{"id":"a","tip":[10,60],"end":[26,60]}],"fill":[["water","flood",15,30,17]],"fish":[42,92],"solution":["a"],"need":28,"over":3},{"id":"p-three-steps","ref":"Save The Fish L9-12 (mechanics: goo scares the shark, water cools goo, a water trap)","teaches":"Three steps in order: hot goo to Grumbles first (while the little cup is dry), then water on the goo above Finn, then open Finn's pipe.","space":[{"rect":[4,8,26,14],"r":5},{"path":[[16,20],[16,32]],"w":6},{"rect":[12,30,20,24],"r":5},{"path":[[30,40],[37,40],[37,44]],"w":4},{"rect":[36,22,16,8],"r":3},{"path":[[44,28],[44,43]],"w":5},{"rect":[34,42,24,6],"r":2},{"rect":[34,44,10,6],"r":3},{"path":[[54,46],[54,68]],"w":5},{"rect":[38,66,24,32],"r":8},{"rect":[4,72,28,22],"r":9},{"rect":[14,52,16,12]},{"rect":[11,48,2,3]},{"rect":[7,48,4,30]}],"pins":[{"id":"c","tip":[39,33],"end":[54,33]},{"id":"a","tip":[10,36],"end":[32,36]},{"id":"b","tip":[12,51],"end":[12,47],"style":"grip"}],"fill":[["water","flood",16,16,15],["lava","flood",20,52,50],["lava","flood",44,27,27],["water","flood",50,90,80]],"fish":[13,86],"shark":[50,90],"solution":["c","a","b"]},{"id":"p-fork-goo","ref":"template: Y-choice lava-to-shark","teaches":"Hot goo can fall two ways. Open Grumbles' way and leave Finn's way shut.","space":[{"rect":[18,4,28,18],"r":5},{"path":[[32,20],[32,34]],"w":8},{"rect":[10,30,44,12],"r":5},{"path":[[18,40],[14,58],[14,76]],"w":8},{"rect":[2,72,26,32],"r":10},{"path":[[46,40],[54,52],[54,64]],"w":8},{"rect":[42,60,20,30],"r":8}],"pins":[{"id":"l","tip":[24,44],"end":[4,32]},{"id":"r","tip":[40,44],"end":[60,32]}],"fill":[["lava","flood",32,28,8],["water","flood",52,82,74]],"fish":[13,96],"shark":[52,82],"fishStartsWet":true,"goal":"safe","solution":["r"]},{"id":"p-gas-rises","teaches":"Green gas floats up. Open the chimney over Grumbles and leave Finn's shut.","ref":"template: gas-rises-to-shark","space":[{"rect":[4,8,24,36],"r":8},{"rect":[36,8,24,36],"r":8},{"path":[[16,42],[16,78]],"w":8},{"path":[[48,42],[48,78]],"w":8},{"rect":[6,74,52,30],"r":12}],"pins":[{"id":"f","tip":[6,56],"end":[26,56],"style":"grip"},{"id":"g","tip":[38,56],"end":[58,56],"style":"grip"}],"fill":[["gas","flood",30,92,57]],"fish":[15,32],"shark":[48,32],"fishStartsWet":true,"goal":"safe","solution":["g"]},{"id":"p-cool-cup","ref":"template: water then goo","teaches":"Let the water down onto the goo so it turns to rock, then open the lower pin.","space":[{"rect":[26,4,24,16],"r":4},{"path":[[38,18],[38,36]],"w":8},{"rect":[26,34,26,16],"r":4},{"rect":[2,72,52,32],"r":11},{"rect":[2,4,14,12],"r":4},{"path":[[8,14],[8,78]],"w":4},{"rect":[28,48,24,12]},{"rect":[52,40,2,4]},{"rect":[54,40,6,4]},{"rect":[54,40,8,36]},{"path":[[60,74],[46,80]],"w":6}],"pins":[{"id":"a","tip":[26,22],"end":[50,22]},{"id":"b","tip":[53,44],"end":[53,39],"style":"grip"},{"id":"t","tip":[-4,16],"end":[20,16],"style":"grip"}],"fill":[["water","flood",38,12,6],["lava","flood",38,46,42],["lava","flood",8,10,6]],"fish":[16,96],"solution":["a","b"]},{"id":"p-bar-cup","ref":"template: sliding bar then goo","teaches":"Slide the green bar so the water lands on the goo, then open the lower pin.","space":[{"rect":[24,4,30,16],"r":4},{"path":[[40,18],[40,36]],"w":8},{"rect":[28,34,26,16],"r":4},{"rect":[2,72,54,32],"r":11},{"rect":[2,28,14,12],"r":4},{"path":[[8,38],[8,78]],"w":4},{"rect":[30,48,24,12]},{"rect":[54,40,2,4]},{"rect":[56,40,6,4]},{"rect":[56,40,8,36]},{"path":[[62,74],[48,80]],"w":6}],"pins":[{"id":"s","tip":[28,22],"end":[52,22],"style":"bar"},{"id":"b","tip":[55,44],"end":[55,39],"style":"grip"},{"id":"t","tip":[-4,40],"end":[20,40],"style":"grip"}],"fill":[["water","flood",40,12,6],["lava","flood",40,46,42],["lava","flood",8,34,30]],"fish":[16,96],"solution":["s","b"]},{"id":"p-u-trap","ref":"template: U-tube","teaches":"Water runs down and climbs back up to Finn. Leave the goo pin in.","space":[{"rect":[4,10,22,46],"r":6},{"path":[[15,54],[15,104],[54,104],[54,96]],"w":6},{"rect":[35,74,22,26],"r":6},{"rect":[40,16,16,12],"r":3},{"path":[[48,26],[48,70],[46,76]],"w":6}],"pins":[{"id":"a","tip":[10,60],"end":[26,60]},{"id":"t","tip":[38,34],"end":[58,34],"style":"grip"}],"fill":[["water","flood",15,30,17],["lava","flood",48,20,18]],"fish":[42,92],"solution":["a"],"need":28,"over":3},{"id":"p-bend-shark","ref":"template: lava bend to shark","teaches":"Finn is already swimming. Open the right-hand pin so the goo follows the bend to Grumbles.","space":[{"rect":[6,4,52,14],"r":5},{"path":[[16,16],[16,78]],"w":6},{"path":[[32,16],[32,40],[18,52]],"w":6},{"path":[[50,16],[50,34],[58,48],[58,68]],"w":6},{"rect":[2,74,28,30],"r":10},{"rect":[44,64,18,30],"r":8}],"pins":[{"id":"a","tip":[4,22],"end":[28,22],"style":"grip"},{"id":"c","tip":[20,22],"end":[44,22],"style":"grip"},{"id":"b","tip":[38,22],"end":[62,22],"style":"grip"}],"fill":[["lava","flood",32,12,6],["water","flood",52,86,76]],"fish":[14,96],"shark":[53,86],"fishStartsWet":true,"goal":"safe","solution":["b"]},{"id":"p-comb","ref":"template: comb of columns","teaches":"One green bar holds both water columns. Slide it, then open the goo pin.","space":[{"rect":[20,4,14,18],"r":4},{"rect":[38,4,14,18],"r":4},{"path":[[27,20],[27,38]],"w":6},{"path":[[45,20],[45,38]],"w":6},{"rect":[20,36,36,14],"r":4},{"rect":[2,72,54,32],"r":11},{"rect":[2,4,14,12],"r":4},{"path":[[8,14],[8,78]],"w":4},{"rect":[22,48,34,12]},{"rect":[56,40,2,4]},{"rect":[58,40,4,4]},{"rect":[60,40,4,36]},{"path":[[62,74],[48,80]],"w":6}],"pins":[{"id":"s","tip":[18,24],"end":[58,24],"style":"bar"},{"id":"b","tip":[57,44],"end":[57,39],"style":"grip"},{"id":"t","tip":[-4,16],"end":[20,16],"style":"grip"}],"fill":[["water","flood",27,12,6],["water","flood",45,12,6],["lava","flood",38,46,42],["lava","flood",8,10,6]],"fish":[16,96],"solution":["s","b"]},{"id":"p-spiral","ref":"template: square spiral","teaches":"The water curls around the spiral, cools the goo, then the lower pin lets it down.","space":[{"rect":[2,2,20,22],"r":4},{"path":[[12,22],[12,28],[48,28],[48,40],[30,40],[30,50]],"w":6},{"rect":[22,48,26,16],"r":4},{"rect":[2,80,52,26],"r":10},{"rect":[2,64,14,12],"r":3},{"path":[[8,74],[8,90]],"w":4},{"rect":[24,62,24,12]},{"rect":[48,54,2,4]},{"rect":[50,54,6,4]},{"rect":[50,54,10,30]},{"path":[[58,82],[46,86]],"w":6}],"pins":[{"id":"a","tip":[0,26],"end":[24,26]},{"id":"b","tip":[49,58],"end":[49,53],"style":"grip"},{"id":"t","tip":[-4,76],"end":[20,76],"style":"grip"}],"fill":[["water","flood",12,14,4],["lava","flood",36,60,56],["lava","flood",8,70,66]],"fish":[16,96],"solution":["a","b"]},{"id":"p-cross-gates","ref":"template: crossing pins","teaches":"Open the upper slanted pin first, so the water turns the goo into rock, then the lower one.","space":[{"rect":[24,4,22,16],"r":4},{"path":[[34,18],[34,38]],"w":7},{"rect":[24,36,26,16],"r":4},{"path":[[40,50],[40,94]],"w":8},{"rect":[8,88,42,16],"r":6},{"rect":[2,4,14,12],"r":4},{"path":[[8,14],[12,96]],"w":4}],"pins":[{"id":"a","tip":[22,34],"end":[48,18]},{"id":"b","tip":[24,56],"end":[52,42],"style":"grip"},{"id":"t","tip":[-4,16],"end":[20,16],"style":"grip"}],"fill":[["water","flood",34,12,6],["lava","flood",36,48,44],["lava","flood",8,10,6]],"fish":[16,96],"solution":["a","b"]},{"id":"p-two-bars","ref":"template: two sliding bars","teaches":"Slide the top bar, let the water cool the goo, then slide the lower bar.","space":[{"rect":[26,4,26,16],"r":4},{"path":[[38,18],[38,36]],"w":8},{"rect":[26,34,26,16],"r":4},{"rect":[2,72,54,32],"r":11},{"rect":[2,4,14,12],"r":4},{"path":[[8,14],[8,78]],"w":4},{"rect":[28,48,24,12]},{"rect":[52,40,2,4]},{"rect":[54,40,6,4]},{"rect":[54,40,8,36]},{"path":[[60,74],[46,80]],"w":6}],"pins":[{"id":"s","tip":[26,22],"end":[50,22],"style":"bar"},{"id":"u","tip":[53,44],"end":[53,39],"style":"bar","travel":8},{"id":"t","tip":[-4,16],"end":[20,16],"style":"grip"}],"fill":[["water","flood",38,12,6],["lava","flood",38,46,42],["lava","flood",8,10,6]],"fish":[16,96],"solution":["s","u"]},{"id":"p-long-goo","ref":"template: long lava-to-shark","teaches":"Finn is already swimming. Leave the straight pin in and open the one over the long pipe.","space":[{"rect":[8,4,40,14],"r":5},{"path":[[18,16],[18,80]],"w":6},{"path":[[40,16],[40,36],[56,50],[56,70]],"w":6},{"rect":[4,76,26,28],"r":10},{"rect":[44,66,18,28],"r":8}],"pins":[{"id":"a","tip":[6,22],"end":[30,22],"style":"grip"},{"id":"b","tip":[28,22],"end":[52,22]}],"fill":[["lava","flood",28,12,6],["water","flood",52,86,76]],"fish":[15,96],"shark":[53,86],"fishStartsWet":true,"goal":"safe","solution":["b"]},{"id":"p-gas-then","ref":"template: gas then water","teaches":"Let the gas rise to Grumbles first. Then open the water. The side pin stays in.","space":[{"rect":[20,2,30,20],"r":4},{"path":[[36,20],[36,40]],"w":6},{"rect":[12,36,30,30],"r":5},{"path":[[16,50],[3,50]],"w":5},{"path":[[3,50],[3,82]],"w":4},{"rect":[2,78,26,28],"r":10},{"path":[[40,42],[58,42],[58,104]],"w":5},{"rect":[50,84,12,22],"r":4},{"rect":[14,68,12,10],"r":3},{"path":[[18,76],[18,88]],"w":4}],"pins":[{"id":"g","tip":[46,70],"end":[70,70],"style":"grip"},{"id":"w","tip":[24,24],"end":[48,24]},{"id":"t","tip":[6,78],"end":[30,78],"style":"grip"}],"fill":[["water","flood",36,12,4],["water","flood",26,62,58],["gas","flood",56,98,0],["lava","flood",18,74,70]],"fish":[12,98],"shark":[26,54],"solution":["g","w"]},{"id":"p-little-finale","ref":"template: gentle mix","teaches":"Gas to Grumbles, then the water. Both goo pins stay in.","space":[{"rect":[20,2,30,20],"r":4},{"path":[[36,20],[36,40]],"w":6},{"rect":[12,36,30,30],"r":5},{"path":[[16,50],[3,50]],"w":5},{"path":[[3,50],[8,96]],"w":5},{"rect":[4,90,40,16],"r":6},{"path":[[40,42],[58,42],[58,104]],"w":5},{"rect":[50,84,12,22],"r":4},{"rect":[14,68,12,10],"r":3},{"path":[[18,76],[18,96]],"w":4},{"rect":[30,68,12,10],"r":3},{"path":[[36,76],[36,96],[14,96]],"w":4}],"pins":[{"id":"g","tip":[46,70],"end":[70,70],"style":"grip"},{"id":"w","tip":[24,24],"end":[48,24]},{"id":"t","tip":[6,78],"end":[30,78],"style":"grip"},{"id":"u","tip":[24,78],"end":[48,78],"style":"grip"}],"fill":[["water","flood",36,12,4],["water","flood",26,62,58],["gas","flood",56,98,0],["lava","flood",18,74,70],["lava","flood",36,74,70]],"fish":[12,98],"shark":[26,54],"solution":["g","w"]}]}</script>
 <script id="ff-sprites" type="application/json">{}</script>
 <script>
 "use strict";
@@ -30,7 +30,7 @@
 //  Files: core.js (store, audio) + sim.js (physics/rules, shared with tools/check-levels.js)
 //         + art.js (vector placeholder art + SPRITE HOOK) + game.js (screens, input, loop).
 // ============================================================================
-const VERSION = 'v0.6.4';
+const VERSION = 'v0.8.0-physH';
 const store = {
   get(k, d){ try { const v = localStorage.getItem('fishfriends4_' + k); return v === null ? d : JSON.parse(v); } catch(e){ return d; } },
   set(k, v){ try { localStorage.setItem('fishfriends4_' + k, JSON.stringify(v)); } catch(e){} }
@@ -99,18 +99,29 @@ const audio = {
   }
 };
 // ============================================================================
-//  SIM v2 (v0.4 portrait): deterministic falling-grain physics + rules. Pure JS, no DOM, no randomness.
-//  Shared by the game (concatenated into index.html) and tools/check-levels.js (require()).
-//  Grid: W x H cells (default 64 x 112), 8 board-px each (board = 512 x 896). Fixed step = 1/60 s.
-//  The level describes the OPEN SPACE (channels/pockets) as shapes; everything else is wall.
+//  SIM v0.8.0-physH. Walls, pins, the nest and cooled rock stay on the grid.
+//  Cooling is unchanged from physD: a lava particle freezes only within 12 board px of a water particle.
+//  Water, lava and gas are particles. A MAC FLIP step (fixed iteration count,
+//  no randomness) is the only thing that moves them, and every gameplay query
+//  reads that particle state. Pure JS, no DOM. Fixed step = 1/60 s.
+//  A liquid the solver has left at exactly zero velocity is not re-solved until a
+//  wall, a pin, or another liquid moves. Rest spacing is skipped the same way.
+//  The pressure sweep visits only cells that hold that liquid. Both leave the
+//  particle positions unchanged.
+//  Grid: W x H cells (default 64 x 112), 8 board-px each (board = 512 x 896).
+//  Lava becomes rock only within a few board px of a water particle.
 // ============================================================================
 const FFSim = (function(){
   const CS = 8, DEF_W = 64, DEF_H = 112;
   const E = 0, WALL = 1, NEST = 2, PIN = 3, WATER = 4, LAVA = 5, GAS = 6, STONE = 7;
   const FLUIDS = { water: WATER, lava: LAVA, gas: GAS, stone: STONE };
-  const PIN_R = { pin: 0.8, grip: 0.8, bar: 1.05 }, PIN_SLIDE_STEPS = 15;   // 0.25 s at 60 steps/s (v0.5 pace)
-  const SETTLE = 30, CALM = 8, WIN_HOLD = 90;   // 1.5 s at 60 steps/s. A safe bowl does not wait out sinking rock.
+  const PIN_R = { pin: 0.8, grip: 0.8, bar: 1.05 }, PIN_SLIDE_STEPS = 15;
+  const SETTLE = 30, CALM = 8, WIN_HOLD = 90;
   const FISH_W = 7, FISH_H = 4, SHARK_W = 11, SHARK_H = 6;
+  const DT = 1 / 60, GRAV = 4800, OCC_AT = 2, SEP = 4;
+  // A lava particle freezes only when a water particle is this close.
+  // 12 board px is a thin crust on the contact. Neighbouring stone does not spread it.
+  const COOL_R2 = 12 * 12;
 
   // ---------------------------------------------------------------- validator
   //  Hard rules from the spec: no rotate / tilt / spin elements, no hoses, anywhere in the data.
@@ -195,13 +206,16 @@ const FFSim = (function(){
     const S = { L, W, H, g, own, pins, t: 0, stamp: new Uint32Array(n), quiet: 0, moves: 0, result: null, reason: null, goal: protect ? 'safe' : (L.goal || 'water'),
       fish: { x: fx, y: fy, water: 0, hazard: 0, near: 0 },
       shark: L.shark ? { x: L.shark[0], y: L.shark[1], state: 'here', by: null, t0: 0 } : null,
-      pulled: [], events: [], need: L.need || 12, over: L.over || 0, wetFor: 0, safeFor: 0, led: null };
+      pulled: [], events: [], need: L.need || 12, over: L.over || 0, wetFor: 0, safeFor: 0, led: null,
+      occ: new Uint8Array(n), wc: new Uint16Array(n), lc: new Uint16Array(n), gc: new Uint16Array(n), pn: 0 };
     // fishStartsWet: Finn's bowl is already full. A placed fill wins; otherwise fill the local bowl
     // (supported empty cells connected to him, at most 10 rows above). Pins and walls stop the flood.
     if (L.fishStartsWet) {
       const [bx, by, bw, bh] = fishRect(S);
       if (countRect(S, bx, by, bw, bh, [WATER]) < S.need) prefillPocket(S);
     }
+    allocFields(S);
+    spawnFluids(S);
     rules(S, true);
     return S;
   }
@@ -239,148 +253,620 @@ const FFSim = (function(){
     p.state = 'out'; S.pulled.push(id); S.quiet = 0; S.safeFor = 0; S.events.push({ type: 'pull', id, t: S.t }); return true;
   }
   function touches(S, p, type){
-    const g = S.g, W = S.W, n = g.length;
+    const W = S.W, n = S.g.length;
     for (const i of p.cells) {
       const x = i % W;
       for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) {
-        if (j < 0 || j >= n) continue; if (g[j] === type) return true;
+        if (j < 0 || j >= n) continue;
+        if (mat(S, j) === type) return true;
       }
     }
     return false;
   }
   const sliding = S => S.pins.some(p => p.state === 'out' && p.d < p.travel);
 
+  // ---------------------------------------------------------------- particles
+  // Four particles per filled cell, on a 4 px lattice. That lattice is already
+  // at rest spacing, so a closed pool does not expand. Volume is the particle
+  // count; the grid only blocks them.
+  function allocFields(S){
+    const W = S.W, H = S.H, n = W * H;
+    S.u = new Float64Array((W + 1) * H);
+    S.uw = new Float64Array((W + 1) * H);
+    S.u0 = new Float64Array((W + 1) * H);
+    S.v = new Float64Array(W * (H + 1));
+    S.vw = new Float64Array(W * (H + 1));
+    S.v0 = new Float64Array(W * (H + 1));
+    S.m = new Float64Array(n);
+    S.pr = new Float64Array(n);
+    S.sol = new Uint8Array(n);
+    S.sup = new Uint8Array(n);
+    S.comp = new Int16Array(n);
+    S.q = new Int32Array(n);
+    S.yref = new Int16Array(n);
+    S.head = new Int32Array(n);
+  }
+  function spawnFluids(S){
+    const g = S.g, W = S.W, cells = [];
+    for (let i = 0; i < g.length; i++) {
+      const c = g[i];
+      if (c === WATER || c === LAVA || c === GAS) cells.push(i);
+    }
+    const n = cells.length * 4;
+    S.px = new Float64Array(n);
+    S.py = new Float64Array(n);
+    S.pvx = new Float64Array(n);
+    S.pvy = new Float64Array(n);
+    S.pk = new Uint8Array(n);
+    S.next = new Int32Array(Math.max(n, 1));
+    S.dead = new Uint8Array(Math.max(n, 1));
+    let p = 0;
+    for (let k = 0; k < cells.length; k++) {
+      const i = cells[k], kind = g[i], x = i % W, y = (i / W) | 0, ox = x * CS, oy = y * CS;
+      const off = [2, 2, 6, 2, 2, 6, 6, 6];
+      for (let t = 0; t < 8; t += 2) {
+        S.px[p] = ox + off[t]; S.py[p] = oy + off[t + 1];
+        S.pk[p] = kind; p++;
+      }
+      g[i] = E;
+    }
+    S.pn = p;
+    recount(S);
+    buildOcc(S);
+  }
+  function pcell(S, i){
+    const x = (S.px[i] / CS) | 0, y = (S.py[i] / CS) | 0;
+    if (x < 0 || y < 0 || x >= S.W || y >= S.H) return -1;
+    return y * S.W + x;
+  }
+  function recount(S){
+    S.wc.fill(0); S.lc.fill(0); S.gc.fill(0);
+    for (let i = 0; i < S.pn; i++) {
+      const c = pcell(S, i); if (c < 0) continue;
+      const k = S.pk[i];
+      if (k === WATER) S.wc[c]++;
+      else if (k === LAVA) S.lc[c]++;
+      else if (k === GAS) S.gc[c]++;
+    }
+  }
+  function buildOcc(S){
+    const o = S.occ, n = o.length, W = S.W, H = S.H;
+    for (let i = 0; i < n; i++) {
+      if (S.wc[i] >= OCC_AT) o[i] = WATER;
+      else if (S.lc[i] >= OCC_AT) o[i] = LAVA;
+      else if (S.gc[i] >= OCC_AT) o[i] = GAS;
+      else o[i] = E;
+    }
+    // A one-particle hole inside a pool still counts. A lone splash, with fewer
+    // than two liquid neighbours, does not.
+    for (let i = 0; i < n; i++) {
+      if (o[i]) continue;
+      let kind = 0;
+      if (S.wc[i] >= 1) kind = WATER;
+      else if (S.lc[i] >= 1) kind = LAVA;
+      else if (S.gc[i] >= 1) kind = GAS;
+      else continue;
+      const x = i % W, y = (i / W) | 0, nb = [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1];
+      let touch = 0;
+      for (let k = 0; k < 4; k++) {
+        const j = nb[k]; if (j < 0) continue;
+        const nk = kind === WATER ? S.wc[j] : kind === LAVA ? S.lc[j] : S.gc[j];
+        if (nk >= 1) touch++;
+      }
+      if (touch >= 2) o[i] = kind;
+    }
+  }
+  function mat(S, i){
+    const s = S.g[i];
+    if (s !== E) return s;
+    return S.occ[i] || E;
+  }
+  function isWall(S, x, y){
+    if (x < 0 || y < 0 || x >= S.W || y >= S.H) return true;
+    const c = S.g[y * S.W + x];
+    return c === WALL || c === NEST || c === PIN || c === STONE;
+  }
+  function buildHead(S){
+    const head = S.head; head.fill(-1);
+    const next = S.next, W = S.W;
+    for (let i = S.pn - 1; i >= 0; i--) {
+      const c = pcell(S, i); if (c < 0) continue;
+      next[i] = head[c]; head[c] = i;
+    }
+  }
+  function killMarked(S){
+    let w = 0;
+    for (let i = 0; i < S.pn; i++) {
+      if (S.dead[i]) continue;
+      if (w !== i) {
+        S.px[w] = S.px[i]; S.py[w] = S.py[i];
+        S.pvx[w] = S.pvx[i]; S.pvy[w] = S.pvy[i]; S.pk[w] = S.pk[i];
+      }
+      w++;
+    }
+    S.pn = w;
+    S.dead.fill(0);
+  }
+  // Lava turns to rock only where a lava particle sits within a few board
+  // pixels of a water particle. Water is not used up. Stone does not spread
+  // the freeze: every other lava particle stays a fluid and keeps flowing.
+  function lavaTouchesWater(S, i){
+    const px = S.px[i], py = S.py[i], W = S.W, H = S.H;
+    const cx = (px / CS) | 0, cy = (py / CS) | 0;
+    // Cell is 8 px and the radius is 12, so a neighbour two cells away can still be inside it.
+    for (let oy = -2; oy <= 2; oy++) {
+      const y = cy + oy; if (y < 0 || y >= H) continue;
+      for (let ox = -2; ox <= 2; ox++) {
+        const x = cx + ox; if (x < 0 || x >= W) continue;
+        for (let j = S.head[y * W + x]; j >= 0; j = S.next[j]) {
+          if (S.pk[j] !== WATER) continue;
+          const dx = S.px[j] - px, dy = S.py[j] - py;
+          if (dx * dx + dy * dy <= COOL_R2) return true;
+        }
+      }
+    }
+    return false;
+  }
+  function coolLava(S){
+    buildHead(S);
+    const W = S.W, g = S.g, dead = S.dead;
+    let n = 0;
+    const stoneCells = [];
+    for (let i = 0; i < S.pn; i++) {
+      if (S.pk[i] !== LAVA || dead[i]) continue;
+      const c = pcell(S, i); if (c < 0) continue;
+      if (!lavaTouchesWater(S, i)) continue;
+      dead[i] = 1; n++;
+      if (g[c] === E) { g[c] = STONE; stoneCells.push(c); }
+    }
+    if (!n) return 0;
+    if (S.shark && S.shark.state === 'here') {
+      const [sx, sy, sw, shh] = sharkRect(S);
+      for (let k = 0; k < stoneCells.length; k++) {
+        const c = stoneCells[k], x = c % W, y = (c / W) | 0;
+        if (x >= sx - 1 && x < sx + sw + 1 && y >= sy - 10 && y < sy + shh + 1) S.sharkHot = (S.sharkHot || 0) + 1;
+      }
+    }
+    // Water that shared the cell with the new stone is pushed up into the open cell.
+    for (let k = 0; k < stoneCells.length; k++) {
+      const c = stoneCells[k], x = c % W, y = (c / W) | 0;
+      for (let i = 0; i < S.pn; i++) {
+        if (dead[i] || pcell(S, i) !== c) continue;
+        if (y > 0 && g[c - W] === E) S.py[i] -= CS;
+        else if (x > 0 && g[c - 1] === E) S.px[i] -= CS;
+        else if (x < W - 1 && g[c + 1] === E) S.px[i] += CS;
+      }
+    }
+    S.events.push({ type: 'cool', n: stoneCells.length, i: stoneCells[0] || 0, t: S.t });
+    killMarked(S);
+    return stoneCells.length;
+  }
+  function moveStone(S, from, to){
+    const W = S.W, fx = from % W, fy = (from / W) | 0, tx = to % W, ty = (to / W) | 0;
+    S.g[to] = STONE; S.g[from] = E;
+    const dx = (fx - tx) * CS, dy = (fy - ty) * CS;
+    for (let i = 0; i < S.pn; i++) if (pcell(S, i) === to) { S.px[i] += dx; S.py[i] += dy; }
+    if (S.sepCalm) S.sepCalm.fill(0);
+    if (S.flipCalm) S.flipCalm.fill(0);
+    return 1;
+  }
+  function stoneOpen(S, j){
+    if (j < 0 || j >= S.g.length || S.g[j] !== E) return false;
+    const o = S.occ[j];
+    return o === E || o === GAS || o === WATER;
+  }
+  function fallStones(S){
+    const g = S.g, W = S.W, H = S.H, T = S.t;
+    const moved = new Uint8Array(g.length);
+    let n = 0;
+    for (let y = H - 2; y >= 1; y--) {
+      const ltr = ((T + y) & 1) === 0;
+      for (let k = 0; k < W; k++) {
+        const x = ltr ? k : W - 1 - k, i = y * W + x;
+        if (g[i] !== STONE || moved[i]) continue;
+        const b = (y + 1) * W + x;
+        if (stoneOpen(S, b) && S.occ[b] !== WATER) { n += moveStone(S, i, b); moved[b] = 1; continue; }
+        if (S.g[b] === E && S.occ[b] === WATER && (T & 1)) {
+          const h = (x * 5 + y * 3 + (T >> 3)) & 3, dx = h === 0 ? -1 : h === 1 ? 1 : 0, nx = x + dx;
+          if (dx && nx >= 0 && nx < W) {
+            const j = (y + 1) * W + nx, side = y * W + nx;
+            if (S.g[j] === E && S.occ[j] === WATER && (S.g[side] === E) && !moved[j]) { n += moveStone(S, i, j); moved[j] = 1; continue; }
+          }
+          n += moveStone(S, i, b); moved[b] = 1; continue;
+        }
+        const d1 = ((T + x) & 1) ? 1 : -1;
+        let slid = false;
+        for (const dx of [d1, -d1]) {
+          const nx = x + dx; if (nx < 0 || nx >= W) continue;
+          const side = y * W + nx, down = (y + 1) * W + nx;
+          if ((T & 1) && stoneOpen(S, side) && stoneOpen(S, down) && !moved[down]) { n += moveStone(S, i, down); moved[down] = 1; slid = true; break; }
+        }
+        if (slid) continue;
+        if (g[b] === STONE && y + 2 < H && ((T >> 1) & 1)) {
+          for (const dx of [d1, -d1]) {
+            const n1 = x + dx, n2 = x + 2 * dx; if (n2 < 0 || n2 >= W) continue;
+            const a = y * W + n1, c2 = y * W + n2, d2 = (y + 1) * W + n2, block = (y + 1) * W + n1;
+            if (stoneOpen(S, a) && stoneOpen(S, c2) && stoneOpen(S, d2) && !stoneOpen(S, block) && !moved[a]) { n += moveStone(S, i, a); moved[a] = 1; break; }
+          }
+        }
+      }
+    }
+    return n;
+  }
+  function canEnter(S, x0, y0, x1, y1){
+    const i0x = (x0 / CS) | 0, i0y = (y0 / CS) | 0, i1x = (x1 / CS) | 0, i1y = (y1 / CS) | 0;
+    if (i1x < 0 || i1y < 0 || i1x >= S.W || i1y >= S.H) return false;
+    if (isWall(S, i1x, i1y)) return false;
+    if (i0x !== i1x && i0y !== i1y && (isWall(S, i1x, i0y) || isWall(S, i0x, i1y))) return false;
+    return true;
+  }
+  function advect(S, i){
+    const x0 = S.px[i], y0 = S.py[i];
+    let x = x0 + S.pvx[i] * DT, y = y0 + S.pvy[i] * DT;
+    const dist = Math.hypot(x - x0, y - y0);
+    const steps = dist > 4 ? Math.ceil(dist / 4) : 1;
+    let cx = x0, cy = y0;
+    for (let s = 1; s <= steps; s++) {
+      const nx = x0 + (x - x0) * (s / steps), ny = y0 + (y - y0) * (s / steps);
+      if (!canEnter(S, cx, cy, nx, ny)) {
+        S.px[i] = cx; S.py[i] = cy;
+        const a = (cx / CS) | 0, b = (cy / CS) | 0, c = (nx / CS) | 0, d = (ny / CS) | 0;
+        if (c !== a) S.pvx[i] = 0;
+        if (d !== b) S.pvy[i] = 0;
+        return;
+      }
+      cx = nx; cy = ny;
+    }
+    S.px[i] = cx; S.py[i] = cy;
+  }
+  function splat(field, weight, stride, fw, fh, x, y, val){
+    if (x < 0 || y < 0 || x > fw - 1 || y > fh - 1) return;
+    const x0 = x | 0, y0 = y | 0;
+    const tx = x - x0, ty = y - y0, sx = 1 - tx, sy = 1 - ty;
+    const x1 = x0 + 1 < fw ? x0 + 1 : x0, y1 = y0 + 1 < fh ? y0 + 1 : y0;
+    const w00 = sx * sy, w10 = (x1 === x0 ? 0 : tx * sy), w01 = (y1 === y0 ? 0 : sx * ty), w11 = (x1 === x0 || y1 === y0) ? 0 : tx * ty;
+    const i00 = x0 + y0 * stride, i10 = x1 + y0 * stride, i01 = x0 + y1 * stride, i11 = x1 + y1 * stride;
+    field[i00] += val * w00; weight[i00] += w00;
+    if (w10) { field[i10] += val * w10; weight[i10] += w10; }
+    if (w01) { field[i01] += val * w01; weight[i01] += w01; }
+    if (w11) { field[i11] += val * w11; weight[i11] += w11; }
+  }
+  function sample(field, stride, fw, fh, x, y){
+    if (x < 0) x = 0; if (y < 0) y = 0;
+    if (x > fw - 1) x = fw - 1; if (y > fh - 1) y = fh - 1;
+    const x0 = x | 0, y0 = y | 0;
+    const x1 = x0 + 1 < fw ? x0 + 1 : x0, y1 = y0 + 1 < fh ? y0 + 1 : y0;
+    const tx = x - x0, ty = y - y0, sx = 1 - tx, sy = 1 - ty;
+    return field[x0 + y0 * stride] * sx * sy + field[x1 + y0 * stride] * tx * sy
+      + field[x0 + y1 * stride] * sx * ty + field[x1 + y1 * stride] * tx * ty;
+  }
+  // One FLIP step for a single kind. Other liquids are solid, so water and lava
+  // stay immiscible and gas is pushed out of them. Iteration count is fixed for
+  // a given speed, which keeps the solve reproducible.
+  function sameBytes(a, b){
+    if (!a || a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+  function hold(src, prev){
+    if (!prev || prev.length !== src.length) return src.slice();
+    prev.set(src); return prev;
+  }
+  // A kind left at exactly zero by the solver (not by the settle bleed) is asleep.
+  // The next step re-solves it only if a wall, a pin, or another liquid moved.
+  function flip(S, kind, grav, blend, damp){
+    const W = S.W, H = S.H, n = W * H;
+    let count = 0, moving = 0;
+    for (let i = 0; i < S.pn; i++) if (S.pk[i] === kind) {
+      count++;
+      if (S.pvx[i] !== 0 || S.pvy[i] !== 0) moving = 1;
+    }
+    if (!count) return;
+    if (!S.flipCalm) S.flipCalm = new Uint8Array(8);
+    const watchL = kind !== LAVA, watchW = kind !== WATER;
+    if (!moving && S.flipCalm[kind]
+        && sameBytes(S.calmG && S.calmG[kind], S.g)
+        && (!watchL || sameBytes(S.calmLc && S.calmLc[kind], S.lc))
+        && (!watchW || sameBytes(S.calmWc && S.calmWc[kind], S.wc))) return;
+    const sol = S.sol, m = S.m, pr = S.pr;
+    for (let i = 0; i < n; i++) {
+      const c = S.g[i];
+      let s = c === WALL || c === NEST || c === PIN || c === STONE;
+      if (!s && kind === WATER && S.lc[i] > 0) s = true;
+      if (!s && kind === LAVA && S.wc[i] > 0) s = true;
+      if (!s && kind === GAS && (S.wc[i] > 0 || S.lc[i] > 0)) s = true;
+      sol[i] = s ? 1 : 0;
+      m[i] = 0;
+    }
+    const u = S.u, v = S.v, uw = S.uw, vw = S.vw;
+    u.fill(0); v.fill(0); uw.fill(0); vw.fill(0);
+    for (let i = 0; i < S.pn; i++) if (S.pk[i] === kind) {
+      S.pvy[i] += grav * DT;
+      const x = S.px[i] / CS, y = S.py[i] / CS;
+      const cx = x | 0, cy = y | 0;
+      if (cx >= 0 && cy >= 0 && cx < W && cy < H && !sol[cy * W + cx]) m[cy * W + cx] += 1;
+      splat(u, uw, W + 1, W + 1, H, x, y - 0.5, S.pvx[i]);
+      splat(v, vw, W, W, H + 1, x - 0.5, y, S.pvy[i]);
+    }
+    const nu = u.length, nv = v.length;
+    for (let i = 0; i < nu; i++) u[i] = uw[i] > 1e-8 ? u[i] / uw[i] : 0;
+    for (let i = 0; i < nv; i++) v[i] = vw[i] > 1e-8 ? v[i] / vw[i] : 0;
+    // Snapshot before solid faces are cleared. A particle sitting on a floor
+    // samples that face; FLIP must see that the projection removed the into-wall
+    // velocity, or the floor layer keeps its gravity and sinks.
+    S.u0.set(u); S.v0.set(v);
+    const fluid = i => i >= 0 && i < n && m[i] >= 1 && !sol[i];
+    const blockedU = (i, j) => i <= 0 || i >= W || sol[j * W + (i - 1)] || sol[j * W + i];
+    const blockedV = (i, j) => j <= 0 || j >= H || sol[(j - 1) * W + i] || sol[j * W + i];
+    for (let j = 0; j <= H; j++) for (let i = 0; i < W; i++) if (blockedV(i, j)) v[i + j * W] = 0;
+    for (let j = 0; j < H; j++) for (let i = 0; i <= W; i++) if (blockedU(i, j)) u[i + j * (W + 1)] = 0;
+    const scale = CS / DT;
+    // Hydrostatic pressure from the highest supported free surface of each
+    // connected body: p = rho g * depth. A side pocket gets the same pressure
+    // as the tall water beside it, so a filled pool does not push sideways.
+    // Liquid that is not held up by a floor (or, for gas, a ceiling) stays at
+    // p = 0 and falls or rises at g. The sweeps start here; a resting pool is
+    // already an exact solution.
+    const DP = grav * CS;
+    const sup = S.sup, comp = S.comp, q = S.q, yRef = S.yref;
+    sup.fill(0); pr.fill(0); comp.fill(-1);
+    if (grav >= 0) {
+      for (let i = 0; i < W; i++) {
+        let on = false;
+        for (let j = H - 1; j >= 0; j--) {
+          const id = i + j * W;
+          if (sol[id]) { on = true; continue; }
+          if (!fluid(id)) { on = false; continue; }
+          if (on) sup[id] = 1;
+        }
+      }
+    } else {
+      for (let i = 0; i < W; i++) {
+        let on = false;
+        for (let j = 0; j < H; j++) {
+          const id = i + j * W;
+          if (sol[id]) { on = true; continue; }
+          if (!fluid(id)) { on = false; continue; }
+          if (on) sup[id] = 1;
+        }
+      }
+    }
+    let cid = 0;
+    for (let id0 = 0; id0 < n; id0++) {
+      if (!fluid(id0) || comp[id0] >= 0) continue;
+      comp[id0] = cid; q[0] = id0;
+      let qs = 1, ref = grav >= 0 ? H : -1, any = 0;
+      for (let h = 0; h < qs; h++) {
+        const id = q[h], x = id % W, y = (id / W) | 0;
+        // A single splashed particle must not lift the free-surface reference.
+        // That was re-pressurising the whole pool every frame and the slosh never died.
+        if (sup[id] && m[id] >= 2) {
+          any = 1;
+          if (grav >= 0) { if (y < ref) ref = y; }
+          else if (y > ref) ref = y;
+        }
+        const nb0 = x > 0 ? id - 1 : -1, nb1 = x < W - 1 ? id + 1 : -1;
+        const nb2 = y > 0 ? id - W : -1, nb3 = y < H - 1 ? id + W : -1;
+        if (nb0 >= 0 && comp[nb0] < 0 && fluid(nb0)) { comp[nb0] = cid; q[qs++] = nb0; }
+        if (nb1 >= 0 && comp[nb1] < 0 && fluid(nb1)) { comp[nb1] = cid; q[qs++] = nb1; }
+        if (nb2 >= 0 && comp[nb2] < 0 && fluid(nb2)) { comp[nb2] = cid; q[qs++] = nb2; }
+        if (nb3 >= 0 && comp[nb3] < 0 && fluid(nb3)) { comp[nb3] = cid; q[qs++] = nb3; }
+      }
+      yRef[cid++] = any ? ref : -1;
+    }
+    const kmag = grav >= 0 ? DP : -DP;
+    for (let id = 0; id < n; id++) {
+      if (!sup[id]) continue;
+      const c = comp[id];
+      if (c < 0 || yRef[c] < 0) continue;
+      const y = (id / W) | 0;
+      const depth = grav >= 0 ? (y - yRef[c] + 1) : (yRef[c] - y + 1);
+      if (depth > 0) pr[id] = kmag * depth;
+    }
+    const iters = 4;
+    if (!S.fids || S.fids.length !== n) S.fids = new Int32Array(n);
+    const fids = S.fids;
+    let nf = 0;
+    for (let id = 0; id < n; id++) if (fluid(id)) fids[nf++] = id;
+    for (let iter = 0; iter < iters; iter++) {
+      for (let k = 0; k < nf; k++) {
+        const id = fids[k], i = id % W, j = (id / W) | 0;
+        const div = u[(i + 1) + j * (W + 1)] - u[i + j * (W + 1)] + v[i + (j + 1) * W] - v[i + j * W];
+        let sum = 0, A = 0;
+        if (i + 1 < W && !sol[id + 1]) { A++; if (fluid(id + 1)) sum += pr[id + 1]; }
+        if (i > 0 && !sol[id - 1]) { A++; if (fluid(id - 1)) sum += pr[id - 1]; }
+        if (j + 1 < H && !sol[id + W]) { A++; if (fluid(id + W)) sum += pr[id + W]; }
+        if (j > 0 && !sol[id - W]) { A++; if (fluid(id - W)) sum += pr[id - W]; }
+        pr[id] = A > 0 ? (sum - div * scale) / A : 0;
+      }
+    }
+    const gscale = DT / CS;
+    for (let j = 0; j < H; j++) for (let i = 1; i < W; i++) {
+      if (blockedU(i, j)) { u[i + j * (W + 1)] = 0; continue; }
+      const L = fluid((i - 1) + j * W) ? pr[(i - 1) + j * W] : 0;
+      const R = fluid(i + j * W) ? pr[i + j * W] : 0;
+      if (fluid((i - 1) + j * W) || fluid(i + j * W)) u[i + j * (W + 1)] -= gscale * (R - L);
+    }
+    for (let j = 1; j < H; j++) for (let i = 0; i < W; i++) {
+      if (blockedV(i, j)) { v[i + j * W] = 0; continue; }
+      const T = fluid(i + (j - 1) * W) ? pr[i + (j - 1) * W] : 0;
+      const B = fluid(i + j * W) ? pr[i + j * W] : 0;
+      if (fluid(i + (j - 1) * W) || fluid(i + j * W)) v[i + j * W] -= gscale * (B - T);
+    }
+    for (let i = 0; i < S.pn; i++) if (S.pk[i] === kind) {
+      const x = S.px[i] / CS, y = S.py[i] / CS;
+      const ox = sample(S.u0, W + 1, W + 1, H, x, y - 0.5);
+      const oy = sample(S.v0, W, W, H + 1, x - 0.5, y);
+      const nx = sample(u, W + 1, W + 1, H, x, y - 0.5);
+      const ny = sample(v, W, W, H + 1, x - 0.5, y);
+      let vx = (1 - blend) * nx + blend * (S.pvx[i] + nx - ox);
+      let vy = (1 - blend) * ny + blend * (S.pvy[i] + ny - oy);
+      vx *= damp; vy *= damp;
+      const sp = Math.hypot(vx, vy);
+      if (sp > 720) { const k = 720 / sp; vx *= k; vy *= k; }
+      S.pvx[i] = vx; S.pvy[i] = vy;
+      advect(S, i);
+    }
+    if (!moving) {
+      let out0 = 1;
+      for (let i = 0; i < S.pn; i++) if (S.pk[i] === kind && (S.pvx[i] !== 0 || S.pvy[i] !== 0)) { out0 = 0; break; }
+      if (out0) {
+        S.flipCalm[kind] = 1;
+        if (!S.calmG) S.calmG = [];
+        if (!S.calmLc) S.calmLc = [];
+        if (!S.calmWc) S.calmWc = [];
+        S.calmG[kind] = hold(S.g, S.calmG[kind]);
+        if (watchL) S.calmLc[kind] = hold(S.lc, S.calmLc[kind]);
+        if (watchW) S.calmWc[kind] = hold(S.wc, S.calmWc[kind]);
+      } else S.flipCalm[kind] = 0;
+    } else S.flipCalm[kind] = 0;
+  }
+  function ejectGas(S){
+    const W = S.W, H = S.H, g = S.g;
+    for (let i = 0; i < S.pn; i++) {
+      if (S.pk[i] !== GAS) continue;
+      for (let guard = 0; guard < 6; guard++) {
+        const c = pcell(S, i); if (c < 0) break;
+        if (g[c] === E && S.wc[c] === 0 && S.lc[c] === 0) break;
+        const y = (c / W) | 0;
+        if (y <= 1) break;
+        S.py[i] -= CS;
+        if (S.sepCalm) S.sepCalm[GAS] = 0;
+        if (S.flipCalm) S.flipCalm[GAS] = 0;
+      }
+    }
+  }
+  // Slide a particle by (dx,dy) without letting its centre cross a wall or cut a corner.
+  function nudge(S, i, dx, dy){
+    const x0 = S.px[i], y0 = S.py[i];
+    if (canEnter(S, x0, y0, x0 + dx, y0 + dy)) { S.px[i] = x0 + dx; S.py[i] = y0 + dy; return; }
+    if (dx && canEnter(S, x0, y0, x0 + dx, y0)) S.px[i] = x0 + dx;
+    if (dy && canEnter(S, S.px[i], y0, S.px[i], y0 + dy)) S.py[i] = y0 + dy;
+  }
+  // Pairwise rest spacing. The spawn lattice is exactly SEP apart, so a closed pool
+  // does not expand. Overlapping particles (a pile-up) get a deterministic axis,
+  // and a push that would enter a wall slides along it instead of tunnelling.
+  function separate(S, kind){
+    const min2 = SEP * SEP, pn = S.pn, pk = S.pk, px = S.px, py = S.py, pvx = S.pvx, pvy = S.pvy;
+    const W = S.W, H = S.H;
+    if (!S.sepCalm) S.sepCalm = new Uint8Array(8);
+    let any = 0, moving = 0;
+    for (let i = 0; i < pn; i++) {
+      if (pk[i] !== kind) continue;
+      any = 1;
+      if (pvx[i] !== 0 || pvy[i] !== 0) { moving = 1; break; }
+    }
+    if (!any) return;
+    // A pool sitting at exactly zero velocity, already at rest spacing, cannot
+    // overlap until something moves it. Stone slides and gas ejection clear the flag.
+    if (!moving && S.sepCalm[kind]) return;
+    const ncell = W * H;
+    if (!S.khead || S.khead.length !== ncell) S.khead = new Int32Array(ncell);
+    const khead = S.khead, next = S.next;
+    let pushedAny = 0;
+    // Gas clouds pile up, and a third pass of the same pairs is most of a heavy step.
+    // Two passes still separate the overlaps the solver produced this step; water and
+    // lava keep three. Positions of a gas-free level do not change.
+    const passes = kind === GAS ? 2 : 3;
+    for (let iter = 0; iter < passes; iter++) {
+      khead.fill(-1);
+      for (let i = pn - 1; i >= 0; i--) {
+        if (pk[i] !== kind) continue;
+        const x = (px[i] / CS) | 0, y = (py[i] / CS) | 0;
+        if (x < 0 || y < 0 || x >= W || y >= H) continue;
+        const c = y * W + x; next[i] = khead[c]; khead[c] = i;
+      }
+      let hit = 0;
+      for (let i = 0; i < pn; i++) {
+        if (pk[i] !== kind) continue;
+        const cx = (px[i] / CS) | 0, cy = (py[i] / CS) | 0;
+        for (let oy = -1; oy <= 1; oy++) {
+          const ny = cy + oy; if (ny < 0 || ny >= H) continue;
+          const row = ny * W;
+          for (let ox = -1; ox <= 1; ox++) {
+            const nx = cx + ox; if (nx < 0 || nx >= W) continue;
+            for (let j = khead[row + nx]; j >= 0; j = next[j]) {
+              if (j <= i) continue;
+              let dx = px[j] - px[i], dy = py[j] - py[i];
+              const d2 = dx * dx + dy * dy;
+              if (d2 >= min2) continue;
+              let d, ux, uy;
+              if (d2 < 1e-8) {
+                const h = (i * 3 + j) & 3;
+                ux = h === 0 ? 1 : h === 1 ? -1 : 0;
+                uy = h === 2 ? 1 : h === 3 ? -1 : 0;
+                d = 0;
+              } else {
+                d = Math.sqrt(d2); ux = dx / d; uy = dy / d;
+              }
+              const push = (SEP - d) * 0.5;
+              nudge(S, i, -ux * push, -uy * push);
+              nudge(S, j, ux * push, uy * push);
+              hit++;
+            }
+          }
+        }
+      }
+      pushedAny += hit;
+      if (!hit) break;
+    }
+    S.sepCalm[kind] = (!moving && !pushedAny) ? 1 : 0;
+    if (pushedAny && S.flipCalm) S.flipCalm[kind] = 0;
+  }
+  function fluids(S){
+    recount(S);
+    const cooled = coolLava(S);
+    if (cooled) recount(S);
+    buildOcc(S);
+    const stones = fallStones(S);
+    if (stones) { recount(S); buildOcc(S); }
+    // Water keeps most of its velocity. Lava is the same solver with more
+    // drag, so a stream of goo is slower than water. Gas rises, then damps.
+    flip(S, WATER, GRAV, 0.9, 0.9);
+    recount(S);
+    flip(S, LAVA, GRAV, 0.55, 0.78);
+    recount(S);
+    flip(S, GAS, -GRAV * 0.85, 0.85, 0.86);
+    recount(S);
+    ejectGas(S);
+    if (S.pn) { separate(S, WATER); separate(S, LAVA); separate(S, GAS); }
+    recount(S);
+    buildOcc(S);
+    // Once only a handful of particles are still moving, bleed the rest off so a
+    // bowl or a trap can go quiet. A real pour has far more than this in flight.
+    let rushing = 0;
+    for (let i = 0; i < S.pn; i++) if (S.pvx[i] * S.pvx[i] + S.pvy[i] * S.pvy[i] > 1600) rushing++;
+    if (rushing < 24) {
+      for (let i = 0; i < S.pn; i++) {
+        S.pvx[i] *= 0.5; S.pvy[i] *= 0.5;
+        if (S.pvx[i] * S.pvx[i] + S.pvy[i] * S.pvy[i] < 36) { S.pvx[i] = 0; S.pvy[i] = 0; }
+      }
+    }
+    let hot = 0;
+    for (let i = 0; i < S.pn; i++) {
+      const sp = S.pvx[i] * S.pvx[i] + S.pvy[i] * S.pvy[i];
+      if (sp > 28 * 28) hot++;
+    }
+    return hot + cooled + stones;
+  }
+
   // ---------------------------------------------------------------- one physics step
   function step(S){
-    const g = S.g, st = S.stamp, W = S.W, H = S.H; const T = ++S.t; let moves = 0;
+    const g = S.g; const T = ++S.t;
     for (const p of S.pins) if (p.state === 'out' && p.d < p.travel) {
-      p.d = Math.min(p.travel, p.d + Math.max(p.travel, 12) / PIN_SLIDE_STEPS); moves++;
+      p.d = Math.min(p.travel, p.d + Math.max(p.travel, 12) / PIN_SLIDE_STEPS);
       const bit = 1 << p.k;
       for (let j = 0; j < p.cells.length; j++) { const i = p.cells[j]; if ((S.own[i] & bit) && p.s[j] < p.d) { S.own[i] &= ~bit; if (!S.own[i] && g[i] === PIN) g[i] = E; } }
     }
-    // hot goo next to water (or a rock) cools into rock
-    const cool = [];
-    for (let i = W; i < W * H - W; i++) if (g[i] === LAVA) {
-      const a = g[i - 1], b = g[i + 1], c = g[i - W], d = g[i + W];
-      // touching water, rock beside it, or rock above/below that is itself resting (not a rock still falling in a stream)
-      const rest = j => j + W < W * H && g[j] === STONE && g[j + W] !== E && g[j + W] !== GAS && g[j + W] !== WATER;
-      if (a === WATER || b === WATER || c === WATER || d === WATER || a === STONE || b === STONE || rest(i - W) || rest(i + W)) cool.push(i);
-    }
-    for (const i of cool) { g[i] = STONE; st[i] = T; moves++; }
-    // goo that hits water right where Grumbles is scares him off (rock that merely falls in later does not)
-    if (cool.length && S.shark && S.shark.state === 'here') { const [sx, sy, sw, shh] = sharkRect(S);
-      for (const i of cool) { const x = i % W, y = (i / W) | 0; if (x >= sx - 1 && x < sx + sw + 1 && y >= sy - 10 && y < sy + shh + 1) S.sharkHot = (S.sharkHot || 0) + 1; } }
-    if (cool.length) S.events.push({ type: 'cool', n: cool.length, i: cool[0], t: T });
-    // falling pass (water, goo, rock): bottom to top, row direction alternates
-    for (let y = H - 2; y >= 1; y--) {
-      const ltr = ((T + y) & 1) === 0;
-      for (let k = 0; k < W; k++) { const x = ltr ? k : W - 1 - k, i = y * W + x, c = g[i];
-        if (c < WATER || st[i] === T || c === GAS) continue;
-        if (c === WATER) moves += flow(S, i, x, y, 1, 40, 5, T);
-        else if (c === LAVA) moves += flow(S, i, x, y, 1, 40, 1, T);   // v0.5: sideways every step at spd 1 (no 2-cell skip). Still thicker than water, but a tank drains inside a few seconds.
-        else if (c === STONE) moves += fallStone(S, i, x, y, T);
-      }
-    }
-    // rising pass (gas): top to bottom
-    for (let y = 1; y < H - 1; y++) {
-      const ltr = ((T + y) & 1) === 1;
-      for (let k = 0; k < W; k++) { const x = ltr ? k : W - 1 - k, i = y * W + x;
-        if (g[i] === GAS && st[i] !== T) moves += flow(S, i, x, y, -1, 32, 3, T); }
-    }
-    if (T % 3 === 0) { const lv = level(S, T); moves += lv; if (lv) S._lvT = T; }
-    if (S._lvT && T - S._lvT < 4) moves += CALM + 1;   // levelling still going: not quiet yet
+    const moves = fluids(S);
     S.moves = moves; S.quiet = moves > CALM ? 0 : S.quiet + 1;
     rules(S);
     return moves;
   }
-  function can(c, into){ if (c === GAS) return into === E;
-    return into === E || into === GAS; }           // water, goo and rock fall into empty space or push gas aside (rock also sinks through water, see fallStone)
-  function swap(S, i, j, T){ const g = S.g, v = g[j]; g[j] = g[i]; g[i] = v; S.stamp[i] = T; S.stamp[j] = T; return 1; }
-  function flow(S, i, x, y, dir, R, spd, T){
-    const g = S.g, W = S.W, c = g[i], ny = y + dir; if (ny < 0 || ny >= S.H) return 0;
-    const below = ny * W + x;
-    if (can(c, g[below])) {
-      // v0.5 pace: in clear air, fall (or rise) two cells so a long drop resolves inside a few seconds.
-      // Both cells must be empty, so a drop never jumps over water, goo, rock or a pin.
-      const ny2 = y + 2 * dir;
-      if (g[below] === E && ny2 > 0 && ny2 < S.H - 1 && g[ny2 * W + x] === E) return swap(S, i, ny2 * W + x, T);
-      return swap(S, i, below, T);
-    }
-    const d1 = ((T + y) & 1) ? 1 : -1;
-    for (const dx of [d1, -d1]) { const nx = x + dx; if (nx < 0 || nx >= W) continue;
-      if (can(c, g[ny * W + nx]) && can(c, g[y * W + nx])) return swap(S, i, ny * W + nx, T); }
-    for (const dx of [d1, -d1]) {
-      for (let k = 1; k <= R; k++) { const nx = x + dx * k; if (nx < 0 || nx >= W || !can(c, g[y * W + nx])) break;
-        if (can(c, g[ny * W + nx])) { const m = x + dx * Math.min(k, spd); return swap(S, i, y * W + m, T); } }
-    }
-    return 0;
-  }
-  // rock: falls, sinks slowly through water (it is heavier), and tumbles off piles/ledges so it never
-  // hangs on a shaft wall or stacks into a tall column
-  function fallStone(S, i, x, y, T){
-    const g = S.g, W = S.W, H = S.H, b = (y + 1) * W + x;
-    if (can(STONE, g[b])) return swap(S, i, b, T);
-    if (g[b] === WATER && (T & 1) && S.stamp[b] !== T) {
-      // sinking rock tumbles a little sideways (deterministic), so a stream of cooled goo breaks into lumps, not a column
-      const h = (x * 5 + y * 3 + (T >> 3)) & 3, dx = h === 0 ? -1 : h === 1 ? 1 : 0, nx = x + dx;
-      if (dx && nx >= 0 && nx < W) { const j = (y + 1) * W + nx; if (g[j] === WATER && (g[y * W + nx] === WATER || g[y * W + nx] === E) && S.stamp[j] !== T) return swap(S, i, j, T); }
-      return swap(S, i, b, T); }
-    const d1 = ((T + x) & 1) ? 1 : -1, free = j => g[j] === E || g[j] === GAS || g[j] === WATER;
-    for (const dx of [d1, -d1]) { const nx = x + dx; if (nx < 0 || nx >= W) continue;
-      if (free((y + 1) * W + nx) && free(y * W + nx) && (T & 1)) return swap(S, i, (y + 1) * W + nx, T); }
-    if (g[b] === STONE && y + 2 < H) for (const dx of [d1, -d1]) { const n1 = x + dx, n2 = x + 2 * dx; if (n2 < 0 || n2 >= W) continue;
-      if (free(y * W + n1) && free((y + 1) * W + n2) && free(y * W + n2) && !free((y + 1) * W + n1) && ((T >> 1) & 1)) return swap(S, i, y * W + n1, T); }
-    return 0;
-  }
-  // water finds its level (U-tubes): in each connected body, move a few top-surface cells to the lowest
-  // supported empty cell beside the body if that cell is 2+ rows lower. Deterministic (scan order).
-  function level(S, T){
-    // v0.4.4: two kinds of levelling inside each connected water body.
-    //  open: surface cell and target gap share the same air space (water running over a slope / a heap of rock):
-    //        resting top cells move to the lowest supported gap that is lower by 1+ row, quickly -> the pool ends flat.
-    //  pipe: the air spaces differ (U-tube, riser): 1+ row lower, rate max(1, min(6, head/4)) per pass, so a riser visibly climbs.
-    const g = S.g, W = S.W, H = S.H, n = W * H, seen = S._seen || (S._seen = new Int32Array(n)); let moved = 0;
-    const air = S._air || (S._air = new Int32Array(n)); air.fill(0); let lab = 0; const q = [];
-    for (let i0 = 0; i0 < n; i0++) { if (air[i0] || (g[i0] !== E && g[i0] !== GAS)) continue;
-      lab++; q.length = 0; q.push(i0); air[i0] = lab;
-      for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W;
-        for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) if (j >= 0 && j < n && !air[j] && (g[j] === E || g[j] === GAS)) { air[j] = lab; q.push(j); } } }
-    const mark = T, row = i => (i / W) | 0;
-    for (let i0 = 0; i0 < n; i0++) { if (g[i0] !== WATER || seen[i0] === mark) continue;
-      q.length = 0; q.push(i0); seen[i0] = mark; const surf = [], lowSet = new Set(); let size = 0;
-      for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W, y = (i / W) | 0; size++;
-        if (y > 0 && (g[i - W] === E || g[i - W] === GAS)) surf.push(i);
-        for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, y > 0 ? i - W : -1, y < H - 1 ? i + W : -1]) { if (j < 0) continue;
-          if (g[j] === WATER && seen[j] !== mark) { seen[j] = mark; q.push(j); }
-          else if (g[j] === E && j + W < n && g[j + W] !== E && g[j + W] !== GAS) lowSet.add(j); } }   // incl. the cell above the water in a riser
-      if (size < 4 || !surf.length || !lowSet.size) continue;
-      surf.sort((a, b) => a - b); const low = [...lowSet].sort((a, b) => b - a);
-      // open levelling, per air space; only resting surface cells (moving ones are handled by the normal flow)
-      const used = new Set();
-      const byAir = new Map(); for (const b of low) { const k = air[b]; if (!byAir.has(k)) byAir.set(k, []); byAir.get(k).push(b); }
-      const surfAir = new Map(); for (const a of surf) { if (T - S.stamp[a] <= 2) continue; const k = air[a - W]; if (!surfAir.has(k)) surfAir.set(k, []); surfAir.get(k).push(a); }
-      if (!S._noOpen) for (const [k, ss] of surfAir) { const ll = byAir.get(k); if (!ll) continue;
-        const rate = Math.min(16, 2 * (row(ll[0]) - row(ss[0])));
-        for (let m = 0; m < Math.min(rate, ss.length, ll.length); m++) { const a = ss[m], b = ll[m];
-          if (row(b) <= row(a) || g[b] !== E || g[a] !== WATER) break;
-          g[a] = E; g[b] = WATER; S.stamp[a] = T; S.stamp[b] = T; used.add(a); used.add(b); moved++; } }
-      // pipe levelling (between different air spaces)
-      if (size < 24) continue;
-      const sp = surf.filter(a => !used.has(a) && g[a] === WATER), lp = low.filter(b => g[b] === E);
-      if (!sp.length || !lp.length) continue;
-      const head = row(lp[0]) - row(sp[0]);           // v0.4.3: flow rate follows the head difference, so the riser visibly climbs and slows as levels meet
-      const rate = Math.max(1, Math.min(6, head >> 2)); let done = 0, li = 0;
-      for (const a of sp) { if (done >= rate) break;
-        while (li < lp.length && (g[lp[li]] !== E || air[lp[li]] === air[a - W])) li++;
-        if (li >= lp.length) break; const b = lp[li];
-        if (row(b) <= row(a)) break;
-        g[a] = E; g[b] = WATER; S.stamp[a] = T; S.stamp[b] = T; moved++; done++; li++; }
-    }
-    return moved;
-  }
+
 
   // ---------------------------------------------------------------- rules: win / gentle fail / shark
-  function countRect(S, x0, y0, w, h, types){ let n = 0; for (let y = Math.max(0, y0); y < Math.min(S.H, y0 + h); y++) for (let x = Math.max(0, x0); x < Math.min(S.W, x0 + w); x++) if (types.includes(S.g[y * S.W + x])) n++; return n; }
+  function countRect(S, x0, y0, w, h, types){ let n = 0; for (let y = Math.max(0, y0); y < Math.min(S.H, y0 + h); y++) for (let x = Math.max(0, x0); x < Math.min(S.W, x0 + w); x++) if (types.includes(mat(S, y * S.W + x))) n++; return n; }
   const fishRect = S => [S.fish.x - (FISH_W >> 1), S.fish.y - 2, FISH_W, FISH_H];
   const sharkRect = S => [S.shark.x - (SHARK_W >> 1), S.shark.y - 3, SHARK_W, SHARK_H];
   function rules(S, init){
@@ -426,7 +912,10 @@ const FFSim = (function(){
     }
     // A settled board with Grumbles still here will not change on its own: the gas has
     // missed him and the water did not join him. That is a gentle fail, even if a decoy pin is still in.
-    if (sharkHere && S.pulled.length && S.quiet >= SETTLE + 15 && !sliding(S)) return fail(S, 'shark');
+    // If goo, gas, or rock can still reach Finn, that hazard is the fail, so wait for it.
+    // Level 7's lower pin opens a seep that hits Finn a few seconds later; the settle
+    // timeout used to call that the shark.
+    if (sharkHere && S.pulled.length && S.quiet >= SETTLE + 15 && !sliding(S) && !threatens(S)) return fail(S, 'shark');
     if (S.quiet >= SETTLE + 15 && !sliding(S) && S.pins.every(p => p.state === 'out')) return fail(S, 'stuck');
   }
   function fail(S, why){ S.result = 'fail'; S.reason = why; S.events.push({ type: 'fail', why, t: S.t }); }
@@ -441,7 +930,7 @@ const FFSim = (function(){
       for (let x = Math.max(0, fx); x < Math.min(W, fx + fw); x++) wantPocket[y * W + x] = 1;
     const lava = [], gas = [], stone = [];
     for (let i = 0; i < n; i++) {
-      const c = g[i];
+      const c = mat(S, i);
       if (c === LAVA) lava.push(i);
       else if (c === GAS) gas.push(i);
       else if (c === STONE && ((i / W) | 0) <= fy + fh) stone.push(i);
@@ -452,10 +941,10 @@ const FFSim = (function(){
     return false;
   }
   function flood(S, sources, pass, want){
-    const g = S.g, W = S.W, n = g.length, seen = new Uint8Array(n), q = [];
+    const W = S.W, n = S.g.length, seen = new Uint8Array(n), q = [];
     for (const i of sources) {
       if (want[i]) return true;
-      if (!pass(g[i]) || seen[i]) continue;
+      if (!pass(mat(S, i)) || seen[i]) continue;
       seen[i] = 1; q.push(i);
     }
     while (q.length) {
@@ -463,7 +952,7 @@ const FFSim = (function(){
       for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) {
         if (j < 0 || j >= n || seen[j]) continue;
         if (want[j]) return true;
-        if (!pass(g[j])) continue;
+        if (!pass(mat(S, j))) continue;
         seen[j] = 1; q.push(j);
       }
     }
@@ -471,21 +960,23 @@ const FFSim = (function(){
   }
   // can Grumbles swim to Finn? = one connected body of water touches both
   function waterLinks(S){
-    const g = S.g, W = S.W, H = S.H, [fx, fy, fw, fh] = fishRect(S), [sx, sy, sw, sh] = sharkRect(S);
+    const W = S.W, H = S.H, [fx, fy, fw, fh] = fishRect(S), [sx, sy, sw, sh] = sharkRect(S);
     const seen = new Uint8Array(W * H), q = [];
-    for (let y = fy - 1; y < fy + fh + 1; y++) for (let x = fx - 1; x < fx + fw + 1; x++) { if (x < 0 || y < 0 || x >= W || y >= H) continue; const i = y * W + x; if (g[i] === WATER) { seen[i] = 1; q.push(i); } }
+    for (let y = fy - 1; y < fy + fh + 1; y++) for (let x = fx - 1; x < fx + fw + 1; x++) { if (x < 0 || y < 0 || x >= W || y >= H) continue; const i = y * W + x; if (mat(S, i) === WATER) { seen[i] = 1; q.push(i); } }
     while (q.length) { const i = q.pop(), x = i % W, y = (i / W) | 0;
       if (x >= sx - 1 && x <= sx + sw && y >= sy - 1 && y <= sy + sh) return true;
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
-        const j = ny * W + nx; if (!seen[j] && g[j] === WATER) { seen[j] = 1; q.push(j); } } }
+        const j = ny * W + nx; if (!seen[j] && mat(S, j) === WATER) { seen[j] = 1; q.push(j); } } }
     return false;
   }
 
   // ---------------------------------------------------------------- undo snapshots
   function snapshot(S){ return { g: S.g.slice(), own: S.own.slice(), t: S.t, pins: S.pins.map(p => ({ state: p.state, d: p.d })), pulled: S.pulled.slice(),
-    shark: S.shark ? Object.assign({}, S.shark) : null, quiet: S.quiet, wetFor: S.wetFor || 0, safeFor: S.safeFor || 0, led: S.led || null, sharkHot: S.sharkHot || 0 }; }
+    shark: S.shark ? Object.assign({}, S.shark) : null, quiet: S.quiet, wetFor: S.wetFor || 0, safeFor: S.safeFor || 0, led: S.led || null, sharkHot: S.sharkHot || 0,
+    pn: S.pn, px: S.px.slice(0, S.pn), py: S.py.slice(0, S.pn), pvx: S.pvx.slice(0, S.pn), pvy: S.pvy.slice(0, S.pn), pk: S.pk.slice(0, S.pn) }; }
   function restore(S, snap){ S.g.set(snap.g); S.own.set(snap.own); S.t = snap.t; S.stamp.fill(0); snap.pins.forEach((p, k) => { S.pins[k].state = p.state; S.pins[k].d = p.d; });
-    S.pulled = snap.pulled.slice(); S.shark = snap.shark ? Object.assign({}, snap.shark) : null; S.quiet = snap.quiet; S.wetFor = snap.wetFor; S.safeFor = snap.safeFor || 0; S.led = snap.led || null; S.sharkHot = snap.sharkHot || 0; S.result = null; S.reason = null; S.events = []; }
+    S.pulled = snap.pulled.slice(); S.shark = snap.shark ? Object.assign({}, snap.shark) : null; S.quiet = snap.quiet; S.wetFor = snap.wetFor; S.safeFor = snap.safeFor || 0; S.led = snap.led || null; S.sharkHot = snap.sharkHot || 0; S.result = null; S.reason = null; S.events = [];
+    S.pn = snap.pn; S.px.set(snap.px); S.py.set(snap.py); S.pvx.set(snap.pvx); S.pvy.set(snap.pvy); S.pk.set(snap.pk); recount(S); buildOcc(S); }
 
   // ---------------------------------------------------------------- headless solve (used by the checker and the "Show me" timing)
   function runSolution(L, order, maxSteps = 6000){
@@ -498,9 +989,9 @@ const FFSim = (function(){
   }
   // rest test: nothing pulled for `steps`; returns { moved, result } (moved = liquid cells that changed)
   function restTest(L, steps = 120){
-    const S = compile(L), g0 = S.g.slice(); let moved = 0;
+    const S = compile(L), g0 = S.g.slice(), o0 = S.occ.slice(); let moved = 0;
     for (let i = 0; i < steps && !S.result; i++) { step(S); }
-    for (let i = 0; i < g0.length; i++) if (g0[i] !== S.g[i]) moved++;
+    for (let i = 0; i < g0.length; i++) if (g0[i] !== S.g[i] || o0[i] !== S.occ[i]) moved++;
     return { moved, result: S.result, reason: S.reason, shark: S.shark && S.shark.state, fishHazard: S.fish.hazard, S };
   }
 
@@ -703,6 +1194,7 @@ function buildBoard(L, S, px){
 }
 // ---------------------------------------------------------------- liquids (v2 sheet: swatch body, lumpy top strip, droplets, rock lumps)
 let liqCv = null, liqCtx = null;
+const FLUID_PROF = { ms: 0, w: 0, h: 0, fullW: 0, fullH: 0 };
 // v0.4.1 smooth liquids: each liquid's cell field is blurred (1-2-1 kernel, walls next to the liquid count as
 // liquid so it hugs the channel) and contoured with marching squares at 0.5, so slopes and falling sheets read as
 // smooth shapes instead of cell steps. A flat run at rest keeps the lumpy top strip (gas: on its underside);
@@ -787,14 +1279,15 @@ const FLUID = {
     caustics: 0.25, causticsSpeed: 4
   },
   lava: {
-    // Brighter end of the palette. The body runs from the surface colour down to the
-    // base. #a81634 turned the lower chamber into maroon jam, so it is not used.
-    base: '#e02c4a', deep: '#e02c4a', top: '#ff6a5a', bottom: '#e02c4a', band: '#ffb04a',
-    bandH: 8 * SHEET, glow: 'rgba(255,176,74,0.92)', glowH: 16 * SHEET,
+    // Body #e02c4a at the free surface down to #a81634. The seamless
+    // lava_surface tile sits at 40% over that body, inside the lava only,
+    // scrolling at 6 px/s. The 8 px #ff6a5a band and the #ffb04a glow stay on top.
+    base: '#e02c4a', deep: '#a81634', top: '#e02c4a', bottom: '#a81634', band: '#ff6a5a',
+    bandH: 8, glow: 'rgba(255,176,74,0.92)', glowH: 16,
     wobbleAmp: 3 * SHEET, wobbleWave: 36 * SHEET, wobblePeriod: 2.4,
     popEvery0: 0.8, popEvery1: 1.6, popR0: 6, popR1: 10, popLife: 0.35,
     shimmer: 0.2, shimmerPx: 2 * SHEET,
-    crust: true, tex: 1, texSpeed: 6
+    tex: 0.4, texSpeed: 6
   },
   gas: {
     color: '#a8e85a', alpha: 0.70,
@@ -804,49 +1297,10 @@ const FLUID = {
   steam: { a: 0.92, life: 1.05, rise: 48 }
 };
 const FLUID_TEX = { water: null, lava: null, puffs: null, failed: false };
-// The lava sheet has large flat orange lobes. Painted straight, one of them sits in the
-// lower chamber as a solid blob. Keep only the fine crust (luma minus a wide blur) so
-// the overlay adds cracks and not a second flat colour.
-function lavaCrust(img){
-  const S = 512, cv = document.createElement('canvas'); cv.width = S; cv.height = S;
-  const c = cv.getContext('2d'); c.drawImage(img, 0, 0, S, S);
-  const src = c.getImageData(0, 0, S, S), d = src.data, lum = new Float32Array(S * S);
-  for (let i = 0, p = 0; i < d.length; i += 4, p++) lum[p] = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114;
-  const box = (a, rad) => {
-    const tmp = new Float32Array(a.length), out = new Float32Array(a.length), div = rad * 2 + 1;
-    const at = (v) => v < 0 ? 0 : v >= S ? S - 1 : v;
-    for (let y = 0; y < S; y++) {
-      let sum = 0;
-      for (let k = -rad; k <= rad; k++) sum += a[y * S + at(k)];
-      for (let x = 0; x < S; x++) {
-        tmp[y * S + x] = sum / div;
-        sum -= a[y * S + at(x - rad)];
-        sum += a[y * S + at(x + rad + 1)];
-      }
-    }
-    for (let x = 0; x < S; x++) {
-      let sum = 0;
-      for (let k = -rad; k <= rad; k++) sum += tmp[at(k) * S + x];
-      for (let y = 0; y < S; y++) {
-        out[y * S + x] = sum / div;
-        sum -= tmp[at(y - rad) * S + x];
-        sum += tmp[at(y + rad + 1) * S + x];
-      }
-    }
-    return out;
-  };
-  const low = box(box(lum, 28), 28), out = c.createImageData(S, S), od = out.data;
-  for (let p = 0; p < lum.length; p++) {
-    const v = Math.max(0, Math.min(255, 128 + (lum[p] - low[p]) * 1.35));
-    const i = p * 4; od[i] = od[i + 1] = od[i + 2] = v; od[i + 3] = 255;
-  }
-  c.putImageData(out, 0, 0);
-  return cv;
-}
 function registerFluidTextures(urls){
   const load = (src, done) => { const img = new Image(); img.onload = () => done(img); img.onerror = () => { FLUID_TEX.failed = true; }; img.src = src; };
   if (urls.water) load(urls.water, img => { FLUID_TEX.water = img; });
-  if (urls.lava) load(urls.lava, img => { FLUID_TEX.lava = lavaCrust(img); });
+  if (urls.lava) load(urls.lava, img => { FLUID_TEX.lava = img; });
   if (urls.gas) load(urls.gas, img => {
     // 2x2 of 256. Use top-left, top-right and bottom-right. Never the bottom-left.
     const cells = [[0, 0], [256, 0], [256, 256]], puffs = [];
@@ -1026,7 +1480,6 @@ function paintRegion(c, reg, t, spec, tex, texA, texSpeed, moving){
       const ox = (t * texSpeed) % 512, oy = tex === FLUID_TEX.water ? (t * texSpeed * 0.35) % 512 : 0;
       pat.setTransform(new DOMMatrix().translateSelf(ox, oy));
       c.save(); c.clip(path, 'evenodd');
-      // Lava crust is a neutral-gray highpass. Overlay keeps the cracks and drops the flat lobes.
       if (spec.crust) c.globalCompositeOperation = 'overlay';
       c.globalAlpha = texA; c.fillStyle = pat;
       c.fillRect(reg.left - 8, reg.top - 8, reg.right - reg.left + 16, reg.bot - reg.top + 24); c.restore();
@@ -1195,18 +1648,372 @@ function fluidStamp(g){
   for (let i = 0; i < g.length; i++) h = Math.imul(h ^ g[i], 16777619);
   return h >>> 0;
 }
+// ---------------------------------------------------------------- particle fluids (v0.8.0-physC)
+//  WebGL1 additive gaussian splats into a density texture, then a threshold
+//  shader. The surface is an iso-contour of that field, so a settled pool is a
+//  smooth line rather than a stack of cell spans. Water shading is the spec
+//  fill: #4a70f0 at the free surface down to #2440be, a 6 px #7fa0ff band,
+//  a 2 px white highlight at 45%, and water_caustics at 25% inside the mask.
+//  A falling pour also stamps a flat horizontal bar per fast droplet so the
+//  stream stays one body. That path is off once the level has a result, so
+//  rest, win and settled frames keep the physB field.
+const GLF = { cv: null, gl: null, ok: false, tried: false, splat: null, shade: null, ell: null, buf: null, quad: null, den: null, fb: null, w: 0, h: 0, data: null, lava: null, cau: null };
+function glShader(gl, type, src){
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn(gl.getShaderInfoLog(s)); gl.deleteShader(s); return null; }
+  return s;
+}
+function glProg(gl, vsSrc, fsSrc){
+  const vs = glShader(gl, gl.VERTEX_SHADER, vsSrc), fs = glShader(gl, gl.FRAGMENT_SHADER, fsSrc);
+  if (!vs || !fs) return null;
+  const p = gl.createProgram(); gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(p)); return null; }
+  return p;
+}
+function ensureFluidGL(w, h){
+  if (GLF.tried && !GLF.ok) return null;
+  if (!GLF.cv) {
+    GLF.tried = true;
+    GLF.cv = document.createElement('canvas');
+    const gl = GLF.cv.getContext('webgl', { alpha: true, premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false });
+    if (!gl) return null;
+    GLF.gl = gl;
+    const splat = glProg(gl,
+      'attribute vec2 aPos;attribute float aKind;uniform vec2 uRes;uniform float uSize;varying float vKind;void main(){vec2 c=(aPos/uRes)*2.0-1.0;c.y=-c.y;gl_Position=vec4(c,0.0,1.0);gl_PointSize=uSize;vKind=aKind;}',
+      'precision mediump float;varying float vKind;void main(){vec2 q=gl_PointCoord*2.0-1.0;float r2=dot(q,q);if(r2>1.0)discard;float w=exp(-r2*2.6);vec3 c=vKind<1.5?vec3(w,0.0,0.0):vKind<2.5?vec3(0.0,w,0.0):vec3(0.0,0.0,w);gl_FragColor=vec4(c,1.0);}');
+    const shade = glProg(gl,
+      'attribute vec2 aPos;varying vec2 vUv;void main(){vUv=aPos*0.5+0.5;gl_Position=vec4(aPos,0.0,1.0);}',
+      'precision mediump float;varying vec2 vUv;uniform sampler2D uDen;uniform sampler2D uLava;uniform sampler2D uCau;uniform vec2 uTexel;uniform float uStep;uniform float uScale;uniform float uTime;uniform float uLavaOn;uniform float uCauOn;' +
+      'vec3 blur(vec2 uv){vec3 c=texture2D(uDen,uv).rgb*0.36;c+=texture2D(uDen,uv+vec2(uTexel.x,0.0)).rgb*0.16;c+=texture2D(uDen,uv-vec2(uTexel.x,0.0)).rgb*0.16;c+=texture2D(uDen,uv+vec2(uTexel.x*2.0,0.0)).rgb*0.08;c+=texture2D(uDen,uv-vec2(uTexel.x*2.0,0.0)).rgb*0.08;c+=texture2D(uDen,uv+vec2(0.0,uTexel.y)).rgb*0.08;c+=texture2D(uDen,uv-vec2(0.0,uTexel.y)).rgb*0.08;return c;}' +
+      // Board y grows downward. +vUv.y is toward the free surface. Water uses red. Lava uses green.
+      // 18 samples, 20 px apart: same 360 px reach as the old 10 px walk, fewer fetches.
+      'float climb(vec2 uv,float dir){float n=0.0;float live=1.0;for(int i=1;i<=18;i++){float v=texture2D(uDen,uv+vec2(0.0,dir*uStep*20.0*float(i))).r;float hit=step(0.42,v);n+=hit*live*20.0;live*=hit;}return n;}' +
+      'float lip(vec2 uv){float n=0.0;float live=1.0;for(int i=1;i<=8;i++){float v=texture2D(uDen,uv+vec2(0.0,uStep*float(i))).r;float hit=step(0.30,v);n+=hit*live;live*=hit;}return n;}' +
+      'float lavaClimb(vec2 uv,float dir){float n=0.0;float live=1.0;for(int i=1;i<=18;i++){float v=texture2D(uDen,uv+vec2(0.0,dir*uStep*20.0*float(i))).g;float hit=step(0.42,v);n+=hit*live*20.0;live*=hit;}return n;}' +
+      'float lavaLip(vec2 uv){float n=0.0;float live=1.0;for(int i=1;i<=18;i++){float v=texture2D(uDen,uv+vec2(0.0,uStep*float(i))).g;float hit=step(0.30,v);n+=hit*live;live*=hit;}return n;}' +
+      'void main(){vec3 d=blur(vUv);' +
+      // Below these edges the iso is exactly 0, so the climbs cannot change the pixel.
+      'if(d.r<=0.26 && d.g<=0.41 && d.b<=0.382){gl_FragColor=vec4(0.0);return;}' +
+      'float iso=0.48;float aa=0.07;float wr=smoothstep(0.26,0.40,d.r);float lr=smoothstep(iso-aa,iso+aa,d.g);float gr=smoothstep(iso-aa*1.4,iso+aa,d.b);' +
+      'float useLava=d.g>=d.r && d.g>=d.b ? 1.0 : 0.0;' +
+      'float useWater=useLava<0.5 && d.b<d.r ? 1.0 : 0.0;' +
+      'vec3 water=vec3(0.290196,0.439216,0.941176);' +
+      'if(useWater>0.5){' +
+      'float up=climb(vUv,1.0);float dn=climb(vUv,-1.0);float g=up/max(up+dn,1.0);' +
+      'water=mix(vec3(0.290196,0.439216,0.941176),vec3(0.141176,0.250980,0.745098),clamp(g,0.0,1.0));' +
+      'if(uCauOn>0.5){vec2 bp=gl_FragCoord.xy/max(uScale,0.0001);vec4 ct=texture2D(uCau,(bp+vec2(uTime*4.0,uTime*1.4))/512.0);water=mix(water,vec3(1.0),ct.a*0.25);}' +
+      'float lipN=lip(vUv);' +
+      'water=mix(water,vec3(0.498039,0.627451,1.0),1.0-smoothstep(5.0,6.0,lipN));' +
+      'water=mix(water,vec3(1.0),(1.0-smoothstep(1.0,2.0,lipN))*0.45);}' +
+      'vec3 lava=vec3(0.878431,0.172549,0.290196);' +
+      'if(useLava>0.5){' +
+      'float lup=lavaClimb(vUv,1.0);float ldn=lavaClimb(vUv,-1.0);float lg=lup/max(lup+ldn,1.0);' +
+      'lava=mix(vec3(0.878431,0.172549,0.290196),vec3(0.658824,0.086275,0.203922),clamp(lg,0.0,1.0));' +
+      // lava_surface.png at 40% over the body, in board pixels, scrolling 6 px/s.
+      // The sampler is mirrored-repeat, and the tile is softened before upload, so a cut in the sheet is not a hard straight edge.
+      // The lip is painted after, so the band and glow stay.
+      'if(uLavaOn>0.5){vec2 lbp=gl_FragCoord.xy/max(uScale,0.0001);vec3 lt=texture2D(uLava,(lbp+vec2(uTime*6.0,0.0))/512.0).rgb;lava=mix(lava,lt,0.4);}' +
+      'float lavaLipN=lavaLip(vUv);' +
+      'lava=mix(lava,vec3(1.0,0.690196,0.290196),(1.0-smoothstep(14.0,16.0,lavaLipN))*0.92);' +
+      'lava=mix(lava,vec3(1.0,0.415686,0.352941),1.0-smoothstep(7.0,8.0,lavaLipN));}' +
+      'vec3 gas=vec3(0.659,0.910,0.353);float a=max(wr,max(lr,gr*0.72));vec3 col=useLava>0.5?lava:d.b>=d.r?gas:water;' +
+      'gl_FragColor=vec4(col,a);}'
+    );
+    const ell = glProg(gl,
+      'attribute vec2 aPos;attribute vec2 aLocal;uniform vec2 uRes;varying vec2 vLocal;void main(){vec2 c=(aPos/uRes)*2.0-1.0;c.y=-c.y;gl_Position=vec4(c,0.0,1.0);vLocal=aLocal;}',
+      'precision mediump float;varying vec2 vLocal;void main(){float ax=abs(vLocal.y);float ay=abs(vLocal.x);if(ax>1.0||ay>1.0)discard;float fade=ay<0.85?1.0:(1.0-ay)/0.15;float w=exp(-ax*ax*2.6)*fade;gl_FragColor=vec4(w,0.0,0.0,1.0);}');
+    if (!splat || !shade || !ell) return null;
+    GLF.splat = splat; GLF.shade = shade; GLF.ell = ell;
+    GLF.buf = gl.createBuffer();
+    GLF.quad = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, GLF.quad);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
+    GLF.den = gl.createTexture();
+    GLF.fb = gl.createFramebuffer();
+    GLF.ok = true;
+  }
+  const gl = GLF.gl;
+  if (GLF.w !== w || GLF.h !== h) {
+    GLF.cv.width = w; GLF.cv.height = h; GLF.w = w; GLF.h = h;
+    gl.bindTexture(gl.TEXTURE_2D, GLF.den);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, GLF.fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, GLF.den, 0);
+    if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) { GLF.ok = false; return null; }
+  }
+  return gl;
+}
+// Falling water only. A fast droplet stamps a flat horizontal bar (the
+// gaussian stays vertical, so the free surface does not grow upward). Sparse
+// bits sitting just above the lower pool are left out, which is what was
+// drawing the spikes. Returns null when nothing is pouring, including every
+// frame after a win, so the point list matches physB.
+function fallingWater(S, i){
+  const vx = S.pvx[i], vy = S.pvy[i];
+  return vy > 100 && vy > Math.abs(vx) && vx * vx + vy * vy > 22500;
+}
+function pourPlan(S){
+  if (S.result) return null;
+  const n = S.pn | 0, W = S.W, H = S.H, CS = FFSim.CS, WATER = FFSim.WATER;
+  if (!GLF.cnt || GLF.cnt.length !== W * H) GLF.cnt = new Uint16Array(W * H);
+  const cnt = GLF.cnt; cnt.fill(0);
+  const fast = GLF.fast || (GLF.fast = []); fast.length = 0;
+  for (let i = 0; i < n; i++) {
+    if (S.pk[i] !== WATER) continue;
+    const x = (S.px[i] / CS) | 0, y = (S.py[i] / CS) | 0;
+    if (x >= 0 && y >= 0 && x < W && y < H) cnt[y * W + x]++;
+    if (fallingWater(S, i)) fast.push(i);
+  }
+  if (fast.length <= 40) return null;
+  if (!GLF.low || GLF.low.length !== W) GLF.low = new Int16Array(W);
+  const low = GLF.low; low.fill(-1);
+  for (let x = 0; x < W; x++) {
+    for (let y = H - 3; y >= 0; y--) {
+      const i = y * W + x;
+      if (cnt[i] >= 3 && cnt[i + W] >= 3 && cnt[i + 2 * W] >= 3) {
+        let t = y; while (t > 0 && cnt[(t - 1) * W + x] >= 3) t--;
+        low[x] = t; break;
+      }
+    }
+  }
+  if (!GLF.surf || GLF.surf.length !== W) GLF.surf = new Int16Array(W);
+  const surf = GLF.surf; surf.fill(-1);
+  for (let x = 0; x < W; x++) {
+    const s = [];
+    for (let d = -6; d <= 6; d++) if (low[x + d] >= 0) s.push(low[x + d]);
+    if (s.length >= 5) { s.sort((a, b) => a - b); surf[x] = s[s.length >> 1]; }
+  }
+  if (!GLF.skip || GLF.skip.length < n) GLF.skip = new Uint8Array(n);
+  const skip = GLF.skip; skip.fill(0);
+  for (let i = 0; i < n; i++) {
+    if (S.pk[i] !== WATER) continue;
+    const cx = (S.px[i] / CS) | 0;
+    if (cx < 0 || cx >= W || surf[cx] < 0 || S.py[i] >= surf[cx] * CS - 4) continue;
+    if (fallingWater(S, i)) {
+      if (S.py[i] < surf[cx] * CS - 36) continue;
+      const cy = (S.py[i] / CS) | 0;
+      let above = 0;
+      for (let oy = 2; oy <= 6; oy++) for (let ox = -1; ox <= 1; ox++) {
+        const nx = cx + ox, ny = cy - oy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H) above += cnt[ny * W + nx];
+      }
+      if (above >= 4) continue;
+    }
+    skip[i] = 1;
+  }
+  return { fast, skip };
+}
+function paintParticleFallback(c, S, scale){
+  c.save(); c.setTransform(scale, 0, 0, scale, 0, 0);
+  for (let i = 0; i < S.pn; i++) {
+    const k = S.pk[i];
+    c.fillStyle = k === FFSim.LAVA ? '#e02c4a' : k === FFSim.GAS ? 'rgba(168,232,90,0.72)' : '#4a70f0';
+    c.beginPath(); c.arc(S.px[i], S.py[i], 5.2, 0, 6.3); c.fill();
+  }
+  c.restore();
+}
+// The lava sheet has hard rectangular cuts. A mirrored box blur (same fold the
+// sampler uses) turns each cut into a short ramp, so it does not read as a tile edge.
+function softenLavaTile(img){
+  const w = img.width, h = img.height, r = 6;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d'); ctx.drawImage(img, 0, 0);
+  const image = ctx.getImageData(0, 0, w, h);
+  const src = image.data, tmp = new Uint8ClampedArray(src.length);
+  const fold = (i, n) => { const p = ((i % (2 * n)) + 2 * n) % (2 * n); return p < n ? p : (2 * n - 1 - p); };
+  const box = (inn, out, horiz) => {
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let rs = 0, gs = 0, bs = 0;
+      for (let k = -r; k <= r; k++) {
+        const xx = horiz ? x + k : x, yy = horiz ? y : y + k;
+        const i = (fold(yy, h) * w + fold(xx, w)) * 4;
+        rs += inn[i]; gs += inn[i + 1]; bs += inn[i + 2];
+      }
+      const o = (y * w + x) * 4, n = r * 2 + 1;
+      out[o] = rs / n; out[o + 1] = gs / n; out[o + 2] = bs / n; out[o + 3] = 255;
+    }
+  };
+  box(src, tmp, true); box(tmp, src, false);
+  box(src, tmp, true); box(tmp, src, false);
+  ctx.putImageData(image, 0, 0);
+  return cv;
+}
+// A nest is solid, so water particles never enter it and the channel shows
+// through as a dark rectangle under Finn. Paint splats into a nest row only
+// when that row already sits in the pool (water or a wall on both ends, and
+// water on at least one). Dry nests stay dry. Nothing is written into the sim.
+function nestWaterSplats(S){
+  const W = S.W, H = S.H, CS = FFSim.CS, g = S.g;
+  const NEST = FFSim.NEST, WATER = FFSim.WATER, WALL = FFSim.WALL, PIN = FFSim.PIN, STONE = FFSim.STONE;
+  const n = S.pn | 0;
+  if (!GLF.wcnt || GLF.wcnt.length !== W * H) GLF.wcnt = new Uint16Array(W * H);
+  const cnt = GLF.wcnt; cnt.fill(0);
+  for (let i = 0; i < n; i++) {
+    if (S.pk[i] !== WATER) continue;
+    const x = (S.px[i] / CS) | 0, y = (S.py[i] / CS) | 0;
+    if (x < 0 || y < 0 || x >= W || y >= H) continue;
+    const k = cnt[y * W + x]; if (k < 65535) cnt[y * W + x] = k + 1;
+  }
+  const pts = GLF.nestPts || (GLF.nestPts = []); pts.length = 0;
+  const solid = v => v === WALL || v === PIN || v === STONE;
+  const wet = (x, y) => (x >= 0 && y >= 0 && x < W && y < H) ? cnt[y * W + x] : 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (g[y * W + x] !== NEST || (x > 0 && g[y * W + x - 1] === NEST)) continue;
+    let e = x; while (e < W && g[y * W + e] === NEST) e++;
+    const leftCell = x > 0 ? g[y * W + x - 1] : WALL;
+    const rightCell = e < W ? g[y * W + e] : WALL;
+    const waterL = wet(x - 1, y) + wet(x - 2, y) >= 2;
+    const waterR = wet(e, y) + wet(e + 1, y) >= 2;
+    const wallL = x === 0 || solid(leftCell);
+    const wallR = e === W || solid(rightCell);
+    if (!((waterL || wallL) && (waterR || wallR) && (waterL || waterR))) continue;
+    for (let i = x; i < e; i++) pts.push((i + 0.5) * CS, (y + 0.5) * CS);
+  }
+  return pts;
+}
+function paintParticleFluids(c, S, w, h, t){
+  // Quarter the shade pixels. The channel mask stays full size, so the rim does not go soft.
+  const gw = Math.max(1, w >> 1), gh = Math.max(1, h >> 1);
+  const scale = gw / (S.W * FFSim.CS);
+  const tFluid = performance.now();
+  const gl = ensureFluidGL(gw, gh);
+  if (!gl || !GLF.ok) { paintParticleFallback(c, S, w / (S.W * FFSim.CS)); FLUID_PROF.ms = performance.now() - tFluid; return; }
+  const n = S.pn | 0;
+  const plan = GLF.ell ? pourPlan(S) : null;
+  const nests = nestWaterSplats(S);
+  const extra = nests.length >> 1;
+  const need = (n + extra) * 3;
+  if (!GLF.data || GLF.data.length < need) GLF.data = new Float32Array(Math.max(16, need));
+  const d = GLF.data;
+  let m = 0;
+  for (let i = 0; i < n; i++) {
+    if (plan && plan.skip[i]) continue;
+    d[m++] = S.px[i] * scale; d[m++] = S.py[i] * scale;
+    d[m++] = S.pk[i] === FFSim.LAVA ? 2 : S.pk[i] === FFSim.GAS ? 3 : 1;
+  }
+  for (let i = 0; i < nests.length; i += 2) {
+    d[m++] = nests[i] * scale; d[m++] = nests[i + 1] * scale; d[m++] = 1;
+  }
+  const drawn = m / 3;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, GLF.fb);
+  gl.viewport(0, 0, gw, gh);
+  gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT);
+  if (drawn) {
+    gl.useProgram(GLF.splat);
+    gl.bindBuffer(gl.ARRAY_BUFFER, GLF.buf);
+    gl.bufferData(gl.ARRAY_BUFFER, d.subarray(0, m), gl.DYNAMIC_DRAW);
+    const pLoc = gl.getAttribLocation(GLF.splat, 'aPos'), kLoc = gl.getAttribLocation(GLF.splat, 'aKind');
+    gl.enableVertexAttribArray(pLoc); gl.vertexAttribPointer(pLoc, 2, gl.FLOAT, false, 12, 0);
+    gl.enableVertexAttribArray(kLoc); gl.vertexAttribPointer(kLoc, 1, gl.FLOAT, false, 12, 8);
+    gl.uniform2f(gl.getUniformLocation(GLF.splat, 'uRes'), gw, gh);
+    gl.uniform1f(gl.getUniformLocation(GLF.splat, 'uSize'), 16 * scale);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+    gl.drawArrays(gl.POINTS, 0, drawn);
+    gl.disableVertexAttribArray(pLoc); gl.disableVertexAttribArray(kLoc);
+  }
+  if (plan && plan.fast.length) {
+    const hx = 40 * scale, hy = 8 * scale, need = plan.fast.length * 24;
+    if (!GLF.ellData || GLF.ellData.length < need) GLF.ellData = new Float32Array(Math.max(need, 256));
+    const e = GLF.ellData; let p = 0;
+    for (let k = 0; k < plan.fast.length; k++) {
+      const i = plan.fast[k];
+      if (plan.skip[i]) continue;
+      const cx = S.px[i] * scale, cy = S.py[i] * scale;
+      const x0 = cx - hx, x1 = cx + hx, y0 = cy - hy, y1 = cy + hy;
+      e[p++] = x0; e[p++] = y0; e[p++] = -1; e[p++] = -1;
+      e[p++] = x1; e[p++] = y0; e[p++] = 1; e[p++] = -1;
+      e[p++] = x0; e[p++] = y1; e[p++] = -1; e[p++] = 1;
+      e[p++] = x0; e[p++] = y1; e[p++] = -1; e[p++] = 1;
+      e[p++] = x1; e[p++] = y0; e[p++] = 1; e[p++] = -1;
+      e[p++] = x1; e[p++] = y1; e[p++] = 1; e[p++] = 1;
+    }
+    if (p) {
+      gl.useProgram(GLF.ell);
+      gl.bindBuffer(gl.ARRAY_BUFFER, GLF.buf);
+      gl.bufferData(gl.ARRAY_BUFFER, e.subarray(0, p), gl.DYNAMIC_DRAW);
+      const ePos = gl.getAttribLocation(GLF.ell, 'aPos'), eLoc = gl.getAttribLocation(GLF.ell, 'aLocal');
+      gl.enableVertexAttribArray(ePos); gl.vertexAttribPointer(ePos, 2, gl.FLOAT, false, 16, 0);
+      gl.enableVertexAttribArray(eLoc); gl.vertexAttribPointer(eLoc, 2, gl.FLOAT, false, 16, 8);
+      gl.uniform2f(gl.getUniformLocation(GLF.ell, 'uRes'), gw, gh);
+      gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+      gl.drawArrays(gl.TRIANGLES, 0, p / 4);
+      gl.disableVertexAttribArray(ePos); gl.disableVertexAttribArray(eLoc);
+    }
+  }
+  if (!GLF.lava && FLUID_TEX.lava && FLUID_TEX.lava.width) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, softenLavaTile(FLUID_TEX.lava));
+    GLF.lava = tex;
+  }
+  if (!GLF.cau && FLUID_TEX.water && FLUID_TEX.water.width) {
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, 0);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, FLUID_TEX.water);
+    GLF.cau = tex;
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, gw, gh);
+  gl.useProgram(GLF.shade);
+  gl.bindBuffer(gl.ARRAY_BUFFER, GLF.quad);
+  const qLoc = gl.getAttribLocation(GLF.shade, 'aPos');
+  gl.enableVertexAttribArray(qLoc); gl.vertexAttribPointer(qLoc, 2, gl.FLOAT, false, 0, 0);
+  gl.disable(gl.BLEND);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, GLF.den);
+  gl.uniform1i(gl.getUniformLocation(GLF.shade, 'uDen'), 0);
+  gl.activeTexture(gl.TEXTURE1);
+  if (GLF.lava) gl.bindTexture(gl.TEXTURE_2D, GLF.lava);
+  gl.uniform1i(gl.getUniformLocation(GLF.shade, 'uLava'), 1);
+  gl.uniform1f(gl.getUniformLocation(GLF.shade, 'uLavaOn'), GLF.lava ? 1 : 0);
+  gl.activeTexture(gl.TEXTURE2);
+  if (GLF.cau) gl.bindTexture(gl.TEXTURE_2D, GLF.cau);
+  gl.uniform1i(gl.getUniformLocation(GLF.shade, 'uCau'), 2);
+  gl.uniform1f(gl.getUniformLocation(GLF.shade, 'uCauOn'), GLF.cau ? 1 : 0);
+  // Texel stays one full-canvas pixel so the blur width, in board pixels, matches physG.
+  gl.uniform2f(gl.getUniformLocation(GLF.shade, 'uTexel'), 1 / w, 1 / h);
+  gl.uniform1f(gl.getUniformLocation(GLF.shade, 'uStep'), scale / gh);
+  gl.uniform1f(gl.getUniformLocation(GLF.shade, 'uScale'), scale);
+  gl.uniform1f(gl.getUniformLocation(GLF.shade, 'uTime'), t || 0);
+  gl.drawArrays(gl.TRIANGLES, 0, 6);
+  // ?prof=1 waits for the shade so the logged fluid time is the real software-GL cost.
+  if (typeof location !== 'undefined' && /(?:\?|&)prof=1(?:&|$)/.test(location.search)) gl.finish();
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.imageSmoothingEnabled = true;
+  c.drawImage(GLF.cv, 0, 0, w, h);
+  FLUID_PROF.ms = performance.now() - tFluid;
+  FLUID_PROF.w = gw; FLUID_PROF.h = gh; FLUID_PROF.fullW = w; FLUID_PROF.fullH = h;
+}
 function drawFluids(ctx, S, t, board){
   const C = FFSim.CS, W = S.W, H = S.H, g = S.g;
   if (!liqCv || liqCv.width !== board.mask.width || liqCv.height !== board.mask.height) { liqCv = document.createElement('canvas'); liqCv.width = board.mask.width; liqCv.height = board.mask.height; liqCtx = liqCv.getContext('2d'); fluidBaked.at = -1; }
   const id = (S.L && S.L.id) || '';
   const stamp = fluidStamp(g);
-  // Rebake when the grid changes, and about 8 times a second so caustics and gas keep drifting. In between, blit the cached layer.
-  const fresh = fluidBaked.at >= 0 && fluidBaked.stamp === stamp && fluidBaked.id === id && fluidBaked.w === liqCv.width && (t - fluidBaked.at) < 0.12;
+  const parts = !!(S && S.px);
+  // The cell grid no longer moves the liquid, so a grid stamp cannot cache the picture.
+  const fresh = !parts && fluidBaked.at >= 0 && fluidBaked.stamp === stamp && fluidBaked.id === id && fluidBaked.w === liqCv.width && (t - fluidBaked.at) < 0.12;
   if (fresh) { ctx.drawImage(liqCv, 0, 0, board.BW, board.BH); drawFluidLive(ctx, t, board.clip); return; }
   const c = liqCtx;
-  c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.clearRect(0, 0, liqCv.width, liqCv.height); c.setTransform(board.px, 0, 0, board.px, 0, 0);
+  c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.clearRect(0, 0, liqCv.width, liqCv.height);
+  if (parts) paintParticleFluids(c, S, liqCv.width, liqCv.height, t);
+  c.setTransform(board.px, 0, 0, board.px, 0, 0);
   c.lineJoin = 'round';
-  drawCartoonFluids(c, S, t);
+  if (!parts) drawCartoonFluids(c, S, t);
   // resting rock keeps the v0.5.2 contour and tile; falling rock stays lumpy pebbles. The grid is restored before anything else reads it.
   const type = FFSim.STONE;
   const solidish = v => v === FFSim.WALL || v === FFSim.NEST || v === FFSim.PIN;
@@ -1596,11 +2403,11 @@ function pickCells(){
 
 // ---------------------------------------------------------------- game state
 let mode = 'title', cur = 0, S = null, undoStack = [], failCount = 0, hintPin = null, hintUntil = 0, auto = null, idleT = 0;
-let noticeAt = -1, fx = [], winAt = 0, failAt = 0, rewindAt = 0, sharkAnim = null, now = 0, pressed = null, levelStart = 0;
+let noticeAt = -1, fx = [], winAt = 0, failAt = 0, rewindAt = 0, sharkAnim = null, now = 0, pressed = null, levelStart = 0, lastDecision = null;
 const STEP = 1 / 60;
 function startLevel(i){
   cur = clamp(i, 0, LEVELS.length - 1); S = FFSim.compile(LEVELS[cur]); undoStack = []; hintPin = null; auto = null; idleT = 0;
-  fx = []; winAt = 0; failAt = 0; rewindAt = 0; sharkAnim = null; mode = 'play'; levelStart = now; prog.last = cur; saveProg(); layoutBoard();
+  fx = []; winAt = 0; failAt = 0; rewindAt = 0; sharkAnim = null; lastDecision = null; mode = 'play'; levelStart = now; prog.last = cur; saveProg(); layoutBoard();
 }
 function restart(){ const f = failCount; startLevel(cur); failCount = f; }
 function pullPin(id, byAuto){
@@ -1622,6 +2429,7 @@ function skipLevel(){ prog.open = Math.max(prog.open, Math.min(LEVELS.length, cu
 
 // ---------------------------------------------------------------- update
 function simUpdate(){
+  if (capturePause) return;
   if (!S || mode !== 'play') return;
   if (!S.result) {
     if (auto && auto.k < LEVELS[cur].solution.length && S.quiet >= FFSim.SETTLE && !FFSim.sliding(S)) {
@@ -1642,25 +2450,29 @@ function handleEvent(e){
     const i = e.i, [x, y] = bpx(i % S.W, i / S.W | 0); for (let j = 0; j < 4; j++) fx.push({ k: 'puff', x: x + rnd(-10, 10), y, vx: rnd(-20, 20), vy: rnd(-60, -20), t: 0, life: 0.8 }); } }
   else if (e.type === 'shark') { audio.play('grumpy'); const sh = S.shark, [x, y] = [sh.x * FFSim.CS, sh.y * FFSim.CS];
     sharkAnim = { x: (sh.x + .5) * FFSim.CS, y: (sh.y + .5) * FFSim.CS, t0: now, dir: sh.x < S.W / 2 ? -1 : 1, by: sh.by, floor: null }; }
-  else if (e.type === 'win') { winAt = now; failCount = 0; audio.play('win');
+  else if (e.type === 'win') { winAt = now; lastDecision = { result: 'win', reason: null, t: S.t }; failCount = 0; audio.play('win');
     prog.done[cur] = true; prog.open = Math.max(prog.open, Math.min(LEVELS.length, cur + 2)); prog.shells += 3; saveProg();
     const [x, y] = [(S.fish.x + .5) * FFSim.CS, S.fish.y * FFSim.CS]; for (let j = 0; j < 24; j++) fx.push({ k: 'bubble', x: x + rnd(-40, 40), y: y + rnd(-10, 20), vx: rnd(-40, 40), vy: rnd(-160, -60), t: 0, life: rnd(1, 1.8), r: rnd(4, 10) });
     burstConfetti(); }
-  else if (e.type === 'fail') { failAt = now; failCount++; audio.play('worried'); rewindAt = now + 1.7; }
+  else if (e.type === 'fail') { failAt = now; lastDecision = { result: 'fail', reason: e.why, t: S.t }; failCount++; audio.play('worried'); rewindAt = now + 1.7; }
 }
 function frameUpdate(dt){
+  // A hitch must not skip the whole celebration. Confetti lives about 2.5 s;
+  // one multi-second frame used to age it out before it was drawn.
+  const fxDt = dt > 0.05 ? 0.05 : dt;
   if (mode === 'play' && S) {
     if (S.result === 'fail' && rewindAt && now >= rewindAt) {          // gentle rewind
       rewindAt = 0; audio.play('rewind');
       if (S.reason === 'stuck' || !undoStack.length) restart(); else { FFSim.restore(S, undoStack.pop()); fx = []; failAt = 0; sharkAnim = null; }
       if (auto) auto = null;
     }
-    if (S.result === 'win' && winAt && now - winAt > 1.55 && mode === 'play') mode = 'win';
+    // captureHold is a QA hook. It does not change how a win is decided.
+    if (!captureHold && S.result === 'win' && winAt && now - winAt > 1.55 && mode === 'play') mode = 'win';
   }
   for (const f of fx) {
-    f.t += dt;
-    if (f.k === 'confetti') { if (f.t >= f.delay) { f.vy += 520 * dt; f.vx *= 1 - Math.min(1, 0.35 * dt); f.x += f.vx * dt; f.y += f.vy * dt; } }
-    else { f.x += f.vx * dt; f.y += f.vy * dt; }
+    f.t += fxDt;
+    if (f.k === 'confetti') { if (f.t >= f.delay) { f.vy += 520 * fxDt; f.vx *= 1 - Math.min(1, 0.35 * fxDt); f.x += f.vx * fxDt; f.y += f.vy * fxDt; } }
+    else { f.x += f.vx * fxDt; f.y += f.vy * fxDt; }
   }
   fx = fx.filter(f => f.t < f.life);
 }
@@ -1745,6 +2557,13 @@ function render(){
   if (mode === 'title') renderTitle(); else if (mode === 'pick') renderPick(); else renderPlay();
   // version label (small, bottom-right)
   ctx.save(); ctx.globalAlpha = 0.6; ctx.font = 'bold 18px "Arial Rounded MT Bold","Trebuchet MS",sans-serif'; ctx.textAlign = 'right'; ctx.fillStyle = '#fff'; ctx.fillText(VERSION, LW - 12, LH - 10); ctx.restore();
+  if (showProf) {
+    ctx.save(); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.font = '14px monospace'; ctx.fillStyle = '#042033'; ctx.fillRect(6, 6, 420, 22);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+    ctx.fillText('sim ' + lastSim.toFixed(1) + 'ms  ren ' + lastRen.toFixed(1) + 'ms  fluid ' + FLUID_PROF.ms.toFixed(1) + 'ms  ' + FLUID_PROF.w + 'x' + FLUID_PROF.h, 10, 8);
+    ctx.restore();
+  }
 }
 function tglButtons(list){ list.forEach(b => { if (b.id === 'music') b.off = !audio.music; if (b.id === 'sound') b.off = !audio.sfx; drawButton(ctx, b, now, pressed === b); }); }
 function title(txt, x, y, size){ ctx.save(); ctx.font = 'bold ' + size + 'px "Arial Rounded MT Bold","Trebuchet MS","Comic Sans MS",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1850,18 +2669,48 @@ function renderWin(){
 // Level 8 looks won (bowl full, shark gone) about 1 s in, then cooled rock keeps sinking
 // through the water. That is 9 or more cell swaps a step, above the calm threshold, so
 // quiet stays 0 until the rocks finish (~14 s of sim) and only then can the win register.
-// A frame longer than 1 s used to throw the extra time away, so on a slow portrait frame
-// those 14 s of sim never finished inside the test's wait. Leftover time is kept.
-// One frame simulates at most 5 s so a backgrounded tab cannot lock the page; the rest
-// stays in the accumulator and the following frames finish it.
-let last = performance.now(), acc = 0, frameN = 0, cookieFrame = -1;
+// A slow frame used to queue every missed step, and the extra steps made the next
+// frame slower still. Catch up by at most two steps, and only while those steps
+// are still inside a 14 ms budget. A 4x-throttled pour then drops sim time
+// instead of spiralling. At 60 fps the budget fits one step.
+let last = performance.now(), acc = 0, frameN = 0, cookieFrame = -1, captureHold = false, capturePause = false;
+const SIM_CAP = 2, SIM_BUDGET = 14;
+const showProf = /(?:\?|&)prof=1(?:&|$)/.test(location.search);
+const prof = { sim: 0, ren: 0, fluids: 0, steps: 0, frames: 0, worst: 0, worstSim: 0, worstRen: 0 };
+let lastSim = 0, lastRen = 0;
+function noteProf(simMs, renMs, steps){
+  prof.sim += simMs; prof.ren += renMs; prof.fluids += FLUID_PROF.ms; prof.steps += steps; prof.frames++;
+  const frame = simMs + renMs;
+  if (frame > prof.worst) { prof.worst = frame; prof.worstSim = simMs; prof.worstRen = renMs; }
+}
+function profSnapshot(){
+  const n = prof.frames || 1;
+  return { frames: prof.frames, sim: prof.sim, ren: prof.ren, fluids: prof.fluids, steps: prof.steps,
+    worst: prof.worst, worstSim: prof.worstSim, worstRen: prof.worstRen,
+    simAvg: prof.sim / n, renAvg: prof.ren / n, fluidsAvg: prof.fluids / n,
+    fw: FLUID_PROF.w, fh: FLUID_PROF.h, fullW: FLUID_PROF.fullW, fullH: FLUID_PROF.fullH,
+    pn: S ? S.pn | 0 : 0 };
+}
+function profReset(){
+  prof.sim = 0; prof.ren = 0; prof.fluids = 0; prof.steps = 0; prof.frames = 0; prof.worst = 0; prof.worstSim = 0; prof.worstRen = 0;
+}
 function loop(ts){
   let dt = (ts - last) / 1000; last = ts;
   if (!(dt >= 0)) dt = 0;
   now += dt; acc += dt; frameN++;
   let n = 0;
-  while (acc >= STEP && n < 300) { simUpdate(); acc -= STEP; n++; }
-  frameUpdate(dt); render(); requestAnimationFrame(loop);
+  const tSim = performance.now();
+  while (acc >= STEP && n < SIM_CAP) {
+    if (n && performance.now() - tSim > SIM_BUDGET) break;
+    simUpdate(); acc -= STEP; n++;
+  }
+  if (acc > STEP) acc = STEP;
+  const tRen = performance.now();
+  frameUpdate(dt); render();
+  const tEnd = performance.now();
+  lastSim = tRen - tSim; lastRen = tEnd - tRen;
+  noteProf(lastSim, lastRen, n);
+  requestAnimationFrame(loop);
 }
 resize(); requestAnimationFrame(loop);
 
@@ -1871,6 +2720,8 @@ window.__fish = {
   jump(i){ failCount = 0; startLevel(i); }, validate: L => FFSim.validate(L),
   state(){ return S && { result: S.result, reason: S.reason, t: S.t, quiet: S.quiet, settled: S.quiet >= FFSim.SETTLE && !FFSim.sliding(S), sliding: FFSim.sliding(S),
     pulled: S.pulled.slice(), pins: S.pins.map(p => ({ id: p.id, state: p.state })), fishWater: S.fish.water, need: S.need, shark: S.shark && S.shark.state, undo: undoStack.length, failCount,
+    lastDecision,
+    particles: S.pn | 0,
     confetti: fx.some(f => f.k === 'confetti' && f.t >= f.delay), goal: S.goal }; },
   boardBox(){ const x = ox + (BX + fitted.x * BS) * k, y = oy + (BY + fitted.y * BS) * k; return { x, y, w: fitted.w * BS * k, h: fitted.h * BS * k, vw, vh }; },
   pinPoint(id, where = 'ring'){ const p = S.pins.find(p => p.id === id); if (!p) return null; const q = pinGeom(p);
@@ -1878,7 +2729,33 @@ window.__fish = {
   buttonPoint(id){ const all = [].concat(buttons.play, buttons.title, buttons.pick, buttons.win); const b = (mode === 'win' ? buttons.win.concat(buttons.play) : mode === 'title' ? buttons.title : mode === 'pick' ? buttons.pick : buttons.play).find(b => b.id === id) || all.find(b => b.id === id);
     return b && { x: ox + b.x * k, y: oy + b.y * k }; },
   pickPoint(i){ const c = pickCells()[i]; return { x: ox + c.x * k, y: oy + c.y * k }; },
-  bg: () => __bgInfo, progress: () => JSON.parse(JSON.stringify(prog)), audio: () => ({ music: audio.music, sfx: audio.sfx })
+  bg: () => __bgInfo, progress: () => JSON.parse(JSON.stringify(prog)), audio: () => ({ music: audio.music, sfx: audio.sfx }),
+  // Capture only. The play loop still stops when the level is won. This steps
+  // the same solver afterwards so a settled frame can be shot, and it does not
+  // change when a win or a fail is decided.
+  settle(steps){ if (!S) return 0; const n = Math.max(0, steps | 0); for (let i = 0; i < n; i++) FFSim.step(S); S.events.length = 0; fx.length = 0; return S.t; },
+  // Capture only. Same step and the same event handler as play, so a win
+  // still bursts confetti. Stops on the step that decides the result.
+  // settle() is what steps after that, and it clears effects on purpose.
+  playSteps(n){
+    if (!S) return 0;
+    const steps = Math.max(0, n | 0);
+    for (let i = 0; i < steps; i++) {
+      if (S.result) break;
+      FFSim.step(S);
+      for (const e of S.events) handleEvent(e);
+      S.events.length = 0;
+    }
+    return S.t;
+  },
+  // Keep the cheer card off while a post-win frame is captured. The win
+  // itself is unchanged: the play loop still stops, and the card returns
+  // as soon as the hold is released.
+  holdWin(on){ captureHold = !!on; if (captureHold && mode === 'win') mode = 'play'; },
+  // Capture only. Stops the play loop from stepping so a pour can be shot
+  // one sim step at a time. settle() still steps, and the picture still draws.
+  holdSim(on){ capturePause = !!on; },
+  prof: profSnapshot, profReset,
 };
 </script>
 </body>
