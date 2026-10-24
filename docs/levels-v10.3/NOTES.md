@@ -30,7 +30,7 @@ Hints match Mega: off until the bulb is tapped, stored in the existing `megaHint
 
 Mega's hardest boards are 10-move exact trays. This pack does not start there. Hulk's early worlds teach one idea on a small board (about 8–11 tiles) and let the solution grow. Super Fin does that, then keeps going until it is clearly past Mega.
 
-Solutions, in order: **6, 7, 8, 9, 10, 11, 12, 12, 13, 13, 14, 15**. Nothing gets shorter. The two ties (Gold Gate with Octo Arm, Bubble Pop with Star Sweep) are a new picture at the same length. The last level is 15 arrows, five past Mega's longest. Early boards are 8–11 walkable tiles. From Octo Arm on, the boards fill more of a 5×6, which is still Mega's tile size (about 185px on the 1280×800 canvas; the smaller early boards are larger, up to 227px). Every board is at most 6 columns and 5 rows.
+Solutions, in order: **6, 7, 8, 9, 10, 11, 12, 13, 13, 13, 14, 15**. Nothing gets shorter. Gold Gate steps up from Octo Arm. Gold Gate, Star Sweep, and Bubble Pop are three different pictures at 13. The last level is 15 arrows, five past Mega's longest. Early boards are 8–11 walkable tiles. From Octo Arm on, the boards fill more of a 5×6, which is still Mega's tile size (about 185px on the 1280×800 canvas; the smaller early boards are larger, up to 227px). Every board is at most 6 columns and 5 rows.
 
 Every level except Five Rights is exact: the tray is exactly the shortest solution, checked with the in-game solver. Five Rights has one spare slot, and the only programs that win inside that tray are 6 arrows long. One more Left, the same direction as the last step, falls into the water.
 
@@ -49,9 +49,9 @@ Shortest lengths below are from `window.__benji.solve` and `runSim` in the runni
 | 5 | Coral Pad | 10 `DDDRRRRUUU` | 10 | The coral gate stands under the pearls. The pad is on the way around. | Coral pad, coral gate |
 | 6 | Gold Clam | 11 `RRURLDDDRRR` | 11 | The clam is a one-tile pocket. Step on it, step back, and the rocks in front of the pearls fall. | Gold clam, gold rocks |
 | 7 | Octo Arm | 12 `RRRRDRDDLDLL` | 12 | The octopus arm is the missing tile in front of the pearls. | Octopus, bridge |
-| 8 | Gold Gate | 12 `RRRRRRRRRRDD` | 12 | The whirl drops you on the pad. The gate is on that side. You do not ride the whirl home. | Green tube, gold pad, gold gate |
+| 8 | Gold Gate | 13 `RRRRDDRRDRRRR` | 13 | The top row ends in water, so you turn down into the whirl. One sand beside the exit is a dead end. The gate is on that side, and riding the whirl home does not reach the pearls. | Green tube, gold pad, gold gate |
 | 9 | Star Sweep | 13 `DDDDRRRRRUUUU` | 13 | The sea-star clears the urchin standing under the pearls. | Activation square, urchin blocker |
-| 10 | Bubble Pop | 13 `DDDDRRRURUUUR` | 13 | The same square, but it pops a bubble rock sitting beside the pearls. The path is a notch, not the Star Sweep loop. | Activation square, bubble rock |
+| 10 | Bubble Pop | 13 `RRRDDDDLRUURR` | 13 | A spur, not the Star Sweep loop. Step left onto the sea-star and walk back out. The last sand on the top row is a decoy: one more Right falls in. Then the bubble rock beside the pearls is open. | Activation square, bubble rock |
 | 11 | Pink Pad | 14 `RRRRRDDDLDLLUL` | 14 | The pink pad is at the start of a long wind and the pink gate is at the pearls. Urchins fill the courtyard. | Pink pad, pink gate, urchins |
 | 12 | Clam Hop | 15 `RRRRRDDLLLLRRRR` | 15 | Chomp the pink clam, hop the violet whirl, and the rocks in front of the pearls fall. A sand tile beside the exit lets you whirl home if the rocks are still up. | Pink clam, violet tube, pink rocks |
 
@@ -66,6 +66,8 @@ Every `G` is still the friend rescue. Rewards still appear after levels 5, 10, a
 - **Pink Pad** is the visible-spike beat: urchins sit where a shortcut would be, and the tubes on One Arrow, Ride Back, Gold Gate, and Clam Hop are the teleporters, with the mouths always on the board.
 
 Pads, clams, gates, rocks, the octopus bridge, both activation targets, sand, urchins, and all three whirl colours are used. No new obstacle and no new art were added. Decorative swirl discs stay off; the whirlpools are the tube mouths.
+
+Super Fin pipes stay in the water or along the left edge of the screen. On these small boards the glass is wider than the gap between two tiles, so a route whose body would paint over a tile loses to one that does not. Little Fin, Big Fin, and Mega Fin keep the previous routes. The levels whose pipes moved are One Arrow, Ride Back, Gold Gate, and Clam Hop. Gold Gate and Bubble Pop are the levels whose grids changed. Pink Pad (14) and Clam Hop (15) are still longer than Bubble Pop.
 
 ## Solver
 

@@ -1,5 +1,4 @@
 {
-  "version": "unknown",
   "worlds": [
     {
       "name": "Little Fin",
@@ -525,11 +524,11 @@
         {
           "i": 7,
           "name": "Gold Gate",
-          "slots": 12,
-          "len": 12,
-          "dirs": "RRRRRRRRRRDD",
+          "slots": 13,
+          "len": 13,
+          "dirs": "RRRRDDRRDRRRR",
           "result": "goal",
-          "tiles": 14,
+          "tiles": 16,
           "rows": 5,
           "cols": 6,
           "states": 20,
@@ -553,12 +552,12 @@
           "name": "Bubble Pop",
           "slots": 13,
           "len": 13,
-          "dirs": "DDDDRRRURUUUR",
+          "dirs": "RRRDDDDLRUURR",
           "result": "goal",
-          "tiles": 14,
+          "tiles": 12,
           "rows": 5,
           "cols": 6,
-          "states": 20,
+          "states": 17,
           "trapped": 0
         },
         {
