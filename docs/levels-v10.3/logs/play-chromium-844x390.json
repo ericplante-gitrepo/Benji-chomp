@@ -1,0 +1,618 @@
+{
+  "worlds": [
+    {
+      "name": "Little Fin",
+      "color": "#3cc46b",
+      "levels": [
+        {
+          "i": 0,
+          "name": "",
+          "slots": 3,
+          "len": 3,
+          "dirs": "RRR",
+          "result": "goal",
+          "tiles": 4,
+          "rows": 1,
+          "cols": 4
+        },
+        {
+          "i": 1,
+          "name": "",
+          "slots": 2,
+          "len": 2,
+          "dirs": "DD",
+          "result": "goal",
+          "tiles": 3,
+          "rows": 3,
+          "cols": 1
+        },
+        {
+          "i": 2,
+          "name": "",
+          "slots": 4,
+          "len": 3,
+          "dirs": "LLL",
+          "result": "goal",
+          "tiles": 4,
+          "rows": 1,
+          "cols": 4
+        },
+        {
+          "i": 3,
+          "name": "",
+          "slots": 5,
+          "len": 4,
+          "dirs": "RDRD",
+          "result": "goal",
+          "tiles": 6,
+          "rows": 3,
+          "cols": 3
+        },
+        {
+          "i": 4,
+          "name": "",
+          "slots": 5,
+          "len": 4,
+          "dirs": "RRRR",
+          "result": "goal",
+          "tiles": 6,
+          "rows": 3,
+          "cols": 3
+        },
+        {
+          "i": 5,
+          "name": "",
+          "slots": 6,
+          "len": 5,
+          "dirs": "RRRDD",
+          "result": "goal",
+          "tiles": 6,
+          "rows": 3,
+          "cols": 4
+        },
+        {
+          "i": 6,
+          "name": "",
+          "slots": 5,
+          "len": 4,
+          "dirs": "RRRR",
+          "result": "goal",
+          "tiles": 5,
+          "rows": 1,
+          "cols": 5
+        },
+        {
+          "i": 7,
+          "name": "",
+          "slots": 6,
+          "len": 5,
+          "dirs": "URRRR",
+          "result": "goal",
+          "tiles": 6,
+          "rows": 2,
+          "cols": 5
+        },
+        {
+          "i": 8,
+          "name": "",
+          "slots": 6,
+          "len": 5,
+          "dirs": "RRRDR",
+          "result": "goal",
+          "tiles": 8,
+          "rows": 4,
+          "cols": 3
+        },
+        {
+          "i": 9,
+          "name": "",
+          "slots": 7,
+          "len": 6,
+          "dirs": "DURRDD",
+          "result": "goal",
+          "tiles": 6,
+          "rows": 3,
+          "cols": 3
+        },
+        {
+          "i": 10,
+          "name": "",
+          "slots": 7,
+          "len": 6,
+          "dirs": "RRRRRR",
+          "result": "goal",
+          "tiles": 8,
+          "rows": 3,
+          "cols": 4
+        },
+        {
+          "i": 11,
+          "name": "",
+          "slots": 6,
+          "len": 5,
+          "dirs": "RRRRR",
+          "result": "goal",
+          "tiles": 7,
+          "rows": 3,
+          "cols": 4
+        },
+        {
+          "i": 12,
+          "name": "",
+          "slots": 6,
+          "len": 5,
+          "dirs": "RRRRR",
+          "result": "goal",
+          "tiles": 7,
+          "rows": 3,
+          "cols": 4
+        }
+      ]
+    },
+    {
+      "name": "Big Fin",
+      "color": "#2e8ef0",
+      "levels": [
+        {
+          "i": 0,
+          "name": "",
+          "slots": 8,
+          "len": 8,
+          "dirs": "DRDRRDRD",
+          "result": "goal",
+          "tiles": 14,
+          "rows": 4,
+          "cols": 4
+        },
+        {
+          "i": 1,
+          "name": "",
+          "slots": 10,
+          "len": 10,
+          "dirs": "DLRRRUULLD",
+          "result": "goal",
+          "tiles": 14,
+          "rows": 4,
+          "cols": 4
+        },
+        {
+          "i": 2,
+          "name": "",
+          "slots": 8,
+          "len": 8,
+          "dirs": "DLDDDLDL",
+          "result": "goal",
+          "tiles": 13,
+          "rows": 4,
+          "cols": 4
+        },
+        {
+          "i": 3,
+          "name": "",
+          "slots": 8,
+          "len": 8,
+          "dirs": "RDRDDULU",
+          "result": "goal",
+          "tiles": 14,
+          "rows": 4,
+          "cols": 4
+        },
+        {
+          "i": 4,
+          "name": "",
+          "slots": 8,
+          "len": 8,
+          "dirs": "RDRDRDDL",
+          "result": "goal",
+          "tiles": 15,
+          "rows": 4,
+          "cols": 5
+        },
+        {
+          "i": 5,
+          "name": "",
+          "slots": 8,
+          "len": 8,
+          "dirs": "RDRDRDDR",
+          "result": "goal",
+          "tiles": 15,
+          "rows": 4,
+          "cols": 5
+        },
+        {
+          "i": 6,
+          "name": "",
+          "slots": 8,
+          "len": 8,
+          "dirs": "URURDRUL",
+          "result": "goal",
+          "tiles": 14,
+          "rows": 4,
+          "cols": 5
+        },
+        {
+          "i": 7,
+          "name": "",
+          "slots": 9,
+          "len": 9,
+          "dirs": "LUUUULUUR",
+          "result": "goal",
+          "tiles": 15,
+          "rows": 4,
+          "cols": 4
+        },
+        {
+          "i": 8,
+          "name": "",
+          "slots": 9,
+          "len": 9,
+          "dirs": "RDRDUUULL",
+          "result": "goal",
+          "tiles": 15,
+          "rows": 4,
+          "cols": 5
+        },
+        {
+          "i": 9,
+          "name": "",
+          "slots": 9,
+          "len": 9,
+          "dirs": "RRRDLULLD",
+          "result": "goal",
+          "tiles": 15,
+          "rows": 4,
+          "cols": 4
+        },
+        {
+          "i": 10,
+          "name": "",
+          "slots": 8,
+          "len": 8,
+          "dirs": "RRDURURR",
+          "result": "goal",
+          "tiles": 10,
+          "rows": 3,
+          "cols": 6
+        },
+        {
+          "i": 11,
+          "name": "",
+          "slots": 8,
+          "len": 8,
+          "dirs": "RRDRRDDL",
+          "result": "goal",
+          "tiles": 11,
+          "rows": 4,
+          "cols": 5
+        }
+      ]
+    },
+    {
+      "name": "Mega Fin",
+      "color": "#9b4dff",
+      "levels": [
+        {
+          "i": 0,
+          "name": "",
+          "slots": 9,
+          "len": 9,
+          "dirs": "UURRURDLL",
+          "result": "goal",
+          "tiles": 18,
+          "rows": 4,
+          "cols": 5
+        },
+        {
+          "i": 1,
+          "name": "",
+          "slots": 9,
+          "len": 9,
+          "dirs": "DLDDDLDRR",
+          "result": "goal",
+          "tiles": 19,
+          "rows": 5,
+          "cols": 4
+        },
+        {
+          "i": 2,
+          "name": "",
+          "slots": 10,
+          "len": 10,
+          "dirs": "LDDRRRDULL",
+          "result": "goal",
+          "tiles": 18,
+          "rows": 4,
+          "cols": 5
+        },
+        {
+          "i": 3,
+          "name": "",
+          "slots": 10,
+          "len": 10,
+          "dirs": "DRRUULUURD",
+          "result": "goal",
+          "tiles": 18,
+          "rows": 4,
+          "cols": 5
+        },
+        {
+          "i": 4,
+          "name": "",
+          "slots": 10,
+          "len": 10,
+          "dirs": "LUUURURDLD",
+          "result": "goal",
+          "tiles": 18,
+          "rows": 4,
+          "cols": 6
+        },
+        {
+          "i": 5,
+          "name": "",
+          "slots": 10,
+          "len": 10,
+          "dirs": "DRRUUUULRD",
+          "result": "goal",
+          "tiles": 19,
+          "rows": 4,
+          "cols": 5
+        },
+        {
+          "i": 6,
+          "name": "",
+          "slots": 10,
+          "len": 10,
+          "dirs": "RDRRDDURUU",
+          "result": "goal",
+          "tiles": 20,
+          "rows": 4,
+          "cols": 6
+        },
+        {
+          "i": 7,
+          "name": "",
+          "slots": 10,
+          "len": 10,
+          "dirs": "DRDURRRLUL",
+          "result": "goal",
+          "tiles": 20,
+          "rows": 4,
+          "cols": 6
+        },
+        {
+          "i": 8,
+          "name": "",
+          "slots": 10,
+          "len": 10,
+          "dirs": "ULDRRUDDRD",
+          "result": "goal",
+          "tiles": 20,
+          "rows": 4,
+          "cols": 5
+        },
+        {
+          "i": 9,
+          "name": "",
+          "slots": 10,
+          "len": 10,
+          "dirs": "DLDUUULLDL",
+          "result": "goal",
+          "tiles": 21,
+          "rows": 4,
+          "cols": 6
+        },
+        {
+          "i": 10,
+          "name": "",
+          "slots": 9,
+          "len": 9,
+          "dirs": "URRRRRRUU",
+          "result": "goal",
+          "tiles": 14,
+          "rows": 4,
+          "cols": 5
+        },
+        {
+          "i": 11,
+          "name": "",
+          "slots": 10,
+          "len": 10,
+          "dirs": "RRDRRDDRRR",
+          "result": "goal",
+          "tiles": 16,
+          "rows": 4,
+          "cols": 6
+        }
+      ]
+    },
+    {
+      "name": "Super Fin",
+      "color": "#ff8a2a",
+      "levels": [
+        {
+          "i": 0,
+          "name": "Five Rights",
+          "slots": 7,
+          "len": 6,
+          "dirs": "RRRRRL",
+          "result": "goal",
+          "tiles": 8,
+          "rows": 3,
+          "cols": 6,
+          "states": 8,
+          "trapped": 0
+        },
+        {
+          "i": 1,
+          "name": "One Arrow",
+          "slots": 7,
+          "len": 7,
+          "dirs": "RRRRRRR",
+          "result": "goal",
+          "tiles": 10,
+          "rows": 5,
+          "cols": 6,
+          "states": 9,
+          "trapped": 0
+        },
+        {
+          "i": 2,
+          "name": "Step Aside",
+          "slots": 8,
+          "len": 8,
+          "dirs": "DDDRRUUU",
+          "result": "goal",
+          "tiles": 9,
+          "rows": 4,
+          "cols": 3,
+          "states": 9,
+          "trapped": 0
+        },
+        {
+          "i": 3,
+          "name": "Ride Back",
+          "slots": 9,
+          "len": 9,
+          "dirs": "RRLRRRRRR",
+          "result": "goal",
+          "tiles": 11,
+          "rows": 5,
+          "cols": 6,
+          "warps": "AaC",
+          "states": 14,
+          "trapped": 0
+        },
+        {
+          "i": 4,
+          "name": "Coral Pad",
+          "slots": 10,
+          "len": 10,
+          "dirs": "DDDRRRRUUU",
+          "result": "goal",
+          "tiles": 11,
+          "rows": 4,
+          "cols": 5,
+          "states": 15,
+          "trapped": 0
+        },
+        {
+          "i": 5,
+          "name": "Gold Clam",
+          "slots": 11,
+          "len": 11,
+          "dirs": "RRURLDDDRRR",
+          "result": "goal",
+          "tiles": 11,
+          "rows": 4,
+          "cols": 6,
+          "states": 19,
+          "trapped": 0
+        },
+        {
+          "i": 6,
+          "name": "Octo Arm",
+          "slots": 12,
+          "len": 12,
+          "dirs": "RRRRDRDDLDLL",
+          "result": "goal",
+          "tiles": 13,
+          "rows": 5,
+          "cols": 6,
+          "states": 15,
+          "trapped": 0
+        },
+        {
+          "i": 7,
+          "name": "Gold Gate",
+          "slots": 13,
+          "len": 13,
+          "dirs": "RRRRDDRRDRRRR",
+          "result": "goal",
+          "tiles": 16,
+          "rows": 5,
+          "cols": 6,
+          "states": 20,
+          "trapped": 0
+        },
+        {
+          "i": 8,
+          "name": "Star Sweep",
+          "slots": 13,
+          "len": 13,
+          "dirs": "DDDDRRRRRUUUU",
+          "result": "goal",
+          "tiles": 14,
+          "rows": 5,
+          "cols": 6,
+          "states": 20,
+          "trapped": 0
+        },
+        {
+          "i": 9,
+          "name": "Bubble Pop",
+          "slots": 13,
+          "len": 13,
+          "dirs": "RRRDDDDLRUURR",
+          "result": "goal",
+          "tiles": 12,
+          "rows": 5,
+          "cols": 6,
+          "states": 17,
+          "trapped": 0
+        },
+        {
+          "i": 10,
+          "name": "Pink Pad",
+          "slots": 14,
+          "len": 14,
+          "dirs": "RRRRRDDDLDLLUL",
+          "result": "goal",
+          "tiles": 17,
+          "rows": 5,
+          "cols": 6,
+          "states": 19,
+          "trapped": 0
+        },
+        {
+          "i": 11,
+          "name": "Clam Hop",
+          "slots": 15,
+          "len": 15,
+          "dirs": "RRRRRDDLLLLRRRR",
+          "result": "goal",
+          "tiles": 18,
+          "rows": 5,
+          "cols": 6,
+          "states": 23,
+          "trapped": 0
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "prog": [
+    0,
+    0,
+    0,
+    0
+  ],
+  "starKeys": [
+    "v6stars0",
+    "v6stars1",
+    "v6stars2",
+    "v6stars3"
+  ],
+  "viewport": {
+    "width": 844,
+    "height": 390,
+    "portrait": false
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "clickWin": {
+    "ok": true,
+    "queue": "3,3,3,3,3,0",
+    "mode": "win",
+    "state": "play"
+  }
+}
