@@ -71,7 +71,7 @@ try { if (!store.get('v99fullReset', false)) { Object.keys(localStorage).filter(
 // v10.1: second one-time full reset (user asked again) - wipes every benji_* key once, then marks all migrations done
 try { if (!store.get('v101fullReset', false)) { Object.keys(localStorage).filter(k => k.startsWith('benji_')).forEach(k => localStorage.removeItem(k));
   ['v91littleStarsReset', 'v94littleStarsReset', 'v98starsReset', 'v99fullReset', 'v10starsReset', 'v101fullReset'].forEach(k => store.set(k, true)); } } catch(e){}
-const BUILD_VERSION = 'v10.2.1';
+const BUILD_VERSION = 'v10.3.0';
 // v10.1 freshness (web only): no service worker / cache storage may pin an old copy, and an iPad home-screen app that was
 // suspended re-checks the server when it comes back; if the live file is newer than the running one, reload it once, cache-busted.
 (function(){ if (!/^https?:$/.test(location.protocol)) return;
@@ -191,7 +191,7 @@ let AC = null, audioUnlocked = false, muted = store.get('muted', false), noiseBu
 function audio(){
   if (!audioUnlocked) return null;
   if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { AC = null; } }
-  if (AC && AC.state === 'suspended') { try { AC.resume(); } catch(e){} }
+  if (AC && AC.state === 'suspended') { try { const p = AC.resume(); if (p && p.catch) p.catch(() => {}); } catch(e){} }
   return AC;
 }
 function tone(f, d, type = 'sine', v = .2, f2 = 0, delay = 0){
@@ -565,6 +565,23 @@ const SWITCH_LEVELS = {
     { grid: ["S5#Ua#", "U.YA.1", "..U..B", "b#xG.."], slots: 10 },  /* v9.8: was 5x8 */  // RRDRDRDRRR clam -> gold gate -> tube a -> pad -> tube b -> coral rocks
   ],
 };
+// v10.3 Super Fin — a new world after Mega Fin. No new tiles, art, or rules.
+// Every board is one idea. Shortest solution == slots, except Five Rights (one spare slot;
+// an extra Left steps off the pearls). Lengths are the in-game solver's (solve / runSim).
+const SUPER_LEVELS = [
+  { name: 'Five Rights', grid: ['S####A', '......', 'Ga....'], slots: 7 },             // RRRRRL   two strips: five rights, whirl, one left. spare
+  { name: 'One Arrow', grid: ['S##A..', '......', '..a##B', '......', '....bG'], slots: 7 }, // RRRRRRR  corner whirls turn a snake of only Right
+  { name: 'Step Aside', grid: ['S.G', '#.#', '#.#', '###'], slots: 8 },                 // DDDRRUUU pearls look two tiles away; the middle is water
+  { name: 'Ride Back', grid: ['S#A#C.', '......', '.4a...', '......', '.c#xG.'], slots: 9 }, // RRLRRRRRR clam down the blue whirl, same whirl home, violet whirl to the rocks
+  { name: 'Coral Pad', grid: ['S...G', '#...X', '#...#', '#1###'], slots: 10 },        // DDDRRRRUUU pad, then the coral gate under the pearls
+  { name: 'Gold Clam', grid: ['..#5..', 'S###..', '..#...', '..##yG'], slots: 11 },    // RRURLDDDRRR step onto the clam and back, then the rocks
+  { name: 'Octo Arm', grid: ['S####.', '....##', '.....#', '....##', '..G=O.'], slots: 12 }, // RRRRDRDDLDLL the octopus arm is the last tile before the pearls
+  { name: 'Gold Gate', grid: ['S####B', '......', 'b2##Y#', '.....#', '.....G'], slots: 12 }, // RRRRRRRRRRDD whirl drops you on the pad; the gate is on that side
+  { name: 'Star Sweep', grid: ['S....G', '#....#', '#....V', '#....#', '###K##'], slots: 13 }, // DDDDRRRRRUUUU sea-star clears the urchin under the pearls
+  { name: 'Bubble Pop', grid: ['S...QG', '#...#.', '#...#.', '#..##.', '##K#..'], slots: 13 }, // DDDDRRRURUUUR bubble vent clears the rock beside the pearls
+  { name: 'Pink Pad', grid: ['S###3#', '...U.#', '...U.#', '.GZ.##', '..###.'], slots: 14 }, // RRRRRDDDLDLLUL pad at the start, pink gate at the end of the wind
+  { name: 'Clam Hop', grid: ['S#####', '.....#', '.C6###', '......', '#c##zG'], slots: 15 }, // RRRRRDDLLLLRRRR pink clam, violet whirl, then the rocks
+];
 // ============================================================================
 //  MUSIC (v6): three original looping songs composed in code (Web Audio only, no files).
 //  Graph:  SFX bus ─┐
@@ -741,7 +758,7 @@ function iosAudioSession(){
 }
 // background / foreground: stop everything while the app is hidden
 function audioPause(){ if (AC && AC.state === 'running') { try { AC.suspend(); } catch(e){} } if (music.silentEl) try { music.silentEl.pause(); } catch(e){} }
-function audioResume(){ if (AC && AC.state === 'suspended' && audioUnlocked) { try { AC.resume(); } catch(e){} } if (music.silentEl) music.silentEl.play().catch(() => {}); }
+function audioResume(){ if (AC && AC.state === 'suspended' && audioUnlocked) { try { const p = AC.resume(); if (p && p.catch) p.catch(() => {}); } catch(e){} } if (music.silentEl) music.silentEl.play().catch(() => {}); }
 document.addEventListener('visibilitychange', () => document.hidden ? audioPause() : audioResume());
 addEventListener('pagehide', audioPause); addEventListener('pageshow', audioResume);
 window.__appPause = audioPause; window.__appResume = audioResume;     // called by the Android wrapper on onPause/onResume
@@ -769,6 +786,7 @@ const KEY_CH = 'GUP=123456XYZxyzKVQO' + TUBE_CH;   // v10.2: + activation square
 // ---- route styles per pair: Mega = loop for every tube, Big = a mix, Little = simple
 function tubeStyle(st){
   if (diff === 2) return 'loop';
+  if (diff === 3) return st === 'a' ? 'basic' : 'step';   // Super Fin boards are small; short pipes stay readable
   if (diff === 1) return levelIdx % 3 === 0 ? 'loop' : (levelIdx % 2 ? 'step' : 'basic');
   return st === 'a' ? 'basic' : 'step';
 }
@@ -1858,6 +1876,7 @@ const LEVELS = [
   ] },
   { name: 'Big Fin', color: '#2e8ef0', hintDelay: 15, levels: BIG_LEVELS },
   { name: 'Mega Fin', color: '#9b4dff', hintDelay: 15, hintsDefault: false, levels: MEGA_LEVELS },
+  { name: 'Super Fin', color: '#ff8a2a', hintDelay: 12, hintsDefault: false, levels: SUPER_LEVELS },
 ];
 const SET_SIZE = 5;
 /* v9.9: Little Fin is fully listed above (switch intros folded in) */ LEVELS[1].levels.push(...SWITCH_LEVELS.big); LEVELS[2].levels.push(...SWITCH_LEVELS.mega);
@@ -1935,8 +1954,8 @@ let state = 'title', T = 0, diff = 0, levelIdx = 0, L = null, G = null;
 let mode = 'edit', queue = [], run = null, idle = 0, failInfo = null, slotShake = 0;
 let later = [], parts = [], pops = [], bursts = [], bubbles = [], confetti = [], flyers = [];
 let card = null, reward = null, shake = 0, pressed = null, ptr = null, goalPop = -1, urchinBump = {};
-const prog = [0, 1, 2].map(i => store.get('v6prog' + i, i === 0 ? Math.min(9, store.get('maze0', 0)) : 0));   // highest unlocked level per tier
-const stars = [0, 1, 2].map(i => store.get('v6stars' + i, []));                                                   // best stars per level
+const prog = LEVELS.map((_, i) => store.get('v6prog' + i, i === 0 ? Math.min(9, store.get('maze0', 0)) : 0));   // highest unlocked level per tier (world 3 uses v6prog3 only once earned)
+const stars = LEVELS.map((_, i) => store.get('v6stars' + i, []));                                                   // best stars per level (v6stars0-2 stay the old arrays)
 if (!store.get('v91littleStarsReset', false)) { stars[0] = []; store.set('v6stars0', []); store.set('v91littleStarsReset', true); }
 if (!store.get('v94littleStarsReset', false)) { stars[0] = []; store.set('v6stars0', []); store.set('v94littleStarsReset', true); }   // v9.4: Little Fin is the v8 set again   // v9 reworked Little Fin: old stars belonged to other puzzles
 if (!store.get('v98starsReset', false)) {   // v9.8: reset stars only on levels whose layout changed
@@ -2164,7 +2183,7 @@ function chompGoal(s){            // Hulk: flex, the goal disappears, a chime. T
 function hint(){
   if (state !== 'play' || card || !L || tutorial) return null;
   if (mode === 'fail' && idle > 2.5) return { play: true };   // (the reset button always pulses after a fail)
-  if (diff === 2 && !hintsOn) return null;               // Mega Fin: hints off unless the bulb is on
+  if (diff >= 2 && !hintsOn) return null;               // Mega Fin and Super Fin: hints off unless the bulb is on
   if (mode !== 'edit' || idle < LEVELS[diff].hintDelay) return null;
   const sol = solve(L); if (!sol) return null;
   for (let i = 0; i < queue.length; i++) if (queue[i] !== sol[i]) { const r = runSim(L, queue); return r.result === 'goal' ? { play: true } : { slot: i }; }
@@ -2176,14 +2195,14 @@ function hint(){
 const LEVEL_BTN = i => ({ x: 640 + (i % 6 - 2.5) * 190 - 80, y: 230 + Math.floor(i / 6) * 195, w: 160, h: 160 });
 function btnsFor(){
   const b = [];
-  if (state === 'title') LEVELS.forEach((Lv, i) => b.push({ id: 'tier' + i, x: 205 + i * 300, y: 290, w: 270, h: 140, label: Lv.name, small: '\u2605 ' + starTotal(i) + ' / ' + Lv.levels.length * 3, color: Lv.color }));
+  if (state === 'title') { const n = LEVELS.length, bw = 270, gap = 16, x0 = (1280 - (n * bw + (n - 1) * gap)) / 2; LEVELS.forEach((Lv, i) => b.push({ id: 'tier' + i, x: x0 + i * (bw + gap), y: 290, w: bw, h: 140, label: Lv.name, small: '\u2605 ' + starTotal(i) + ' / ' + Lv.levels.length * 3, color: Lv.color })); }
   if (state === 'select') {
     b.push({ id: 'home', x: 20, y: 20, w: 96, h: 96, icon: 'back', color: '#7b5ce0', solid: 1 });
     LEVELS[diff].levels.forEach((_, i) => b.push(Object.assign({ id: 'pick' + i, kind: 'level', i, locked: i > prog[diff] }, LEVEL_BTN(i))));
   }
   const play = state === 'play';
   if (play) { b.push({ id: 'home', x: 14, y: 12, w: 84, h: 84, icon: 'back', color: '#7b5ce0', solid: 1 });
-    if (diff === 2) b.push({ id: 'hints', x: 1030, y: 680, w: 64, h: 64, mini: 1, icon: 'bulb', on: hintsOn, color: hintsOn ? 'rgba(255,190,40,.85)' : 'rgba(20,60,110,.4)' }); }
+    if (diff >= 2) b.push({ id: 'hints', x: 1030, y: 680, w: 64, h: 64, mini: 1, icon: 'bulb', on: hintsOn, color: hintsOn ? 'rgba(255,190,40,.85)' : 'rgba(20,60,110,.4)' }); }
   if (state === 'reward' && reward && reward.t > 1.2) {
     b.push({ id: 'home', x: 24, y: 656, w: 140, h: 124, icon: 'home', color: '#2e8ef0', solid: 1 });
     b.push({ id: 'continue', x: 1116, y: 656, w: 140, h: 124, icon: 'play', color: '#3cc46b', solid: 1 });
@@ -2208,7 +2227,9 @@ function drawLevelButton(bt){
     ctx.lineWidth = 9; ctx.strokeStyle = '#e8eef5'; ctx.beginPath(); ctx.arc(0, -20, 20, Math.PI, 0); ctx.stroke();
     ctx.fillStyle = '#e8eef5'; rr(-30, -20, 60, 46, 10); ctx.fill(); ctx.fillStyle = '#8193a8'; ellipse(0, 0, 6, 8); ctx.fill();
   } else {
-    text(String(bt.i + 1), 0, -18, 66, '#fff', 'rgba(0,0,0,.35)', 9);
+    const nm = Lv.levels[bt.i].name;
+    if (nm) { text(String(bt.i + 1), 0, -44, 36, '#fff', 'rgba(0,0,0,.35)', 6); text(nm, 0, 2, 16, '#fff', 'rgba(0,0,0,.35)', 4); }
+    else text(String(bt.i + 1), 0, -18, 66, '#fff', 'rgba(0,0,0,.35)', 9);
     for (let k = 0; k < 3; k++) { ctx.save(); ctx.translate((k - 1) * 44, 46 - (k === 1 ? 6 : 0)); starPath(19);
       ctx.fillStyle = k < st ? '#ffd43b' : 'rgba(255,255,255,.3)'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = k < st ? '#b7791f' : 'rgba(0,0,0,.18)'; ctx.stroke(); ctx.restore(); }
   }
@@ -2513,6 +2534,7 @@ function drawSelect(){
   text(Lv.name, 640, 110, 84, '#fff', Lv.color, 16);
   text('Pick a level  \u00b7  \u2605 ' + starTotal(diff) + ' / ' + Lv.levels.length * 3, 640, 180, 32, '#fff', '#0c3d6b', 8);
   if (diff === 2) text('Tricky! Exact-length paths, no spare arrows. Hints are off (turn on with the bulb).', 640, 650, 26, '#e8f6ff', '#0c3d6b', 6);
+  else if (diff === 3) text('One new idea each swim. Hints are off (turn them on with the bulb).', 640, 650, 26, '#e8f6ff', '#0c3d6b', 6);
   else if (diff === 1) text('Longer paths: every arrow counts!', 640, 650, 28, '#e8f6ff', '#0c3d6b', 6);
 }
 function drawReward(){
