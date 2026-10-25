@@ -764,7 +764,10 @@ function launchArrow() {
   });
   if (res.ok) {
     const last = res.moves[res.moves.length - 1];
-    run.segs.push({ kind: 'wait', dur: last && last.type === 'tube' ? 0.1 : 0.07 });
+    const another = run.i + 1 < run.cmds.length;
+    // v10 wins on the last stroke. The 0.07s beat stays only while another arrow follows.
+    const gap = last && last.type === 'tube' ? 0.1 : (another ? 0.07 : 0);
+    if (gap > 0) run.segs.push({ kind: 'wait', dur: gap });
   }
   run.si = 0;
   beginSeg();
@@ -798,7 +801,6 @@ function beginSeg() {
     benji.moving = false;
     glide(420, 160, 0.5, 'sine', 0.08);
     bubbleBurst(benji.x, benji.y + 20, 6, 30);
-    startReact(seg.fail, run.i, 1.6);
   } else if (seg.kind === 'tube') {
     seg.phase = 'in';
     seg.pts = tubePolyline(seg);
@@ -887,6 +889,8 @@ function segDone() {
     benji.ox = 0;
     benji.forceState = null;
     benji.moving = false;
+    // v10 AUTO_RESET.water is 0.35s after the sink. 0.42 pops five frames late.
+    startReact(seg.fail, run.i, 0.35);
     return;
   } else if (seg.kind === 'tube') {
     benji.shrink = 1;
@@ -1063,8 +1067,7 @@ function update(dt) {
   if (state === 'reward' && reward) reward.t += dt;
   if (state === 'play' && win) win.t += dt;
   const seg = run && run.segs[run.si];
-  const driving = seg && (mode === 'run' || (mode === 'fail' && seg.kind === 'fall'));
-  if (driving && stepSeg(seg, dt, adt)) segDone();
+  if (seg && mode === 'run' && stepSeg(seg, dt, adt)) segDone();
   if (mode === 'fail' && run && run.react) {
     run.react.t += dt;
     const falling = run.react.why === 'water' || run.react.why === 'off';
