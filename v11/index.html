@@ -1158,7 +1158,11 @@ function bootLevels() {
         mark: '',
         markOpen: null,
         eyeOpen: null,
+        eyeCover: null,
+        urchinOpen: null,
+        outside: null,
         tuckEye: null,
+        chin: '',
         cover: '',
         markScored: false
       });
@@ -1568,7 +1572,8 @@ function withPen(fn) {
   finally { ctx = prev; }
   return g;
 }
-function opaqueKeys(g, x, y, w, h) {
+function opaqueKeys(g, x, y, w, h, minA) {
+  const cut = minA == null ? 40 : minA;
   const x0 = Math.max(0, Math.floor(x));
   const y0 = Math.max(0, Math.floor(y));
   const x1 = Math.min(W, Math.ceil(x + w));
@@ -1579,7 +1584,7 @@ function opaqueKeys(g, x, y, w, h) {
   const d = img.data;
   for (let yy = 0; yy < img.height; yy++) {
     for (let xx = 0; xx < img.width; xx++) {
-      if (d[(yy * img.width + xx) * 4 + 3] > 40) keys.add((x0 + xx) + ',' + (y0 + yy));
+      if (d[(yy * img.width + xx) * 4 + 3] > cut) keys.add((x0 + xx) + ',' + (y0 + yy));
     }
   }
   return keys;
@@ -1645,6 +1650,215 @@ function eyeOpenPercent(name, state, frame, rx0, rx1, ry0, ry1, treatKeys, pose)
   }
   return openPercent(eyes, treatKeys);
 }
+function strayCollect(level) {
+  const tr = pickTreat(level);
+  if (!tr) return '';
+  const reach2 = G.PW * 0.5 * (G.PW * 0.5);
+  const centre = treatAnchor();
+  const start = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
+  const seen = new Set([stateKey(start, 0, level.hasJ)]);
+  let frontier = [{ st: start, x: spotOf(G, start.r, start.c).x, y: spotOf(G, start.r, start.c).y }];
+  for (let depth = 0; depth < level.slots; depth++) {
+    const next = [];
+    for (let n = 0; n < frontier.length; n++) {
+      const node = frontier[n];
+      for (const d of ['L', 'R', 'U', 'D']) {
+        const res = resolve(level, node.st, d, depth + 1);
+        let x = node.x, y = node.y;
+        for (let m = 0; m < res.moves.length; m++) {
+          const mv = res.moves[m];
+          if (mv.type === 'tube') {
+            const dest = spotOf(G, mv.nr, mv.nc);
+            x = dest.x;
+            y = dest.y;
+            continue;
+          }
+          if (mv.type !== 'swim') continue;
+          const fail = mv.fail || null;
+          const bump = !!(fail && BUMP_FAIL[fail]);
+          const arrives = !fail || fail === 'jelly' || fail === 'loop';
+          const full = spotOf(G, mv.r, mv.c);
+          const x1 = bump ? lerp(x, full.x, 0.42) : full.x;
+          const y1 = bump ? lerp(y, full.y, 0.42) : full.y;
+          let near = false;
+          if (mv.r === tr.r && mv.c === tr.c) {
+            for (let s = 0; s <= 20; s++) {
+              const k = s / 20;
+              const hop = Math.sin(k * Math.PI) * (bump ? 6 : 14);
+              const px = lerp(x, x1, ease(k));
+              const py = lerp(y, y1, ease(k)) - hop;
+              const dx = px - centre.x, dy = py - centre.y;
+              if (dx * dx + dy * dy <= reach2) near = true;
+            }
+          }
+          const early = near && arrives;
+          const landed = arrives && mv.r === tr.r && mv.c === tr.c;
+          if (early !== landed) return 'collect mismatch toward ' + mv.r + ',' + mv.c;
+          if (arrives && !fail) { x = x1; y = y1; }
+        }
+        if (!res.ok) continue;
+        const key = stateKey(res.st, depth + 1, level.hasJ);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        next.push({ st: res.st, x: x, y: y });
+      }
+    }
+    frontier = next;
+  }
+  return '';
+}
+function boxesNear(a, b) {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}
+function treatAnchor() {
+  const ch = cellChar(L.grid, treat.r, treat.c);
+  return treatPose(G, treat.r, treat.c, ch);
+}
+function benjiTreatOverlap() {
+  if (!treat || treat.got || !G || !L) return 0;
+  const pose = treatAnchor();
+  const tbox = spriteBox('treat', treat.kind, pose.x, pose.y, pose.scale);
+  if (!tbox) return 0;
+  const bsc = (G.TW / 140) * 0.40 * (benji.shrink || 1);
+  const benjiBox = { x: benji.x - 220 * bsc, y: benji.y - 160 * bsc, w: 440 * bsc, h: 320 * bsc };
+  if (!boxesNear(tbox, benjiBox)) return 0;
+  const board = boardActors();
+  let treatAt = -1, benjiAt = -1;
+  for (let i = 0; i < board.items.length; i++) {
+    if (board.items[i].kind === 'treat') treatAt = i;
+    if (board.items[i].kind === 'benji') benjiAt = i;
+  }
+  if (treatAt < 0 || benjiAt < 0 || treatAt < benjiAt) return 0;
+  const frames = (SPRITES.treat && SPRITES.treat.frames[treat.kind]) || [];
+  const nFrames = frames.length || 1;
+  const tg = withPen(() => {
+    for (let f = 0; f < nFrames; f++) drawSprite('treat', treat.kind, pose.x, pose.y, { scale: pose.scale, frame: f });
+  });
+  const tkeys = opaqueKeys(tg, tbox.x - 2, tbox.y - 2, tbox.w + 4, tbox.h + 4);
+  const bg = withPen(() => drawBenji());
+  const bkeys = opaqueKeys(bg, tbox.x - 2, tbox.y - 2, tbox.w + 4, tbox.h + 4);
+  return keysHit(bkeys, tkeys);
+}
+function chinOverlap(level) {
+  if (!treat || !level.solution) return '';
+  const saved = {
+    mode: mode, run: run, fx: fx, got: treat.got,
+    x: benji.x, y: benji.y, r: benji.r, c: benji.c, flip: benji.flip,
+    moving: benji.moving, forceState: benji.forceState, forceValue: benji.forceValue,
+    rot: benji.rot, hidden: benji.hidden
+  };
+  let detail = '';
+  try {
+    treat.got = false;
+    mode = 'run';
+    fx = {};
+    benji.forceState = null;
+    benji.forceValue = 0;
+    benji.shrink = 1;
+    benji.alpha = 1;
+    benji.hidden = false;
+    benji.popIn = 1;
+    benji.turnT = 1;
+    benji.q = 0;
+    benji.qv = 0;
+    benji.squat = 0;
+    benji.rot = 0;
+    benji.ox = 0;
+    benji.extraY = 0;
+    benji.spin = 0;
+    benji.home = null;
+    benji.flip = level.goalAt[1] < level.start[1];
+    const reach2 = G.PW * 0.5 * (G.PW * 0.5);
+    let sw = new Set();
+    let st = { r: level.start[0], c: level.start[1], sw: sw, fr: new Set() };
+    let x = spotOf(G, st.r, st.c).x;
+    let y = spotOf(G, st.r, st.c).y;
+    let flip = benji.flip;
+    let got = false;
+    let sawTreatSwim = false;
+    const sampleAt = (px, py, fl, moving, k, dir, collectsNow) => {
+      if (got || detail) return;
+      run = { sw: sw, fr: new Set(), segs: [], si: 0 };
+      benji.x = px;
+      benji.y = py;
+      benji.flip = fl;
+      benji.moving = moving;
+      const nose = dir === 'L' ? -1 : dir === 'R' ? 1 : 0;
+      benji.rot = moving ? nose * (fl ? -1 : 1) * 0.12 * Math.sin(k * Math.PI) : 0;
+      const pose = treatAnchor();
+      const dx = px - pose.x, dy = py - pose.y;
+      if (collectsNow && dx * dx + dy * dy <= reach2) { got = true; return; }
+      const overlap = benjiTreatOverlap();
+      if (!overlap) return;
+      if (collectsNow) { got = true; return; }
+      detail = 'treat covers Benji d=' + (Math.sqrt(dx * dx + dy * dy) / G.PW).toFixed(2) + 'pw n=' + overlap;
+    };
+    sampleAt(x, y, flip, false, 0, '', false);
+    const cmds = level.solution.split('');
+    for (let i = 0; i < cmds.length && !detail; i++) {
+      const res = resolve(level, st, cmds[i], i + 1);
+      let fromR = st.r, fromC = st.c;
+      for (let m = 0; m < res.moves.length && !detail; m++) {
+        const mv = res.moves[m];
+        if (mv.type === 'tube') {
+          const dest = spotOf(G, mv.nr, mv.nc);
+          x = dest.x;
+          y = dest.y;
+          fromR = mv.nr;
+          fromC = mv.nc;
+          continue;
+        }
+        if (mv.type !== 'swim') continue;
+        const fail = mv.fail || null;
+        const bump = !!(fail && BUMP_FAIL[fail]);
+        const arrives = !fail || fail === 'jelly' || fail === 'loop';
+        const full = spotOf(G, mv.r, mv.c);
+        const x1 = bump ? lerp(x, full.x, 0.42) : full.x;
+        const y1 = bump ? lerp(y, full.y, 0.42) : full.y;
+        const dir = travelDir(mv.r - fromR, mv.c - fromC) || cmds[i];
+        if (dir === 'L') flip = true;
+        else if (dir === 'R') flip = false;
+        const collects = !got && arrives && mv.r === treat.r && mv.c === treat.c;
+        if (collects) sawTreatSwim = true;
+        for (let s = 0; s <= 40; s++) {
+          const k = s / 40;
+          const hop = Math.sin(k * Math.PI) * (bump ? 6 : 14);
+          const px = lerp(x, x1, ease(k));
+          const py = lerp(y, y1, ease(k)) - hop;
+          sampleAt(px, py, flip, true, k, dir, collects);
+          if (detail) break;
+        }
+        if (arrives && !fail) {
+          x = x1;
+          y = y1;
+          fromR = mv.r;
+          fromC = mv.c;
+        }
+      }
+      if (!res.ok) break;
+      st = res.st;
+      sw = st.sw;
+      ['m', 'g', 'p', 'k', 'c', 's', 'o'].forEach(col => { if (sw.has(col)) fx[col] = 1; });
+    }
+    if (!detail && sawTreatSwim && !got) return 'winning swim missed the treat';
+    return detail;
+  } finally {
+    mode = saved.mode;
+    run = saved.run;
+    fx = saved.fx;
+    treat.got = saved.got;
+    benji.x = saved.x;
+    benji.y = saved.y;
+    benji.r = saved.r;
+    benji.c = saved.c;
+    benji.flip = saved.flip;
+    benji.moving = saved.moving;
+    benji.forceState = saved.forceState;
+    benji.forceValue = saved.forceValue;
+    benji.rot = saved.rot;
+    benji.hidden = saved.hidden;
+  }
+}
 function scorePlate(level, row) {
   const issues = [];
   world = level.world;
@@ -1706,10 +1920,29 @@ function scorePlate(level, row) {
   }
   let eyeOpen = null;
   let tuckEye = null;
+  let urchinOpen = null;
+  let outside = null;
   if (pose.floor === 'bed') {
     eyeOpen = eyeOpenPercent('urchin', 'idle', 0, -45, 40, -62, -30, treatKeys, pose);
     tuckEye = eyeOpenPercent('urchinBed', 'tuck', 3, -50, 50, -30, -8, treatKeys, pose);
+    const ubox = spriteBox('urchin', 'idle', pose.x, pose.cy, pose.sc);
+    const ug = withPen(() => drawSprite('urchin', 'idle', pose.x, pose.cy, { scale: pose.sc, frame: 0 }));
+    const ukeys = ubox ? opaqueKeys(ug, ubox.x, ubox.y, ubox.w, ubox.h) : new Set();
+    urchinOpen = openPercent(ukeys, treatKeys);
+    const cell = cellXY(G, treat.r, treat.c);
+    outside = 0;
+    treatKeys.forEach(k => {
+      const xy = k.split(',');
+      const x = +xy[0] + 0.5, y = +xy[1] + 0.5;
+      if (x < cell.x - G.PW / 2 || x > cell.x + G.PW / 2 || y < cell.y - G.TD / 2 || y > cell.y + G.TD / 2) outside++;
+    });
+    const covered = eyeOpen == null ? null : Math.round((100 - eyeOpen) * 10) / 10;
+    if (covered == null || covered > 0) issues.push('standing eye covered ' + (covered == null ? 'unmeasured' : covered + '%'));
+    if (outside) issues.push('treat leaves its cell (' + outside + ' px)');
   }
+  const chin = chinOverlap(level);
+  const stray = strayCollect(level);
+  if (stray) issues.push(stray);
   const board = boardActors();
   let treatAt = -1;
   for (let i = 0; i < board.items.length; i++) if (board.items[i].kind === 'treat') treatAt = i;
@@ -1726,10 +1959,15 @@ function scorePlate(level, row) {
     if (keysHit(keys, treatKeys)) covers.push('beat');
   }
   if (covers.length) issues.push('treat covered by ' + covers.join(', '));
+  if (chin) issues.push(chin);
   row.mark = mark;
   row.markOpen = pct;
   row.eyeOpen = eyeOpen;
+  row.eyeCover = eyeOpen == null ? null : Math.round((100 - eyeOpen) * 10) / 10;
+  row.urchinOpen = urchinOpen;
+  row.outside = outside;
   row.tuckEye = tuckEye;
+  row.chin = chin || 'clear';
   row.cover = covers.join(', ');
   row.markScored = true;
   if (issues.length) {
@@ -1955,15 +2193,26 @@ function beginSeg() {
     glide(320, 1100, 0.45, 'sine', 0.08);
   }
 }
+function takeTreat() {
+  if (!treat || treat.got) return;
+  treat.got = true;
+  sfx(740, 0.1, 'triangle', 0.06);
+  burst(benji.x, benji.y, '#ffe14d');
+}
+function maybeCollectTreat(seg) {
+  if (!treat || treat.got || !G || !seg || seg.kind !== 'swim') return;
+  if (seg.r !== treat.r || seg.c !== treat.c) return;
+  if (seg.fail && seg.fail !== 'jelly' && seg.fail !== 'loop') return;
+  const p = treatAnchor();
+  const dx = benji.x - p.x, dy = benji.y - p.y;
+  const reach = G.PW * 0.5;
+  if (dx * dx + dy * dy <= reach * reach || benjiTreatOverlap()) takeTreat();
+}
 function arrive(r, c) {
   const ch = cellChar(L.grid, r, c);
   if (SW[ch]) run.sw.add(SW[ch]);
   if (ch === 'F') run.fr.add(r + ',' + c);
-  if (treat && !treat.got && treat.r === r && treat.c === c) {
-    treat.got = true;
-    sfx(740, 0.1, 'triangle', 0.06);
-    burst(benji.x, benji.y, '#ffe14d');
-  }
+  if (treat && !treat.got && treat.r === r && treat.c === c) takeTreat();
   benji.r = r; benji.c = c;
 }
 function overshootIndex(cmds) {
@@ -2288,6 +2537,7 @@ function stepSwim(seg, adt) {
     benji.forceState = 'chomp';
     benji.forceValue = clamp(seg.t / seg.dur * 1.3, 0, 1);
   }
+  maybeCollectTreat(seg);
   return k >= 1;
 }
 function stepBounce(seg, adt) {
@@ -2764,7 +3014,13 @@ function treatPose(g, r, c, ch) {
   let y = p.y - 6;
   if (plate) {
     scale *= 0.8;
-    y -= g.TD * 0.18;
+    const drop = g.TD * 0.18;
+    y -= drop;
+    if (floor === 'bed') {
+      const chan = { M: 'm', y: 'g', z: 'p' }[ch];
+      const tuck = chan && gateOpen(chan) ? clamp((fx[chan] || 0) * 3, 0, 1) : 0;
+      y += drop * 2 * (1 - tuck);
+    }
   }
   return { x: p.x, y: y, scale: scale, plate: plate, sc: sc, floor: floor, cy: p.y };
 }
