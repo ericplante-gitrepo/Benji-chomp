@@ -449,6 +449,8 @@ function pipeOrProp(ch) { return !!(PIPE_MOUTH[ch] || PROP_CELL[ch]); }
 const TITLE_BAND_BOTTOM = 54 + 48 / 2 + 8 / 2;
 const STINGER_RISE = 98.5;
 const bootReport = [];
+// Winning-program counts at 313e9f0. These nine puzzles keep that many.
+const ORIGINAL_WINS = { R3: 1, S2: 1, S3: 1, S4: 1, S7: 1, S10: 1, D4: 1, D5: 1, D8: 1 };
 function bootLevels() {
   LEVEL_PACK.forEach((world, wi) => {
     world.levels.forEach((raw, i) => {
@@ -464,7 +466,11 @@ function bootLevels() {
         shortest: level.shortest, need: level.need,
         sameLength: !!shortest && shortest.length === level.solution.length,
         layout: layout, layoutOk: layout.length === 0,
-        earn: level.earn || ''
+        earn: level.earn || '',
+        treat: level.treatCell || '',
+        onPath: !!level.treatOnPath,
+        overGoal: !!level.treatOverGoal,
+        wins: level.winCount || 0
       });
     });
   });
@@ -664,38 +670,6 @@ function reachableCells(level) {
   level.reach = cells;
   return cells;
 }
-function earnProgram(level, r, c) {
-  const cell = r + ',' + c;
-  const start = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
-  const seen = new Set([stateKey(start, 0, level.hasJ) + '|0']);
-  let frontier = [{ st: start, path: '', got: false }];
-  for (let depth = 0; depth < level.slots; depth++) {
-    const next = [];
-    for (let i = 0; i < frontier.length; i++) {
-      const node = frontier[i];
-      for (const d of ['L', 'R', 'U', 'D']) {
-        const res = resolve(level, node.st, d, depth + 1);
-        if (!res.ok) continue;
-        let got = node.got;
-        if (!got) {
-          for (let k = 0; k < res.moves.length; k++) {
-            const m = res.moves[k];
-            if (m.type === 'swim' && !m.fail && m.r + ',' + m.c === cell) got = true;
-            else if (m.type === 'tube' && m.nr + ',' + m.nc === cell) got = true;
-          }
-        }
-        const path = node.path + d;
-        if (got && isWin(level, res.st)) return path;
-        const key = stateKey(res.st, depth + 1, level.hasJ) + '|' + (got ? '1' : '0');
-        if (seen.has(key)) continue;
-        seen.add(key);
-        next.push({ st: res.st, path: path, got: got });
-      }
-    }
-    frontier = next;
-  }
-  return null;
-}
 function sandCells(level) {
   const cells = [];
   for (let r = 0; r < level.grid.length; r++) {
@@ -705,38 +679,125 @@ function sandCells(level) {
   }
   return cells;
 }
-function pickTreat(level) {
-  const reached = reachableCells(level);
-  const sim = runSim(level, level.solution);
-  const onPath = [];
-  (sim.trace || []).forEach(p => {
-    if (cellChar(level.grid, p[0], p[1]) === '#') onPath.push(p);
-  });
-  const onPathReach = onPath.filter(p => reached.has(p[0] + ',' + p[1]));
-  let pool = onPathReach;
-  if (!pool.length) {
-    const sand = sandCells(level);
-    const legacy = sand[Math.floor(sand.length / 2)];
-    if (legacy && reached.has(legacy[0] + ',' + legacy[1])) pool = [legacy];
-    else {
-      const open = sand.filter(p => reached.has(p[0] + ',' + p[1]));
-      if (!open.length) return null;
-      const anchors = [[level.start[0], level.start[1]]].concat(sim.trace || []);
-      let best = Infinity;
-      const near = [];
-      open.forEach(p => {
-        let d = Infinity;
-        anchors.forEach(a => { d = Math.min(d, Math.abs(a[0] - p[0]) + Math.abs(a[1] - p[1])); });
-        if (d < best) { best = d; near.length = 0; }
-        if (d === best) near.push(p);
-      });
-      near.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-      pool = near;
-    }
+function visitCells(level, cmds) {
+  const list = typeof cmds === 'string' ? cmds.split('') : cmds.slice();
+  let st = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
+  const cells = [];
+  for (let i = 0; i < list.length; i++) {
+    const res = resolve(level, st, list[i], i + 1);
+    res.moves.forEach(m => {
+      if (m.type === 'swim' && !m.fail) cells.push([m.r, m.c]);
+      else if (m.type === 'tube') cells.push([m.nr, m.nc]);
+    });
+    if (!res.ok) break;
+    st = res.st;
   }
+  return cells;
+}
+function pathSandCells(level) {
+  const sim = runSim(level, level.solution);
+  if (sim.result !== 'win') return [];
+  const seen = new Set();
+  const out = [];
+  visitCells(level, level.solution).forEach(p => {
+    const k = p[0] + ',' + p[1];
+    if (seen.has(k)) return;
+    seen.add(k);
+    if (cellChar(level.grid, p[0], p[1]) === '#') out.push(p);
+  });
+  return out;
+}
+function legacyTreatCell(level) {
+  const sand = sandCells(level);
+  if (!sand.length) return null;
+  return sand[Math.floor(sand.length / 2)];
+}
+function pickTreat(level) {
+  const onPath = pathSandCells(level);
+  const pool = onPath.length ? onPath : sandCells(level);
+  if (!pool.length) return null;
   const p = pool[Math.floor(pool.length / 2)];
   const kinds = ['cracker', 'sushi', 'shrimp', 'cupcake'];
   return { r: p[0], c: p[1], kind: kinds[level.index % kinds.length], got: false };
+}
+function winningProgramCount(level) {
+  const start = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
+  let frontier = [{ st: start, ways: 1 }];
+  let total = 0;
+  for (let depth = 0; depth < level.slots; depth++) {
+    const next = new Map();
+    for (let i = 0; i < frontier.length; i++) {
+      const node = frontier[i];
+      for (const d of ['L', 'R', 'U', 'D']) {
+        const res = resolve(level, node.st, d, depth + 1);
+        if (!res.ok) continue;
+        if (isWin(level, res.st)) total += node.ways;
+        const k = stateKey(res.st, depth + 1, level.hasJ);
+        const prev = next.get(k);
+        if (prev) prev.ways += node.ways;
+        else next.set(k, { st: res.st, ways: node.ways });
+      }
+    }
+    frontier = Array.from(next.values());
+  }
+  return total;
+}
+function treatOverGoal(level, treat) {
+  return !!(treat && cellChar(level.grid, treat.r + 1, treat.c) === 'G');
+}
+function rectsOverlap(a, b) {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}
+function circleHitsRect(cx, cy, rad, b) {
+  const nx = Math.max(b.x, Math.min(cx, b.x + b.w));
+  const ny = Math.max(b.y, Math.min(cy, b.y + b.h));
+  const dx = nx - cx, dy = ny - cy;
+  return dx * dx + dy * dy <= rad * rad;
+}
+function treatBox(g, treat) {
+  const p = cellXY(g, treat.r, treat.c);
+  const k = 0.5 * (g.TW / 140) * 0.72;
+  return { x: p.x - 80 * k, y: p.y - 6 - 128 * k, w: 160 * k, h: 160 * k };
+}
+function bubbleCoversTreat(level, treat) {
+  const g = geomOf(level);
+  const box = treatBox(g, treat);
+  const items = [];
+  for (let r = 0; r < g.rows; r++) {
+    for (let c = 0; c < g.cols; c++) {
+      const ch = level.grid[r][c];
+      if (ch === 'G' || ch === 'F') items.push({ row: r, layer: 1, kind: ch, r: r, c: c });
+      if (treat.r === r && treat.c === c && !treatOverGoal(level, treat)) {
+        items.push({ row: r, layer: 0, kind: 'treat', r: r, c: c });
+      }
+      if (ch === 'G' && treatOverGoal(level, treat) && treat.r === r - 1 && treat.c === c) {
+        items.push({ row: r, layer: 2, kind: 'treat', r: treat.r, c: treat.c });
+      }
+    }
+  }
+  items.sort((a, b) => a.row - b.row || a.layer - b.layer);
+  let treatAt = -1;
+  for (let i = 0; i < items.length; i++) if (items[i].kind === 'treat') treatAt = i;
+  if (treatAt < 0) return 'treat not drawn';
+  const sc = g.TW / 140;
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (it.kind !== 'G' && it.kind !== 'F') continue;
+    const p = cellXY(g, it.r, it.c);
+    const goal = it.kind === 'G';
+    const bobs = goal ? [-4, 0, 4] : [-3, 0, 3];
+    const lift = goal ? g.TD * 0.55 : g.TD * 0.42;
+    const rad = (goal ? 40 : 34) * sc;
+    const fk = 0.5 * (goal ? 0.40 : 0.34) * sc;
+    const spriteDy = (goal ? 6 : 4) * sc;
+    for (let b = 0; b < bobs.length; b++) {
+      const cy = p.y - lift + bobs[b];
+      const sprite = { x: p.x - 130 * fk, y: cy + spriteDy - 124 * fk, w: 260 * fk, h: 240 * fk };
+      const hit = circleHitsRect(p.x, cy, rad, box) || rectsOverlap(sprite, box);
+      if (hit && i > treatAt) return (goal ? 'goal' : 'friend') + ' bubble at ' + it.r + ',' + it.c;
+    }
+  }
+  return '';
 }
 function layoutIssues(level) {
   const issues = [];
@@ -767,9 +828,41 @@ function layoutIssues(level) {
   else {
     const ch = cellChar(level.grid, treat.r, treat.c);
     if (ch !== '#' || TREAT_BAN[ch]) issues.push('treat on ' + ch + ' at ' + treat.r + ',' + treat.c);
-    const earned = earnProgram(level, treat.r, treat.c);
-    level.earn = earned || '';
-    if (!earned) issues.push('treat not earned at ' + treat.r + ',' + treat.c);
+    const sim = runSim(level, level.solution);
+    if (level.solution.length > level.slots) issues.push('solution longer than slots');
+    if (sim.result !== 'win') issues.push('solution does not win');
+    const visits = sim.result === 'win' ? visitCells(level, level.solution) : [];
+    const seen = new Set();
+    const pathSand = [];
+    visits.forEach(p => {
+      const k = p[0] + ',' + p[1];
+      if (seen.has(k)) return;
+      seen.add(k);
+      if (cellChar(level.grid, p[0], p[1]) === '#') pathSand.push(p);
+    });
+    const onPath = seen.has(treat.r + ',' + treat.c);
+    level.treatOnPath = onPath;
+    level.treatCell = treat.r + ',' + treat.c;
+    level.treatOverGoal = treatOverGoal(level, treat);
+    level.earn = onPath ? level.solution : '';
+    if (pathSand.length) {
+      if (!onPath) issues.push('treat off winning path at ' + treat.r + ',' + treat.c);
+    } else {
+      // The winning program never steps on plain sand, so the treat stays on the 313e9f0 cell.
+      const legacy = legacyTreatCell(level);
+      if (!legacy || legacy[0] !== treat.r || legacy[1] !== treat.c) {
+        issues.push('no path sand and treat is not the 313e9f0 cell');
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(ORIGINAL_WINS, level.id)) {
+      const wins = winningProgramCount(level);
+      level.winCount = wins;
+      if (wins !== ORIGINAL_WINS[level.id]) {
+        issues.push('winning programs ' + wins + ' expected ' + ORIGINAL_WINS[level.id]);
+      }
+    }
+    const cover = bubbleCoversTreat(level, treat);
+    if (cover) issues.push('treat covered by ' + cover);
   }
   return issues;
 }
@@ -1749,6 +1842,11 @@ function drawStinger(p, sc) {
   if (!jellyUp && !jellyAnim) drawSprite('stingerWarn', 'pulse', p.x, p.y, { scale: sc, frame: Math.floor(T * 12) % 6 });
   drawSprite('stinger', s.state, p.x, p.y, { scale: sc, frame: s.frame });
 }
+function drawTreatSprite(r, c) {
+  const p = cellXY(G, r, c);
+  const sc = G.TW / 140;
+  drawSprite('treat', treat.kind, p.x, p.y - 6, { scale: sc * 0.72, frame: Math.floor(T * 6) % 4 });
+}
 function drawActors() {
   const items = [];
   const add = (row, layer, draw) => items.push({ row: row, layer: layer, draw: draw });
@@ -1776,8 +1874,11 @@ function drawActors() {
     if (ch === 'J') add(r, 0, () => drawStinger(p, sc));
     if (ch === 'G') add(r, 1, () => drawGoalBubble(r, c));
     if (ch === 'F') add(r, 1, () => drawFriendBubble(r, c));
-    if (treat && !treat.got && treat.r === r && treat.c === c) {
-      add(r, 0, () => drawSprite('treat', treat.kind, p.x, p.y - 6, { scale: sc * 0.72, frame: Math.floor(T * 6) % 4 }));
+    if (treat && !treat.got && treat.r === r && treat.c === c && !treatOverGoal(L, treat)) {
+      add(r, 0, () => drawTreatSprite(r, c));
+    }
+    if (ch === 'G' && treat && !treat.got && treatOverGoal(L, treat) && treat.r === r - 1 && treat.c === c) {
+      add(r, 2, () => drawTreatSprite(treat.r, treat.c));
     }
   }
   const inTube = mode === 'run' && run && run.segs[run.si] && run.segs[run.si].kind === 'tube';

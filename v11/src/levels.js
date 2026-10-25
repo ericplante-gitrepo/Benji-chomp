@@ -35,11 +35,11 @@ const LEVEL_PACK = [
         "slots": 2,
         "solution": "DU",
         "grid": [
-          "S#G",
+          "S.G",
           "A.a",
-          "..."
+          ".#."
         ],
-        "source": "Opus R-02. v11: sand between the start and the goal holds the treat."
+        "source": "Opus R-02. v11: sand below the pipe holds the treat."
       },
       {
         "id": "R4",
@@ -329,15 +329,15 @@ const LEVEL_PACK = [
         "name": "Button Above",
         "role": "play",
         "goal": "reach",
-        "slots": 6,
+        "slots": 4,
         "solution": "UDDD",
         "grid": [
           "m..",
-          "S..",
-          "M..",
-          "G#."
+          "S#.",
+          "M#.",
+          "G.."
         ],
-        "source": "v11: was Flat Spikes LRRRR, another button detour beside S1. Button is above the start. Sand beside the goal holds the treat.",
+        "source": "v11: was Flat Spikes LRRRR, another button detour beside S1. Button is above the start.",
         "replaces": "S2"
       },
       {
@@ -345,28 +345,28 @@ const LEVEL_PACK = [
         "name": "Button Island",
         "role": "twist",
         "goal": "reach",
-        "slots": 8,
+        "slots": 6,
         "solution": "DLRURR",
         "grid": [
           "SMG",
           "A.#",
           "ma."
         ],
-        "source": "Opus S-01 (Hulk level 2). v11: sand under the goal holds the treat."
+        "source": "Opus S-01 (Hulk level 2)"
       },
       {
         "id": "S4",
         "name": "Slide and Press",
         "role": "breather",
         "goal": "reach",
-        "slots": 5,
+        "slots": 3,
         "solution": "RDD",
         "grid": [
           "S>m",
-          "..M",
-          ".#G"
+          "#.M",
+          "..G"
         ],
-        "source": "Dispatch. v11: sand beside the goal holds the treat."
+        "source": "Dispatch"
       },
       {
         "id": "S5",
@@ -405,7 +405,7 @@ const LEVEL_PACK = [
         "solution": "DURRRRD",
         "grid": [
           "S6yzF",
-          "5#..G"
+          "5.#.G"
         ],
         "source": "Dispatch. v11 colour: gold pad opens the gold bed, pink pad opens the pink bed."
       },
@@ -440,15 +440,15 @@ const LEVEL_PACK = [
         "name": "There and Back",
         "role": "set piece",
         "goal": "reach",
-        "slots": 9,
+        "slots": 7,
         "solution": "RRLLDRR",
         "grid": [
-          "Sa...",
-          "B.#..",
+          "Sa..#",
+          "B....",
           "bMG..",
           "...Am"
         ],
-        "source": "Sol S-05. v11: sand above the goal holds the treat."
+        "source": "Sol S-05"
       }
     ]
   },
@@ -500,24 +500,24 @@ const LEVEL_PACK = [
         "name": "Glow Slide",
         "role": "breather",
         "goal": "reach",
-        "slots": 4,
+        "slots": 2,
         "solution": "RR",
         "grid": [
           "SJ>>>G",
-          ".....#"
+          "#....."
         ],
-        "source": "Dispatch. v11: sand under the goal holds the treat."
+        "source": "Dispatch. v11: sand under the start holds the treat."
       },
       {
         "id": "D5",
         "name": "Deep Sea Dash",
         "role": "set piece",
         "goal": "reach",
-        "slots": 8,
+        "slots": 6,
         "solution": "LRRRRL",
         "grid": [
           "5SJyA.",
-          "....#.",
+          ".#....",
           "....Ga"
         ],
         "source": "Argon D-10. v11 colour: gold pad and gold bed (teal moon). Pipe mouths are separated by water so the tube shows. Sand holds the treat."
@@ -553,12 +553,12 @@ const LEVEL_PACK = [
         "name": "Around the Sting",
         "role": "breather",
         "goal": "reach",
-        "slots": 4,
+        "slots": 2,
         "solution": "DD",
         "grid": [
-          "SJ.",
+          "SJ#",
           "A.a",
-          ".#G"
+          "..G"
         ],
         "source": "v11: was Jelly Hatches DDDDDD, jelly safe with no choice. Rights zap; Down into the tube. Stinger moved off the pipe mouth.",
         "replaces": "D8"
