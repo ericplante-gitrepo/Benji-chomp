@@ -33,7 +33,7 @@ const BUILD = 'v11.0.0-test';
 
 const W = 1280, H = 800;
 const cv = document.getElementById('c');
-const ctx = cv.getContext('2d');
+let ctx = cv.getContext('2d');
 const FONT = '"Arial Rounded MT Bold","Trebuchet MS","Comic Sans MS","Roboto",sans-serif';
 let scale = 1, offX = 0, offY = 0, dpr = 1, viewW = 1280, viewH = 800;
 
@@ -74,7 +74,7 @@ const store = {
 // --- sprites -----------------------------------------------------------------
 const SPRITES = {};
 const IMAGES = {};
-let artPending = 0, artReady = false;
+let artPending = 0, artReady = false, bootReady = false, markScoresDone = false, penScratch = null;
 const artErrors = [];
 function trackImage(img, name, onOk) {
   artPending++;
@@ -83,7 +83,10 @@ function trackImage(img, name, onOk) {
     img._fin = true;
     if (ok) { if (onOk) onOk(); } else artErrors.push(name);
     artPending--;
-    if (artPending <= 0) artReady = true;
+    if (artPending <= 0) {
+      artReady = true;
+      if (bootReady) applyMarkScores();
+    }
   };
   img.onload = () => fin(true);
   img.onerror = () => fin(false);
@@ -1108,8 +1111,8 @@ const prog = [0, 1, 2, 3].map(i => store.get('v11prog' + i, 0));
 const stars = [0, 1, 2, 3].map(i => store.get('v11stars' + i, []));
 musicOn = store.get('v11music', true);
 const TREAT_BAN = {
-  M: 1, m: 1, J: 1, '5': 1, '6': 1, y: 1, z: 1, U: 1,
-  F: 1, G: 1, A: 1, a: 1, B: 1, b: 1, C: 1, c: 1
+  S: 1, G: 1, F: 1, J: 1, U: 1,
+  A: 1, a: 1, B: 1, b: 1, C: 1, c: 1
 };
 const PIPE_MOUTH = { A: 1, a: 1, B: 1, b: 1, C: 1, c: 1 };
 const PROP_CELL = { U: 1, M: 1, y: 1, z: 1, h: 1, '2': 1, '3': 1, H: 1, Y: 1, Z: 1, m: 1, '5': 1, '6': 1 };
@@ -1117,8 +1120,19 @@ function pipeOrProp(ch) { return !!(PIPE_MOUTH[ch] || PROP_CELL[ch]); }
 const TITLE_BAND_BOTTOM = 54 + 48 / 2 + 8 / 2;
 const STINGER_RISE = 98.5;
 const bootReport = [];
-// Winning-program counts at 313e9f0. These nine puzzles keep that many.
-const ORIGINAL_WINS = { R3: 1, S2: 1, S3: 1, S4: 1, S7: 1, S10: 1, D4: 1, D5: 1, D8: 1 };
+// Winning-program counts at 313e9f0, one entry per level.
+const ORIGINAL_WINS = { R1: 1, R2: 1, R3: 1, R4: 5, R5: 1, R6: 1, R7: 1, R8: 2, R9: 16, R10: 1, R11: 1, K1: 1, K2: 1, K3: 1, K4: 179, K5: 1, K6: 1, K7: 1, K8: 1, K9: 1, K10: 2, K11: 1, S1: 1, S2: 1, S3: 1, S4: 1, S5: 1, S6: 1, S7: 1, S8: 12, S9: 1, S10: 1, D1: 1, D2: 1, D3: 2, D4: 1, D5: 1, D6: 1, D7: 2, D8: 1, D9: 1, D10: 27, D11: 1 };
+// R3 and D8 stay off this map: their winning route never crosses an allowed cell.
+const PLATE_TREAT = {
+  K4: [0, 3],
+  S2: [2, 0],
+  S3: [0, 1],
+  S4: [0, 1],
+  S7: [0, 2],
+  S10: [2, 1],
+  D4: [0, 3],
+  D5: [0, 3]
+};
 function bootLevels() {
   LEVEL_PACK.forEach((world, wi) => {
     world.levels.forEach((raw, i) => {
@@ -1136,12 +1150,21 @@ function bootLevels() {
         layout: layout, layoutOk: layout.length === 0,
         earn: level.earn || '',
         treat: level.treatCell || '',
+        floor: level.treatFloor || '',
         onPath: !!level.treatOnPath,
         overGoal: !!level.treatOverGoal,
-        wins: level.winCount || 0
+        unplaced: !!level.treatUnplaced,
+        wins: level.winCount || 0,
+        mark: '',
+        markOpen: null,
+        eyeOpen: null,
+        tuckEye: null,
+        cover: '',
+        markScored: false
       });
     });
   });
+  bootReady = true;
 }
 bootLevels();
 
@@ -1380,13 +1403,47 @@ function legacyTreatCell(level) {
   if (!sand.length) return null;
   return sand[Math.floor(sand.length / 2)];
 }
+function treatFloor(ch) {
+  if (ch === '#') return 'sand';
+  if (ch === 'm' || ch === '5' || ch === '6') return 'pad';
+  if (ch === 'M' || ch === 'y' || ch === 'z') return 'bed';
+  if (ch === '>' || ch === '<' || ch === '^' || ch === 'v') return 'current';
+  return '';
+}
+function plateMark(ch) {
+  switch (ch) {
+    case 'm': return 'star';
+    case '5':
+    case 'y': return 'moon';
+    case '6':
+    case 'z': return 'heart';
+    case '>':
+    case '<':
+    case '^':
+    case 'v': return 'arrow';
+    default: return '';
+  }
+}
+function pipeInteriors(level) {
+  const inside = new Set();
+  buildTubes(level).forEach(route => {
+    const cells = route.cells || [];
+    cells.forEach((p, i) => {
+      if (i > 0 && i < cells.length - 1) inside.add(p[0] + ',' + p[1]);
+    });
+  });
+  return inside;
+}
 function pickTreat(level) {
+  const kinds = ['cracker', 'sushi', 'shrimp', 'cupcake'];
+  const kind = kinds[level.index % kinds.length];
+  const forced = PLATE_TREAT[level.id];
+  if (forced) return { r: forced[0], c: forced[1], kind: kind, got: false };
   const onPath = pathSandCells(level);
   const pool = onPath.length ? onPath : sandCells(level);
   if (!pool.length) return null;
   const p = pool[Math.floor(pool.length / 2)];
-  const kinds = ['cracker', 'sushi', 'shrimp', 'cupcake'];
-  return { r: p[0], c: p[1], kind: kinds[level.index % kinds.length], got: false };
+  return { r: p[0], c: p[1], kind: kind, got: false };
 }
 function winningProgramCount(level) {
   const start = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
@@ -1413,59 +1470,13 @@ function winningProgramCount(level) {
 function treatOverGoal(level, treat) {
   return !!(treat && cellChar(level.grid, treat.r + 1, treat.c) === 'G');
 }
-function rectsOverlap(a, b) {
-  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-}
-function circleHitsRect(cx, cy, rad, b) {
-  const nx = Math.max(b.x, Math.min(cx, b.x + b.w));
-  const ny = Math.max(b.y, Math.min(cy, b.y + b.h));
-  const dx = nx - cx, dy = ny - cy;
-  return dx * dx + dy * dy <= rad * rad;
-}
-function treatBox(g, treat) {
-  const p = cellXY(g, treat.r, treat.c);
-  const k = 0.5 * (g.TW / 140) * 0.72;
-  return { x: p.x - 80 * k, y: p.y - 6 - 128 * k, w: 160 * k, h: 160 * k };
-}
-function bubbleCoversTreat(level, treat) {
-  const g = geomOf(level);
-  const box = treatBox(g, treat);
-  const items = [];
-  for (let r = 0; r < g.rows; r++) {
-    for (let c = 0; c < g.cols; c++) {
-      const ch = level.grid[r][c];
-      if (ch === 'G' || ch === 'F') items.push({ row: r, layer: 1, kind: ch, r: r, c: c });
-      if (treat.r === r && treat.c === c && !treatOverGoal(level, treat)) {
-        items.push({ row: r, layer: 0, kind: 'treat', r: r, c: c });
-      }
-      if (ch === 'G' && treatOverGoal(level, treat) && treat.r === r - 1 && treat.c === c) {
-        items.push({ row: r, layer: 2, kind: 'treat', r: treat.r, c: treat.c });
-      }
-    }
+function treatLiftRow(level, treat) {
+  if (!treat) return -1;
+  const below = cellChar(level.grid, treat.r + 1, treat.c);
+  if (below === 'G' || below === 'F' || below === 'h' || below === '2' || below === '3' || below === 'H' || below === 'Y' || below === 'Z') {
+    return treat.r + 1;
   }
-  items.sort((a, b) => a.row - b.row || a.layer - b.layer);
-  let treatAt = -1;
-  for (let i = 0; i < items.length; i++) if (items[i].kind === 'treat') treatAt = i;
-  if (treatAt < 0) return 'treat not drawn';
-  const sc = g.TW / 140;
-  for (let i = 0; i < items.length; i++) {
-    const it = items[i];
-    if (it.kind !== 'G' && it.kind !== 'F') continue;
-    const p = cellXY(g, it.r, it.c);
-    const goal = it.kind === 'G';
-    const bobs = goal ? [-4, 0, 4] : [-3, 0, 3];
-    const lift = goal ? g.TD * 0.55 : g.TD * 0.42;
-    const rad = (goal ? 40 : 34) * sc;
-    const fk = 0.5 * (goal ? 0.40 : 0.34) * sc;
-    const spriteDy = (goal ? 6 : 4) * sc;
-    for (let b = 0; b < bobs.length; b++) {
-      const cy = p.y - lift + bobs[b];
-      const sprite = { x: p.x - 130 * fk, y: cy + spriteDy - 124 * fk, w: 260 * fk, h: 240 * fk };
-      const hit = circleHitsRect(p.x, cy, rad, box) || rectsOverlap(sprite, box);
-      if (hit && i > treatAt) return (goal ? 'goal' : 'friend') + ' bubble at ' + it.r + ',' + it.c;
-    }
-  }
-  return '';
+  return -1;
 }
 function layoutIssues(level) {
   const issues = [];
@@ -1495,31 +1506,38 @@ function layoutIssues(level) {
   if (!treat) issues.push('missing treat');
   else {
     const ch = cellChar(level.grid, treat.r, treat.c);
-    if (ch !== '#' || TREAT_BAN[ch]) issues.push('treat on ' + ch + ' at ' + treat.r + ',' + treat.c);
+    const floor = treatFloor(ch);
+    const inside = pipeInteriors(level);
+    const key = treat.r + ',' + treat.c;
+    level.treatFloor = floor;
+    if (!floor || TREAT_BAN[ch] || inside.has(key)) {
+      issues.push('treat on ' + (ch || 'empty') + ' at ' + key);
+    }
     const sim = runSim(level, level.solution);
     if (level.solution.length > level.slots) issues.push('solution longer than slots');
     if (sim.result !== 'win') issues.push('solution does not win');
     const visits = sim.result === 'win' ? visitCells(level, level.solution) : [];
     const seen = new Set();
-    const pathSand = [];
+    let pathAllowed = false;
     visits.forEach(p => {
       const k = p[0] + ',' + p[1];
       if (seen.has(k)) return;
       seen.add(k);
-      if (cellChar(level.grid, p[0], p[1]) === '#') pathSand.push(p);
+      const step = cellChar(level.grid, p[0], p[1]);
+      if (treatFloor(step) && !TREAT_BAN[step] && !inside.has(k)) pathAllowed = true;
     });
-    const onPath = seen.has(treat.r + ',' + treat.c);
+    const onPath = seen.has(key);
     level.treatOnPath = onPath;
-    level.treatCell = treat.r + ',' + treat.c;
+    level.treatCell = key;
     level.treatOverGoal = treatOverGoal(level, treat);
     level.earn = onPath ? level.solution : '';
-    if (pathSand.length) {
-      if (!onPath) issues.push('treat off winning path at ' + treat.r + ',' + treat.c);
+    level.treatUnplaced = !pathAllowed;
+    if (pathAllowed) {
+      if (!onPath) issues.push('treat off winning path at ' + key);
     } else {
-      // The winning program never steps on plain sand, so the treat stays on the 313e9f0 cell.
       const legacy = legacyTreatCell(level);
       if (!legacy || legacy[0] !== treat.r || legacy[1] !== treat.c) {
-        issues.push('no path sand and treat is not the 313e9f0 cell');
+        issues.push('no allowed cell and treat is not the 313e9f0 cell');
       }
     }
     if (Object.prototype.hasOwnProperty.call(ORIGINAL_WINS, level.id)) {
@@ -1529,10 +1547,237 @@ function layoutIssues(level) {
         issues.push('winning programs ' + wins + ' expected ' + ORIGINAL_WINS[level.id]);
       }
     }
-    const cover = bubbleCoversTreat(level, treat);
-    if (cover) issues.push('treat covered by ' + cover);
   }
   return issues;
+}
+function withPen(fn) {
+  if (!penScratch) {
+    penScratch = document.createElement('canvas');
+    penScratch.width = W;
+    penScratch.height = H;
+  }
+  const g = penScratch.getContext('2d', { willReadFrequently: true });
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalAlpha = 1;
+  g.globalCompositeOperation = 'source-over';
+  g.filter = 'none';
+  g.clearRect(0, 0, W, H);
+  const prev = ctx;
+  ctx = g;
+  try { fn(); }
+  finally { ctx = prev; }
+  return g;
+}
+function opaqueKeys(g, x, y, w, h) {
+  const x0 = Math.max(0, Math.floor(x));
+  const y0 = Math.max(0, Math.floor(y));
+  const x1 = Math.min(W, Math.ceil(x + w));
+  const y1 = Math.min(H, Math.ceil(y + h));
+  const keys = new Set();
+  if (x1 <= x0 || y1 <= y0) return keys;
+  const img = g.getImageData(x0, y0, x1 - x0, y1 - y0);
+  const d = img.data;
+  for (let yy = 0; yy < img.height; yy++) {
+    for (let xx = 0; xx < img.width; xx++) {
+      if (d[(yy * img.width + xx) * 4 + 3] > 40) keys.add((x0 + xx) + ',' + (y0 + yy));
+    }
+  }
+  return keys;
+}
+function navyKeys(g, x, y, w, h) {
+  const x0 = Math.max(0, Math.floor(x));
+  const y0 = Math.max(0, Math.floor(y));
+  const x1 = Math.min(W, Math.ceil(x + w));
+  const y1 = Math.min(H, Math.ceil(y + h));
+  const keys = new Set();
+  if (x1 <= x0 || y1 <= y0) return keys;
+  const img = g.getImageData(x0, y0, x1 - x0, y1 - y0);
+  const d = img.data;
+  for (let yy = 0; yy < img.height; yy++) {
+    for (let xx = 0; xx < img.width; xx++) {
+      const i = (yy * img.width + xx) * 4;
+      const r = d[i], gg = d[i + 1], b = d[i + 2], a = d[i + 3];
+      if (a > 180 && r < 80 && gg < 90 && b < 130) keys.add((x0 + xx) + ',' + (y0 + yy));
+    }
+  }
+  return keys;
+}
+function openPercent(symbol, treatKeys) {
+  if (!symbol.size) return null;
+  let open = 0;
+  symbol.forEach(k => { if (!treatKeys.has(k)) open++; });
+  return Math.round(1000 * open / symbol.size) / 10;
+}
+function spriteBox(name, state, x, y, scale) {
+  const s = SPRITES[name];
+  const f = s && s.frames[state] && s.frames[state][0];
+  if (!f) return null;
+  const k = s.pxScale * scale;
+  return { x: x - f.ax * k, y: y - f.ay * k, w: f.w * k, h: f.h * k };
+}
+function keysHit(keys, treatKeys) {
+  let n = 0;
+  keys.forEach(k => { if (treatKeys.has(k)) n++; });
+  return n;
+}
+function eyeOpenPercent(name, state, frame, rx0, rx1, ry0, ry1, treatKeys, pose) {
+  const s = SPRITES[name];
+  if (!s || !s.ready || !s.frames[state]) return null;
+  const frames = s.frames[state];
+  const f = frames[Math.min(frame, frames.length - 1)];
+  const c = document.createElement('canvas');
+  c.width = f.w;
+  c.height = f.h;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(s.img, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
+  const img = g.getImageData(0, 0, f.w, f.h);
+  const d = img.data;
+  const k = s.pxScale * pose.sc;
+  const eyes = new Set();
+  for (let y = 0; y < f.h; y++) {
+    for (let x = 0; x < f.w; x++) {
+      const rx = x - f.ax, ry = y - f.ay;
+      if (rx < rx0 || rx > rx1 || ry < ry0 || ry > ry1) continue;
+      const i = (y * f.w + x) * 4;
+      if (d[i + 3] <= 180 || d[i] >= 50 || d[i + 1] >= 50 || d[i + 2] >= 70) continue;
+      eyes.add(Math.round(pose.x + rx * k) + ',' + Math.round(pose.cy + ry * k));
+    }
+  }
+  return openPercent(eyes, treatKeys);
+}
+function scorePlate(level, row) {
+  const issues = [];
+  world = level.world;
+  L = level;
+  G = geomOf(level);
+  treat = pickTreat(level);
+  mode = 'edit';
+  run = null;
+  win = null;
+  jellyUp = true;
+  T = 0;
+  if (!treat) {
+    row.markScored = true;
+    return;
+  }
+  placeBenji(level.start[0], level.start[1]);
+  const ch = cellChar(level.grid, treat.r, treat.c);
+  const pose = treatPose(G, treat.r, treat.c, ch);
+  const body = withPen(() => drawTreatBodyFrames(treat.r, treat.c));
+  const box = spriteBox('treat', treat.kind, pose.x, pose.y, pose.scale)
+    || { x: pose.x - 40, y: pose.y - 80, w: 80, h: 120 };
+  const treatKeys = opaqueKeys(body, box.x - 4, box.y - 8, box.w + 8, box.h + 16);
+  if (!treatKeys.size) issues.push('treat sprite not measured');
+  const mark = plateMark(ch);
+  let pct = null;
+  if (mark === 'arrow') {
+    const face = { '>': 'r', '<': 'l', '^': 'u', v: 'd' }[ch];
+    const abox = spriteBox('current', face, pose.x, pose.cy, pose.sc);
+    const frames = (SPRITES.current && SPRITES.current.frames[face]) || [];
+    let worst = null;
+    for (let f = 0; f < frames.length; f++) {
+      const g = withPen(() => drawSprite('current', face, pose.x, pose.cy, { scale: pose.sc, frame: f }));
+      const keys = abox ? opaqueKeys(g, abox.x, abox.y, abox.w, abox.h) : new Set();
+      const open = openPercent(keys, treatKeys);
+      if (open == null) continue;
+      if (worst == null || open < worst) worst = open;
+    }
+    pct = worst;
+    if (pct == null) issues.push('current arrow not measured');
+    else if (pct < 70) issues.push('arrow uncovered ' + pct + '% < 70');
+  } else if (mark === 'star') {
+    const g = withPen(() => drawSprite('urchinPad', 'up', pose.x, pose.cy, { scale: pose.sc, frame: 0 }));
+    const k = 0.5 * pose.sc;
+    const keys = navyKeys(g, pose.x + (105 - 128) * k, pose.cy + (111 - 139) * k, 55 * k, 31 * k);
+    pct = openPercent(keys, treatKeys);
+    if (pct == null) issues.push('pad star not measured');
+    else if (pct < 70) issues.push('star uncovered ' + pct + '% < 70');
+  } else if (mark === 'moon' || mark === 'heart') {
+    const onBed = pose.floor === 'bed';
+    const msc = onBed ? Math.max(0.55, pose.sc * 0.62) : Math.max(0.75, pose.sc);
+    const mx = pose.x;
+    const my = onBed ? pose.cy + G.TD * 0.32 : pose.cy - 10 * pose.sc;
+    const rad = 24 * msc + 8;
+    const g = withPen(() => drawMark(mx, my, mark, msc));
+    const keys = opaqueKeys(g, mx - rad, my - rad, rad * 2, rad * 2);
+    pct = openPercent(keys, treatKeys);
+    if (pct == null) issues.push(mark + ' not measured');
+    else if (pct < 70) issues.push(mark + ' uncovered ' + pct + '% < 70');
+  }
+  let eyeOpen = null;
+  let tuckEye = null;
+  if (pose.floor === 'bed') {
+    eyeOpen = eyeOpenPercent('urchin', 'idle', 0, -45, 40, -62, -30, treatKeys, pose);
+    tuckEye = eyeOpenPercent('urchinBed', 'tuck', 3, -50, 50, -30, -8, treatKeys, pose);
+  }
+  const board = boardActors();
+  let treatAt = -1;
+  for (let i = 0; i < board.items.length; i++) if (board.items[i].kind === 'treat') treatAt = i;
+  if (treatAt < 0) issues.push('treat not drawn');
+  const covers = [];
+  for (let i = treatAt + 1; i < board.items.length; i++) {
+    const g = withPen(() => board.items[i].draw());
+    const keys = opaqueKeys(g, box.x - 2, box.y - 2, box.w + 4, box.h + 4);
+    if (keysHit(keys, treatKeys)) covers.push(board.items[i].kind);
+  }
+  if (L.hasJ) {
+    const g = withPen(() => drawBeat());
+    const keys = opaqueKeys(g, box.x - 2, box.y - 2, box.w + 4, box.h + 4);
+    if (keysHit(keys, treatKeys)) covers.push('beat');
+  }
+  if (covers.length) issues.push('treat covered by ' + covers.join(', '));
+  row.mark = mark;
+  row.markOpen = pct;
+  row.eyeOpen = eyeOpen;
+  row.tuckEye = tuckEye;
+  row.cover = covers.join(', ');
+  row.markScored = true;
+  if (issues.length) {
+    row.layout = row.layout.concat(issues);
+    row.layoutOk = false;
+  }
+}
+function applyMarkScores() {
+  if (!artReady || !bootReady || markScoresDone) return;
+  markScoresDone = true;
+  const snap = {
+    world: world, L: L, G: G, treat: treat, mode: mode, run: run, win: win,
+    jellyUp: jellyUp, T: T,
+    r: benji.r, c: benji.c, x: benji.x, y: benji.y, flip: benji.flip
+  };
+  try {
+    const rows = {};
+    bootReport.forEach(row => { rows[row.id] = row; });
+    LEVEL_PACK.forEach(pack => {
+      pack.levels.forEach(raw => {
+        const level = raw.prep;
+        const row = rows[level.id];
+        if (!row || row.markScored) return;
+        try { scorePlate(level, row); }
+        catch (err) {
+          row.layout = row.layout.concat(['mark score failed']);
+          row.layoutOk = false;
+          row.markScored = true;
+          row.cover = String(err && err.message ? err.message : err);
+        }
+      });
+    });
+  } finally {
+    world = snap.world;
+    L = snap.L;
+    G = snap.G;
+    treat = snap.treat;
+    mode = snap.mode;
+    run = snap.run;
+    win = snap.win;
+    jellyUp = snap.jellyUp;
+    T = snap.T;
+    benji.r = snap.r;
+    benji.c = snap.c;
+    benji.x = snap.x;
+    benji.y = snap.y;
+    benji.flip = snap.flip;
+  }
 }
 function loadLevel(i) {
   levelIdx = i;
@@ -2510,49 +2755,90 @@ function drawStinger(p, sc) {
   if (!jellyUp && !jellyAnim) drawSprite('stingerWarn', 'pulse', p.x, p.y, { scale: sc, frame: Math.floor(T * 12) % 6 });
   drawSprite('stinger', s.state, p.x, p.y, { scale: sc, frame: s.frame });
 }
-function drawTreatSprite(r, c) {
-  const p = cellXY(G, r, c);
-  const sc = G.TW / 140;
-  drawSprite('treat', treat.kind, p.x, p.y - 6, { scale: sc * 0.72, frame: Math.floor(T * 6) % 4 });
+function treatPose(g, r, c, ch) {
+  const p = cellXY(g, r, c);
+  const floor = treatFloor(ch);
+  const plate = floor === 'pad' || floor === 'bed' || floor === 'current';
+  const sc = g.TW / 140;
+  let scale = sc * 0.72;
+  let y = p.y - 6;
+  if (plate) {
+    scale *= 0.8;
+    y -= g.TD * 0.18;
+  }
+  return { x: p.x, y: y, scale: scale, plate: plate, sc: sc, floor: floor, cy: p.y };
 }
-function drawActors() {
+function drawTreatShadow(pose) {
+  const k = 0.5 * pose.scale;
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = '#14324a';
+  ctx.filter = 'blur(' + Math.max(1.5, pose.sc * 1.5) + 'px)';
+  ctx.beginPath();
+  ctx.ellipse(pose.x, pose.y + 26 * k, 46 * k, 12 * k, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+function drawTreatBodyFrames(r, c) {
+  const ch = cellChar(L.grid, r, c);
+  const pose = treatPose(G, r, c, ch);
+  const frames = (SPRITES.treat && SPRITES.treat.frames[treat.kind]) || [];
+  const n = frames.length || 1;
+  for (let f = 0; f < n; f++) {
+    drawSprite('treat', treat.kind, pose.x, pose.y, { scale: pose.scale, frame: f });
+  }
+  return pose;
+}
+function drawTreatSprite(r, c) {
+  const ch = cellChar(L.grid, r, c);
+  const pose = treatPose(G, r, c, ch);
+  if (pose.plate) drawTreatShadow(pose);
+  drawSprite('treat', treat.kind, pose.x, pose.y, { scale: pose.scale, frame: Math.floor(T * 6) % 4 });
+}
+function boardActors() {
   const items = [];
-  const add = (row, layer, draw) => items.push({ row: row, layer: layer, draw: draw });
+  const add = (row, layer, kind, draw) => items.push({ row: row, layer: layer, kind: kind, draw: draw });
   const openingFrame = Math.floor(T * 8) % 4;
   for (let r = 0; r < G.rows; r++) for (let c = 0; c < G.cols; c++) {
     const ch = L.grid[r][c];
     const p = cellXY(G, r, c);
     const sc = G.TW / 140;
     if (PIPE_MOUTH[ch]) {
-      add(r, 0, () => drawSprite('tube_opening', ch.toLowerCase(), p.x, p.y, { scale: sc * 0.86, frame: openingFrame }));
+      add(r, 0, 'pipe', () => drawSprite('tube_opening', ch.toLowerCase(), p.x, p.y, { scale: sc * 0.86, frame: openingFrame }));
     }
-    if (ch === 'U') add(r, 0, () => drawUrchinAt(p, sc, false));
-    if (ch === 'M') add(r, 0, () => drawBed(p, sc, 'm', null, null));
-    if (ch === 'y') add(r, 0, () => drawBed(p, sc, 'g', PAINT.gold, 'moon'));
-    if (ch === 'z') add(r, 0, () => drawBed(p, sc, 'p', PAINT.pink, 'heart'));
-    if (ch === 'h') add(r, 0, () => drawClam(p, sc, 'coral', 'k'));
-    if (ch === '2') add(r, 0, () => drawClam(p, sc, 'gold', 'g'));
-    if (ch === '3') add(r, 0, () => drawClam(p, sc, 'pink', 'p'));
-    if (ch === 'H') add(r, 0, () => drawKelpGate(p, sc, 'coral', 'k'));
-    if (ch === 'Y') add(r, 0, () => drawKelpGate(p, sc, 'gold', 'g'));
-    if (ch === 'Z') add(r, 0, () => drawKelpGate(p, sc, 'pink', 'p'));
-    if (ch === 'm') add(r, 0, () => drawPad(p, sc, 'm', null, null));
-    if (ch === '5') add(r, 0, () => drawPad(p, sc, 'g', PAINT.gold, 'moon'));
-    if (ch === '6') add(r, 0, () => drawPad(p, sc, 'p', PAINT.pink, 'heart'));
-    if (ch === 'J') add(r, 0, () => drawStinger(p, sc));
-    if (ch === 'G') add(r, 1, () => drawGoalBubble(r, c));
-    if (ch === 'F') add(r, 1, () => drawFriendBubble(r, c));
-    if (treat && !treat.got && treat.r === r && treat.c === c && !treatOverGoal(L, treat)) {
-      add(r, 0, () => drawTreatSprite(r, c));
+    if (ch === 'U') add(r, 0, 'urchin', () => drawUrchinAt(p, sc, false));
+    if (ch === 'M') add(r, 0, 'bed', () => drawBed(p, sc, 'm', null, null));
+    if (ch === 'y') add(r, 0, 'bed', () => drawBed(p, sc, 'g', PAINT.gold, 'moon'));
+    if (ch === 'z') add(r, 0, 'bed', () => drawBed(p, sc, 'p', PAINT.pink, 'heart'));
+    if (ch === 'h') add(r, 0, 'clam', () => drawClam(p, sc, 'coral', 'k'));
+    if (ch === '2') add(r, 0, 'clam', () => drawClam(p, sc, 'gold', 'g'));
+    if (ch === '3') add(r, 0, 'clam', () => drawClam(p, sc, 'pink', 'p'));
+    if (ch === 'H') add(r, 0, 'kelp', () => drawKelpGate(p, sc, 'coral', 'k'));
+    if (ch === 'Y') add(r, 0, 'kelp', () => drawKelpGate(p, sc, 'gold', 'g'));
+    if (ch === 'Z') add(r, 0, 'kelp', () => drawKelpGate(p, sc, 'pink', 'p'));
+    if (ch === 'm') add(r, 0, 'pad', () => drawPad(p, sc, 'm', null, null));
+    if (ch === '5') add(r, 0, 'pad', () => drawPad(p, sc, 'g', PAINT.gold, 'moon'));
+    if (ch === '6') add(r, 0, 'pad', () => drawPad(p, sc, 'p', PAINT.pink, 'heart'));
+    if (ch === 'J') add(r, 0, 'stinger', () => drawStinger(p, sc));
+    if (ch === 'G') add(r, 1, 'goal', () => drawGoalBubble(r, c));
+    if (ch === 'F') add(r, 1, 'friend', () => drawFriendBubble(r, c));
+    const lift = treat && !treat.got ? treatLiftRow(L, treat) : -1;
+    if (treat && !treat.got && treat.r === r && treat.c === c && lift < 0) {
+      add(r, 0, 'treat', () => drawTreatSprite(r, c));
     }
-    if (ch === 'G' && treat && !treat.got && treatOverGoal(L, treat) && treat.r === r - 1 && treat.c === c) {
-      add(r, 2, () => drawTreatSprite(treat.r, treat.c));
+    if (lift === r && treat && !treat.got && treat.r === r - 1 && treat.c === c) {
+      add(r, 2, 'treat', () => drawTreatSprite(treat.r, treat.c));
     }
   }
   const inTube = mode === 'run' && run && run.segs[run.si] && run.segs[run.si].kind === 'tube';
-  if (!inTube) add((benji.y - G.by) / G.TD - 0.5, 2, drawBenji);
-  items.sort((a, b) => a.row - b.row || a.layer - b.layer).forEach(it => it.draw());
-  if (inTube) drawBenji();
+  if (!inTube) add((benji.y - G.by) / G.TD - 0.5, 2, 'benji', drawBenji);
+  items.sort((a, b) => a.row - b.row || a.layer - b.layer);
+  return { items: items, inTube: inTube };
+}
+function drawActors() {
+  const board = boardActors();
+  board.items.forEach(it => it.draw());
+  if (board.inTube) drawBenji();
 }
 function benjiPose() {
   if (benji.forceState) return { state: benji.forceState, value: benji.forceValue || 0 };
@@ -3094,6 +3380,7 @@ window.__benji = {
   stars: stars,
   prog: prog
 };
+if (bootReady && artReady) applyMarkScores();
 
 </script>
 </body>
