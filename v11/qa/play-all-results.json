@@ -1,0 +1,144 @@
+{
+  "checks": {
+    "audit": {
+      "tray": "truncate",
+      "badBoot": [],
+      "ties": [
+        {
+          "id": "K10",
+          "intended": "UDLLRRRR",
+          "shortest": "LLRRUDRR"
+        },
+        {
+          "id": "D3",
+          "intended": "DRUR",
+          "shortest": "RDUR"
+        },
+        {
+          "id": "D7",
+          "intended": "DRURR",
+          "shortest": "RDURR"
+        },
+        {
+          "id": "D10",
+          "intended": "DRURR",
+          "shortest": "RDURR"
+        }
+      ],
+      "pipes": [],
+      "wrong": [],
+      "overshoot": [],
+      "overflow": [],
+      "scroll": {
+        "w": 1280,
+        "h": 800,
+        "iw": 1280,
+        "ih": 800
+      },
+      "artErrors": [],
+      "lastError": null
+    },
+    "tray": {
+      "truncate": "RR",
+      "empty": "",
+      "keep": "RRU",
+      "byLength": "",
+      "byLengthLong": "U"
+    },
+    "r1": {
+      "id": "R1",
+      "win": true,
+      "stars": 3,
+      "shell": false
+    },
+    "beforeReload": {
+      "v11prog0": "1",
+      "v6prog0": "9",
+      "benji_music": "1",
+      "benji_v6prog0": "\"keep-me\"",
+      "v6stars0": "[1]"
+    },
+    "afterReload": {
+      "prog0": 1,
+      "v11prog0": "1",
+      "v6prog0": "9",
+      "benji_music": "1",
+      "benji_v6prog0": "\"keep-me\"",
+      "v6stars0": "[1]",
+      "keys": [
+        "benji_music",
+        "v11stars0",
+        "v6stars0",
+        "v6prog0",
+        "benji_v6prog0",
+        "v11prog0"
+      ]
+    },
+    "portrait": true,
+    "before": "title",
+    "afterClick": "title",
+    "console": [],
+    "network": []
+  },
+  "suites": [
+    {
+      "label": "chromium-1280x800-dpr1.5",
+      "wins": 43,
+      "n": 43,
+      "console": [],
+      "network": [],
+      "fails": []
+    },
+    {
+      "label": "chromium-1024x768",
+      "wins": 43,
+      "n": 43,
+      "console": [],
+      "network": [],
+      "fails": []
+    },
+    {
+      "label": "chromium-844x390",
+      "wins": 43,
+      "n": 43,
+      "console": [],
+      "network": [],
+      "fails": []
+    }
+  ],
+  "webkit": {
+    "loaded": {
+      "n": 43,
+      "bad": [],
+      "art": []
+    },
+    "wins": [
+      {
+        "id": "R1",
+        "win": true,
+        "stars": 3,
+        "shell": false
+      },
+      {
+        "id": "K1",
+        "win": true,
+        "stars": 3,
+        "shell": false
+      },
+      {
+        "id": "S1",
+        "win": true,
+        "stars": 3,
+        "shell": false
+      },
+      {
+        "id": "D1",
+        "win": true,
+        "stars": 3,
+        "shell": false
+      }
+    ],
+    "console": [],
+    "network": []
+  }
+}
