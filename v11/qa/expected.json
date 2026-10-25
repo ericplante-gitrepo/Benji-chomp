@@ -398,8 +398,8 @@
   {
     "id": "D5",
     "world": "Deep Sea",
-    "intended": "LRRRRD",
-    "shortest": "LRRRRD",
+    "intended": "LRRRRL",
+    "shortest": "LRRRRL",
     "verdict": "ok",
     "why": "stated solution wins",
     "wins": 1,

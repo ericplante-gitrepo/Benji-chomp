@@ -36,9 +36,10 @@ const LEVEL_PACK = [
         "solution": "DU",
         "grid": [
           "S.G",
-          "A.a"
+          "A.a",
+          ".#."
         ],
-        "source": "Opus R-02"
+        "source": "Opus R-02. v11: sand below the pipe holds the treat."
       },
       {
         "id": "R4",
@@ -348,7 +349,7 @@ const LEVEL_PACK = [
         "solution": "DLRURR",
         "grid": [
           "SMG",
-          "A..",
+          "A.#",
           "ma."
         ],
         "source": "Opus S-01 (Hulk level 2)"
@@ -362,7 +363,7 @@ const LEVEL_PACK = [
         "solution": "RDD",
         "grid": [
           "S>m",
-          "..M",
+          "#.M",
           "..G"
         ],
         "source": "Dispatch"
@@ -404,7 +405,7 @@ const LEVEL_PACK = [
         "solution": "DURRRRD",
         "grid": [
           "S6yzF",
-          "5...G"
+          "5.#.G"
         ],
         "source": "Dispatch. v11 colour: gold pad opens the gold bed, pink pad opens the pink bed."
       },
@@ -442,7 +443,7 @@ const LEVEL_PACK = [
         "slots": 7,
         "solution": "RRLLDRR",
         "grid": [
-          "Sa...",
+          "Sa..#",
           "B....",
           "bMG..",
           "...Am"
@@ -502,9 +503,10 @@ const LEVEL_PACK = [
         "slots": 2,
         "solution": "RR",
         "grid": [
-          "SJ>>>G"
+          "SJ>>>G",
+          "#....."
         ],
-        "source": "Dispatch"
+        "source": "Dispatch. v11: sand under the start holds the treat."
       },
       {
         "id": "D5",
@@ -512,13 +514,13 @@ const LEVEL_PACK = [
         "role": "set piece",
         "goal": "reach",
         "slots": 6,
-        "solution": "LRRRRD",
+        "solution": "LRRRRL",
         "grid": [
-          "5SJyA",
-          "....a",
-          "....G"
+          "5SJyA.",
+          ".#....",
+          "....Ga"
         ],
-        "source": "Argon D-10. v11 colour: gold pad and gold bed (teal moon). Stinger moved beside the pipe so the raised pose does not cover the exit."
+        "source": "Argon D-10. v11 colour: gold pad and gold bed (teal moon). Pipe mouths are separated by water so the tube shows. Sand holds the treat."
       },
       {
         "id": "D6",

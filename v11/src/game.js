@@ -371,6 +371,8 @@ const TREAT_BAN = {
 const PIPE_MOUTH = { A: 1, a: 1, B: 1, b: 1, C: 1, c: 1 };
 const PROP_CELL = { U: 1, M: 1, y: 1, z: 1, h: 1, '2': 1, '3': 1, H: 1, Y: 1, Z: 1, m: 1, '5': 1, '6': 1 };
 function pipeOrProp(ch) { return !!(PIPE_MOUTH[ch] || PROP_CELL[ch]); }
+const TITLE_BAND_BOTTOM = 54 + 48 / 2 + 8 / 2;
+const STINGER_RISE = 98.5;
 const bootReport = [];
 function bootLevels() {
   LEVEL_PACK.forEach((world, wi) => {
@@ -401,7 +403,13 @@ function geomOf(level) {
   const TW = Math.min(228, (x1 - x0) / (cols * kx), (y1 - y0 - 20) / (rows * ky + kh));
   const PW = TW * kx, TD = TW * ky, TH = TW * kh;
   const bw = cols * PW, bh = rows * TD + TH;
-  return { rows: rows, cols: cols, TW: TW, PW: PW, TD: TD, TH: TH, bx: (x0 + x1) / 2 - bw / 2, by: y0 + (y1 - y0 - bh) / 2 };
+  let by = y0 + (y1 - y0 - bh) / 2;
+  if (level.grid[0].indexOf('J') >= 0) {
+    const top = by + TD / 2 - STINGER_RISE * (TW / 140);
+    const gap = 4;
+    if (top < TITLE_BAND_BOTTOM + gap) by += TITLE_BAND_BOTTOM + gap - top;
+  }
+  return { rows: rows, cols: cols, TW: TW, PW: PW, TD: TD, TH: TH, bx: (x0 + x1) / 2 - bw / 2, by: by };
 }
 function cellXY(g, r, c) { return { x: g.bx + c * g.PW + g.PW / 2, y: g.by + r * g.TD + g.TD / 2 }; }
 function spotOf(g, r, c) {
@@ -527,17 +535,22 @@ function placeBenji(r, c) {
   benji.r = r; benji.c = c;
   if (G) { const p = spotOf(G, r, c); benji.x = p.x; benji.y = p.y; }
 }
+function sandCells(level) {
+  const cells = [];
+  for (let r = 0; r < level.grid.length; r++) {
+    for (let c = 0; c < level.grid[0].length; c++) {
+      if (level.grid[r][c] === '#') cells.push([r, c]);
+    }
+  }
+  return cells;
+}
 function pickTreat(level) {
   const sim = runSim(level, level.solution);
-  const sands = [];
-  const any = [];
+  const onPath = [];
   (sim.trace || []).forEach(p => {
-    const ch = cellChar(level.grid, p[0], p[1]);
-    if (TREAT_BAN[ch]) return;
-    if (ch === '#') sands.push(p);
-    else if (ch && ch !== 'S' && ch !== 'G' && ch !== '.') any.push(p);
+    if (cellChar(level.grid, p[0], p[1]) === '#') onPath.push(p);
   });
-  const list = sands.length ? sands : any;
+  const list = onPath.length ? onPath : sandCells(level);
   if (!list.length) return null;
   const p = list[Math.floor(list.length / 2)];
   const kinds = ['cracker', 'sushi', 'shrimp', 'cupcake'];
@@ -559,10 +572,19 @@ function layoutIssues(level) {
       }
     }
   }
+  const g = geomOf(level);
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[0].length; c++) {
+      if (grid[r][c] !== 'J') continue;
+      const top = g.by + (r + 0.5) * g.TD - STINGER_RISE * (g.TW / 140);
+      if (top < TITLE_BAND_BOTTOM) issues.push('stinger cuts the title at ' + r + ',' + c);
+    }
+  }
   const treat = pickTreat(level);
-  if (treat) {
+  if (!treat) issues.push('missing treat');
+  else {
     const ch = cellChar(level.grid, treat.r, treat.c);
-    if (TREAT_BAN[ch]) issues.push('treat on ' + ch + ' at ' + treat.r + ',' + treat.c);
+    if (ch !== '#' || TREAT_BAN[ch]) issues.push('treat on ' + ch + ' at ' + treat.r + ',' + treat.c);
   }
   return issues;
 }
@@ -975,7 +997,7 @@ function backdrop() {
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   if (state !== 'title' && (world === 1 || world === 2)) {
-    ctx.fillStyle = 'rgba(32,43,80,0.35)';
+    ctx.fillStyle = 'rgba(32,43,80,0.40)';
     ctx.fillRect(0, 0, W, H);
   }
   bubbles.forEach(b => {
@@ -1209,7 +1231,7 @@ function benjiState() {
   return 'idle';
 }
 function drawBenji() {
-  const sc = (G ? G.TW : 160) / 140 * 0.52;
+  const sc = (G ? G.TW : 160) / 140 * 0.40;
   const st = benjiState();
   const frame = st === 'idle' || st === 'swim' || st === 'happy' ? Math.floor(T * 8) % 4 : Math.min(3, Math.floor(((run && run.react && run.react.t) || 0) * 10));
   const squash = mode === 'fail' && run && run.react && run.react.why === 'urchin' ? 0.9 : 1;
