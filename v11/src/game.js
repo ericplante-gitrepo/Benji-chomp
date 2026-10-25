@@ -454,7 +454,8 @@ const STINGER_RISE = 98.5;
 const bootReport = [];
 // Winning-program counts at 313e9f0, one entry per level.
 const ORIGINAL_WINS = { R1: 1, R2: 1, R3: 1, R4: 5, R5: 1, R6: 1, R7: 1, R8: 2, R9: 16, R10: 1, R11: 1, K1: 1, K2: 1, K3: 1, K4: 179, K5: 1, K6: 1, K7: 1, K8: 1, K9: 1, K10: 2, K11: 1, S1: 1, S2: 1, S3: 1, S4: 1, S5: 1, S6: 1, S7: 1, S8: 12, S9: 1, S10: 1, D1: 1, D2: 1, D3: 2, D4: 1, D5: 1, D6: 1, D7: 2, D8: 1, D9: 1, D10: 27, D11: 1 };
-// R3 and D8 stay off this map: their winning route never crosses an allowed cell.
+// R3 and D8 have no treat. Their winning route never crosses an allowed cell.
+const NO_TREAT = { R3: 1, D8: 1 };
 const PLATE_TREAT = {
   K4: [0, 3],
   S2: [2, 0],
@@ -771,6 +772,7 @@ function pipeInteriors(level) {
   return inside;
 }
 function pickTreat(level) {
+  if (NO_TREAT[level.id]) return null;
   const kinds = ['cracker', 'sushi', 'shrimp', 'cupcake'];
   const kind = kinds[level.index % kinds.length];
   const forced = PLATE_TREAT[level.id];
@@ -838,50 +840,60 @@ function layoutIssues(level) {
       if (top < TITLE_BAND_BOTTOM) issues.push('stinger cuts the title at ' + r + ',' + c);
     }
   }
+  const sim = runSim(level, level.solution);
+  if (level.solution.length > level.slots) issues.push('solution longer than slots');
+  if (sim.result !== 'win') issues.push('solution does not win');
+  if (Object.prototype.hasOwnProperty.call(ORIGINAL_WINS, level.id)) {
+    const wins = winningProgramCount(level);
+    level.winCount = wins;
+    if (wins !== ORIGINAL_WINS[level.id]) {
+      issues.push('winning programs ' + wins + ' expected ' + ORIGINAL_WINS[level.id]);
+    }
+  }
   const treat = pickTreat(level);
-  if (!treat) issues.push('missing treat');
-  else {
-    const ch = cellChar(level.grid, treat.r, treat.c);
-    const floor = treatFloor(ch);
-    const inside = pipeInteriors(level);
-    const key = treat.r + ',' + treat.c;
-    level.treatFloor = floor;
-    if (!floor || TREAT_BAN[ch] || inside.has(key)) {
-      issues.push('treat on ' + (ch || 'empty') + ' at ' + key);
-    }
-    const sim = runSim(level, level.solution);
-    if (level.solution.length > level.slots) issues.push('solution longer than slots');
-    if (sim.result !== 'win') issues.push('solution does not win');
-    const visits = sim.result === 'win' ? visitCells(level, level.solution) : [];
-    const seen = new Set();
-    let pathAllowed = false;
-    visits.forEach(p => {
-      const k = p[0] + ',' + p[1];
-      if (seen.has(k)) return;
-      seen.add(k);
-      const step = cellChar(level.grid, p[0], p[1]);
-      if (treatFloor(step) && !TREAT_BAN[step] && !inside.has(k)) pathAllowed = true;
-    });
-    const onPath = seen.has(key);
-    level.treatOnPath = onPath;
-    level.treatCell = key;
-    level.treatOverGoal = treatOverGoal(level, treat);
-    level.earn = onPath ? level.solution : '';
-    level.treatUnplaced = !pathAllowed;
-    if (pathAllowed) {
-      if (!onPath) issues.push('treat off winning path at ' + key);
-    } else {
-      const legacy = legacyTreatCell(level);
-      if (!legacy || legacy[0] !== treat.r || legacy[1] !== treat.c) {
-        issues.push('no allowed cell and treat is not the 313e9f0 cell');
-      }
-    }
-    if (Object.prototype.hasOwnProperty.call(ORIGINAL_WINS, level.id)) {
-      const wins = winningProgramCount(level);
-      level.winCount = wins;
-      if (wins !== ORIGINAL_WINS[level.id]) {
-        issues.push('winning programs ' + wins + ' expected ' + ORIGINAL_WINS[level.id]);
-      }
+  if (!treat) {
+    level.treatFloor = '';
+    level.treatOnPath = false;
+    level.treatCell = '';
+    level.treatOverGoal = false;
+    level.earn = '';
+    level.treatUnplaced = false;
+    if (!NO_TREAT[level.id]) issues.push('missing treat');
+    return issues;
+  }
+  const ch = cellChar(level.grid, treat.r, treat.c);
+  const floor = treatFloor(ch);
+  const inside = pipeInteriors(level);
+  const key = treat.r + ',' + treat.c;
+  level.treatFloor = floor;
+  if (!floor || TREAT_BAN[ch] || inside.has(key)) {
+    issues.push('treat on ' + (ch || 'empty') + ' at ' + key);
+  }
+  const visits = sim.result === 'win' ? visitCells(level, level.solution) : [];
+  const seen = new Set();
+  let pathAllowed = false;
+  visits.forEach(p => {
+    const k = p[0] + ',' + p[1];
+    if (seen.has(k)) return;
+    seen.add(k);
+    const step = cellChar(level.grid, p[0], p[1]);
+    if (treatFloor(step) && !TREAT_BAN[step] && !inside.has(k)) pathAllowed = true;
+  });
+  const onPath = seen.has(key);
+  level.treatOnPath = onPath;
+  level.treatCell = key;
+  level.treatOverGoal = treatOverGoal(level, treat);
+  level.earn = onPath ? level.solution : '';
+  level.treatUnplaced = !pathAllowed;
+  if (level.solution.length > level.slots || sim.result !== 'win' || !onPath) {
+    issues.push('winning program missed the treat');
+  }
+  if (pathAllowed) {
+    if (!onPath) issues.push('treat off winning path at ' + key);
+  } else {
+    const legacy = legacyTreatCell(level);
+    if (!legacy || legacy[0] !== treat.r || legacy[1] !== treat.c) {
+      issues.push('no allowed cell and treat is not the 313e9f0 cell');
     }
   }
   return issues;
@@ -1203,7 +1215,14 @@ function scorePlate(level, row) {
   jellyUp = true;
   T = 0;
   if (!treat) {
+    const board = boardActors();
+    if (board.items.some(it => it.kind === 'treat')) issues.push('treat drawn with nothing to collect');
+    row.chin = 'clear';
     row.markScored = true;
+    if (issues.length) {
+      row.layout = row.layout.concat(issues);
+      row.layoutOk = false;
+    }
     return;
   }
   placeBenji(level.start[0], level.start[1]);

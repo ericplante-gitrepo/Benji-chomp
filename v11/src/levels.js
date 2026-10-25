@@ -39,7 +39,7 @@ const LEVEL_PACK = [
           "A.a",
           ".#."
         ],
-        "source": "Opus R-02. v11: sand below the pipe holds the treat."
+        "source": "Opus R-02. v11: no treat."
       },
       {
         "id": "R4",
