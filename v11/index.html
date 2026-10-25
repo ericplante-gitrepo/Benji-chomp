@@ -53,6 +53,16 @@ resize();
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+const bounceOut = t => {
+  const n = 7.5625, d = 2.75;
+  if (t < 1 / d) return n * t * t;
+  if (t < 2 / d) return n * (t -= 1.5 / d) * t + 0.75;
+  if (t < 2.5 / d) return n * (t -= 2.25 / d) * t + 0.9375;
+  return n * (t -= 2.625 / d) * t + 0.984375;
+};
+// v10.3.0 swim clock (index.html MOVE_T / updateRun). Scale and centring stay v11's.
+const MOVE_T = 0.42;
+const BUMP_FAIL = { urchin: 1, bump: 1, bridge: 1, bed: 1 };
 function assertNever(x) { throw new Error('Unexpected value: ' + String(x)); }
 function portrait() { return viewH > viewW; }
 
@@ -820,6 +830,27 @@ function sfx(f, dur, type, vol) {
   if (!a || a.state !== 'running') return;
   try { toneAt(a, f, a.currentTime, dur || 0.12, type || 'sine', vol || 0.07); } catch (e) {}
 }
+function glide(f0, f1, dur, type, vol) {
+  if (!audioUnlocked || muted) return;
+  const a = audioCtx();
+  if (!a || a.state !== 'running') return;
+  try {
+    const t = a.currentTime;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(Math.max(40, f0), t);
+    o.frequency.exponentialRampToValueAtTime(Math.max(40, f1), t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol || 0.08, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(t); o.stop(t + dur + 0.02);
+  } catch (e) {}
+}
+function blub() {
+  const f = 320 + Math.random() * 80;
+  glide(f, f * 1.9, 0.1, 'sine', 0.1);
+}
 function fanfare() {
   if (!audioUnlocked || muted) return;
   const a = audioCtx();
@@ -1193,7 +1224,12 @@ let state = 'title', world = 0, levelIdx = 0, L = null, G = null;
 let mode = 'edit', queue = [], run = null, runs = 0, win = null, reward = null;
 let pressed = null, T = 0, animMul = 1, slotShake = 0;
 let tubes = [], fx = {}, trails = [], treat = null, parts = [], bubbles = [];
-const benji = { r: 0, c: 0, x: 400, y: 400, flip: false, faceT: 1, bob: 0 };
+const benji = {
+  r: 0, c: 0, x: 400, y: 400, flip: false,
+  turnT: 1, q: 0, qv: 0, squat: 0, rot: 0, ox: 0, extraY: 0,
+  shrink: 1, alpha: 1, spin: 0, moving: false, hidden: false,
+  home: null, popIn: 1, forceState: null, forceValue: 0
+};
 let jellyUp = true, jellyAnim = null;
 let lastError = null;
 
@@ -1202,6 +1238,25 @@ function resetFx() { fx = {}; trails = []; jellyAnim = null; }
 function placeBenji(r, c) {
   benji.r = r; benji.c = c;
   if (G) { const p = spotOf(G, r, c); benji.x = p.x; benji.y = p.y; }
+}
+function resetPose() {
+  benji.turnT = 1; benji.q = 0; benji.qv = 0; benji.squat = 0;
+  benji.rot = 0; benji.ox = 0; benji.extraY = 0;
+  benji.shrink = 1; benji.alpha = 1; benji.spin = 0;
+  benji.moving = false; benji.hidden = false; benji.home = null;
+  benji.popIn = 1; benji.forceState = null; benji.forceValue = 0;
+}
+function travelDir(dr, dc) {
+  if (Math.abs(dc) > Math.abs(dr)) return dc < 0 ? 'L' : 'R';
+  if (dr < 0) return 'U';
+  if (dr > 0) return 'D';
+  return null;
+}
+function faceToward(dir) {
+  const was = benji.flip;
+  if (dir === 'L') benji.flip = true;
+  else if (dir === 'R') benji.flip = false;
+  if (was !== benji.flip) benji.turnT = 0;
 }
 function sandCells(level) {
   const cells = [];
@@ -1266,6 +1321,7 @@ function loadLevel(i) {
   treat = pickTreat(L);
   jellyUp = true;
   placeBenji(L.start[0], L.start[1]);
+  resetPose();
   benji.flip = L.goalAt[1] < L.start[1];
   state = 'play';
 }
@@ -1294,34 +1350,57 @@ function pressPlay() {
   if (mode === 'run' || mode === 'fail') { manualReset(); return; }
   if (!queue.length) { slotShake = 0.35; sfx(240, 0.1, 'square', 0.04); return; }
   runs++;
-  sfx(520, 0.08, 'triangle', 0.06);
+  sfx(392, 0.1, 'triangle', 0.08);
   mode = 'run';
   run = {
     cmds: queue.slice(), i: 0,
     sw: new Set(), fr: new Set(),
-    segs: [], si: 0, res: null, react: null
+    segs: [{ kind: 'wait', dur: 0.25, lead: true }], si: 0, res: null, react: null
   };
   resetFx();
   if (treat) treat.got = false;
   placeBenji(L.start[0], L.start[1]);
-  launchArrow();
+  resetPose();
+  benji.flip = L.goalAt[1] < L.start[1];
+  beginSeg();
+}
+function beginReturn(keepQueue) {
+  const why = run && run.react ? run.react.why : '';
+  if (!keepQueue && run) queue = applyTray(traySetting(), queue, run.failSlot, L.need);
+  const sunk = why === 'water' || why === 'off' || benji.hidden || benji.alpha < 0.5;
+  const sx = benji.x, sy = benji.y;
+  mode = 'edit';
+  run = null;
+  resetFx();
+  if (treat) treat.got = false;
+  benji.forceState = null;
+  benji.rot = 0; benji.ox = 0; benji.spin = 0; benji.moving = false; benji.squat = 0;
+  benji.shrink = 1; benji.alpha = 1; benji.hidden = false;
+  const sr = L.start[0], sc0 = L.start[1];
+  const p = spotOf(G, sr, sc0);
+  benji.r = sr; benji.c = sc0;
+  if (sunk) {
+    benji.home = null;
+    benji.x = p.x; benji.y = p.y;
+    benji.popIn = 0;
+    benji.flip = L.goalAt[1] < sc0;
+    bubbleBurst(p.x, p.y + 10, 8, 26);
+    sfx(500, 0.09, 'sine', 0.12);
+  } else {
+    benji.popIn = 1;
+    benji.home = { x: p.x, y: p.y, t: 0, sx: sx, sy: sy, dur: 0.5 };
+    if (p.x < sx - 4) benji.flip = true;
+    else if (p.x > sx + 4) benji.flip = false;
+    blub();
+  }
 }
 function manualReset() {
   if (!L) return;
-  mode = 'edit'; run = null;
-  resetFx();
-  if (treat) treat.got = false;
-  placeBenji(L.start[0], L.start[1]);
-  sfx(360, 0.08, 'sine', 0.05);
+  beginReturn(true);
 }
 function finishFail() {
   if (!run) { mode = 'edit'; return; }
-  const slot = run.failSlot;
-  queue = applyTray(traySetting(), queue, slot, L.need);
-  mode = 'edit'; run = null;
-  resetFx();
-  if (treat) treat.got = false;
-  placeBenji(L.start[0], L.start[1]);
+  beginReturn(false);
 }
 function launchArrow() {
   const dir = run.cmds[run.i];
@@ -1330,22 +1409,81 @@ function launchArrow() {
   run.res = res;
   run.segs = [];
   if (L.hasJ) run.segs.push({ kind: 'beat', safe: n % 2 === 1, dur: 0.18 });
-  res.moves.forEach(m => {
-    if (m.type === 'swim') run.segs.push({ kind: 'swim', r: m.r, c: m.c, fail: m.fail || null, dur: m.fail ? 0.3 : 0.3 });
-    else run.segs.push({ kind: 'tube', r: m.r, c: m.c, nr: m.nr, nc: m.nc, dur: 0.46 });
+  let fromR = benji.r, fromC = benji.c;
+  res.moves.forEach((m, idx) => {
+    const next = res.moves[idx + 1];
+    if (m.type === 'swim') {
+      const travel = travelDir(m.r - fromR, m.c - fromC) || dir;
+      const fail = m.fail || null;
+      const bump = !!(fail && BUMP_FAIL[fail]);
+      run.segs.push({
+        kind: 'swim', r: m.r, c: m.c, fail: fail, dir: travel,
+        dur: bump ? 0.24 : MOVE_T, short: bump, fromR: fromR, fromC: fromC
+      });
+      if (bump) run.segs.push({ kind: 'bounce', dur: 0.32, fail: fail, r: fromR, c: fromC });
+      else if (fail === 'water' || fail === 'off') run.segs.push({ kind: 'fall', dur: 1.25, fail: fail });
+      else if (!fail && next && next.type !== 'tube') run.segs.push({ kind: 'wait', dur: 0.07 });
+      fromR = m.r; fromC = m.c;
+    } else if (m.type === 'tube') {
+      run.segs.push({ kind: 'tube', r: m.r, c: m.c, nr: m.nr, nc: m.nc });
+      fromR = m.nr; fromC = m.nc;
+      if (next) run.segs.push({ kind: 'wait', dur: 0.1 });
+    } else assertNever(m.type);
   });
+  if (res.ok) {
+    const last = res.moves[res.moves.length - 1];
+    const another = run.i + 1 < run.cmds.length;
+    // v10 wins on the last stroke. The 0.07s beat stays only while another arrow follows.
+    const gap = last && last.type === 'tube' ? 0.1 : (another ? 0.07 : 0);
+    if (gap > 0) run.segs.push({ kind: 'wait', dur: gap });
+  }
   run.si = 0;
   beginSeg();
 }
 function beginSeg() {
   const seg = run.segs[run.si];
+  if (!seg) return;
   seg.t = 0;
-  if (seg.kind === 'swim' || seg.kind === 'tube') {
+  if (seg.kind === 'swim') {
     seg.x0 = benji.x; seg.y0 = benji.y;
-    const dest = seg.kind === 'tube' ? spotOf(G, seg.nr, seg.nc) : spotOf(G, seg.r, seg.c);
-    seg.x1 = dest.x; seg.y1 = dest.y;
-    const dc = (seg.kind === 'tube' ? seg.nc - seg.c : seg.c - benji.c);
-    if (dc < 0) benji.flip = true; else if (dc > 0) benji.flip = false;
+    const full = spotOf(G, seg.r, seg.c);
+    if (seg.short) {
+      seg.x1 = lerp(seg.x0, full.x, 0.42);
+      seg.y1 = lerp(seg.y0, full.y, 0.42);
+    } else {
+      seg.x1 = full.x; seg.y1 = full.y;
+    }
+    faceToward(seg.dir);
+    benji.squat = 0;
+    blub();
+  } else if (seg.kind === 'bounce') {
+    seg.x0 = benji.x; seg.y0 = benji.y;
+    const home = spotOf(G, seg.r, seg.c);
+    seg.x1 = home.x; seg.y1 = home.y;
+    benji.moving = true;
+    if (seg.fail === 'urchin') sfx(190, 0.42, 'sine', 0.1);
+    else sfx(200, 0.16, 'sine', 0.1);
+  } else if (seg.kind === 'fall') {
+    seg.y0 = benji.y;
+    seg.dropped = false;
+    benji.moving = false;
+    glide(420, 160, 0.5, 'sine', 0.08);
+    bubbleBurst(benji.x, benji.y + 20, 6, 30);
+  } else if (seg.kind === 'tube') {
+    seg.phase = 'in';
+    seg.pts = tubePolyline(seg);
+    seg.len = polyLen(seg.pts);
+    seg.ride = clamp(0.7 + seg.len / 2200, 1, 1.4);
+    seg.ts = tubeShrink();
+    seg.mouth = spotOf(G, seg.r, seg.c);
+    seg.dest = spotOf(G, seg.nr, seg.nc);
+    seg.ang = null;
+    const q0 = seg.pts[0];
+    const q1 = seg.pts[Math.min(1, seg.pts.length - 1)];
+    if (q1.x < q0.x - 2) faceToward('L');
+    else if (q1.x > q0.x + 2) faceToward('R');
+    benji.spin = 0;
+    glide(320, 1100, 0.45, 'sine', 0.08);
   }
 }
 function arrive(r, c) {
@@ -1369,25 +1507,79 @@ function overshootIndex(cmds) {
   }
   return null;
 }
-function startReact(why, slot) {
+function startReact(why, slot, dur) {
   run.failSlot = slot;
-  run.react = { why: why, t: 0, dur: 1 };
+  run.react = { why: why, t: 0, dur: dur == null ? 1 : dur };
   mode = 'fail';
   sfx(why === 'jelly' ? 180 : 220, 0.2, 'sine', 0.08);
 }
 function segDone() {
   const seg = run.segs[run.si];
-  if (seg.kind === 'swim' && !seg.fail) arrive(seg.r, seg.c);
-  if (seg.kind === 'tube') arrive(seg.nr, seg.nc);
-  if (seg.kind === 'swim' && seg.fail) { startReact(seg.fail, run.i); return; }
+  if (seg.kind === 'wait') {
+    if (seg.lead) { launchArrow(); return; }
+    run.si++;
+    if (run.si < run.segs.length) { beginSeg(); return; }
+    finishArrow();
+    return;
+  }
+  if (seg.kind === 'beat') {
+    run.si++;
+    if (run.si < run.segs.length) { beginSeg(); return; }
+    finishArrow();
+    return;
+  }
+  if (seg.kind === 'swim') {
+    benji.rot = 0;
+    benji.moving = false;
+    if (!seg.fail) {
+      benji.x = seg.x1; benji.y = seg.y1;
+      arrive(seg.r, seg.c);
+      bubbleBurst(benji.x, benji.y + 30, 2, 20);
+    } else if (seg.fail === 'jelly' || seg.fail === 'loop') {
+      benji.x = seg.x1; benji.y = seg.y1;
+      arrive(seg.r, seg.c);
+      startReact(seg.fail, run.i, 1);
+      return;
+    } else if (!(BUMP_FAIL[seg.fail] || seg.fail === 'water' || seg.fail === 'off')) {
+      startReact(seg.fail, run.i, 1);
+      return;
+    }
+  } else if (seg.kind === 'bounce') {
+    benji.moving = false;
+    benji.x = seg.x1; benji.y = seg.y1;
+    benji.r = seg.r; benji.c = seg.c;
+    startReact(seg.fail, run.i, seg.fail === 'urchin' ? 0.9 : 1.1);
+    return;
+  } else if (seg.kind === 'fall') {
+    benji.hidden = true;
+    benji.alpha = 0;
+    benji.rot = 0;
+    benji.ox = 0;
+    benji.forceState = null;
+    benji.moving = false;
+    // v10 AUTO_RESET.water is 0.35s after the sink. 0.42 pops five frames late.
+    startReact(seg.fail, run.i, 0.35);
+    return;
+  } else if (seg.kind === 'tube') {
+    benji.shrink = 1;
+    benji.spin = 0;
+    benji.moving = false;
+    benji.x = seg.dest.x;
+    benji.y = seg.dest.y;
+    arrive(seg.nr, seg.nc);
+  } else assertNever(seg.kind);
   run.si++;
   if (run.si < run.segs.length) { beginSeg(); return; }
+  finishArrow();
+}
+function finishArrow() {
   if (run.res && run.res.ok) {
     benji.r = run.res.st.r; benji.c = run.res.st.c;
     run.sw = new Set(run.res.st.sw);
     run.fr = new Set(run.res.st.fr);
     const p = spotOf(G, benji.r, benji.c);
     benji.x = p.x; benji.y = p.y;
+    benji.moving = false;
   }
   run.i++;
   if (run.i >= run.cmds.length) {
@@ -1396,7 +1588,7 @@ function segDone() {
     else {
       const over = overshootIndex(run.cmds);
       const why = over != null ? 'toofar' : (runSim(L, run.cmds).why === 'friends' ? 'friends' : 'miss');
-      startReact(why, over != null ? over : run.cmds.length - 1);
+      startReact(why, over != null ? over : run.cmds.length - 1, 1.1);
     }
   } else launchArrow();
 }
@@ -1408,6 +1600,8 @@ function startWin() {
   const shell = L.goal === 'fewest' && len === L.need;
   win = { stars: n, shell: shell, t: 0, friend: L.cast.goal };
   mode = 'win';
+  benji.moving = false;
+  benji.rot = 0;
   const prev = stars[world][levelIdx] || 0;
   if (n > prev) { stars[world][levelIdx] = n; store.set('v11stars' + world, stars[world]); }
   const unlocked = levelIdx + 1;
@@ -1514,37 +1708,167 @@ function update(dt) {
   T += dt;
   const adt = dt * animMul;
   slotShake = Math.max(0, slotShake - dt);
+  benji.qv += (-benji.q * 260 - benji.qv * 14) * adt;
+  benji.q += benji.qv * adt;
+  benji.turnT = Math.min(1, benji.turnT + adt / 0.14);
+  if (benji.popIn < 1) benji.popIn = Math.min(1, benji.popIn + dt / 0.35);
+  const stroking = mode === 'run' && run && run.segs[run.si] && run.segs[run.si].kind === 'swim';
+  if (!stroking) benji.squat *= Math.pow(0.8, adt * 60);
+  if (benji.home) {
+    const h = benji.home;
+    h.t += dt;
+    const k = clamp(h.t / h.dur, 0, 1);
+    benji.x = lerp(h.sx, h.x, ease(k));
+    benji.y = lerp(h.sy, h.y, ease(k));
+    benji.moving = k < 1;
+    if (k >= 1) { benji.home = null; benji.moving = false; }
+  }
   bubbles.forEach(b => { b.y -= b.s * dt; if (b.y < -20) b.y = H + 10; b.x += Math.sin(T + b.w) * 8 * dt; });
-  parts.forEach(p => { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 40 * dt; });
+  parts.forEach(p => {
+    p.t += dt;
+    p.x += (p.vx || 0) * dt;
+    p.y += (p.vy || 0) * dt;
+    if (p.kind !== 'bubble') p.vy += 40 * dt;
+  });
   parts = parts.filter(p => p.t < p.life);
   updateJelly(adt);
   if (state === 'reward' && reward) reward.t += dt;
   if (state === 'play' && win) win.t += dt;
-  if (mode === 'run' && run && run.segs[run.si]) {
-    const seg = run.segs[run.si];
-    seg.t += adt;
-    const u = clamp(seg.t / seg.dur, 0, 1);
-    const e = ease(u);
-    if (seg.kind === 'swim') { benji.x = lerp(seg.x0, seg.x1, e); benji.y = lerp(seg.y0, seg.y1, e); }
-    else if (seg.kind === 'tube') {
-      const pts = tubePolyline(seg);
-      const q = samplePoly(pts, e);
-      benji.x = q.x; benji.y = q.y;
-      if (q.dx < -0.2) benji.flip = true; else if (q.dx > 0.2) benji.flip = false;
-    }
-    if (u >= 1) segDone();
-  } else if (mode === 'fail' && run && run.react) {
+  const seg = run && run.segs[run.si];
+  if (seg && mode === 'run' && stepSeg(seg, dt, adt)) segDone();
+  if (mode === 'fail' && run && run.react) {
     run.react.t += dt;
-    if (run.react.why === 'water') {
-      benji.y += 28 * dt;
-    }
-    if (run.react.t >= run.react.dur) finishFail();
+    const falling = run.react.why === 'water' || run.react.why === 'off';
+    if (!falling) benji.ox = Math.sin(run.react.t * 34) * 8 * (1 - clamp(run.react.t, 0, 1));
+    const fallLive = seg && seg.kind === 'fall' && seg.t < seg.dur;
+    if (!fallLive && run.react.t >= run.react.dur) beginReturn(false);
   }
   updateFx(adt);
-  if (G && mode === 'edit' && L) {
+  if (G && mode === 'edit' && L && !benji.home && benji.popIn >= 1) {
     const p = spotOf(G, benji.r, benji.c);
     benji.x = p.x; benji.y = p.y;
   }
+}
+function stepSeg(seg, dt, adt) {
+  if (seg.kind === 'wait' || seg.kind === 'beat') {
+    seg.t += adt;
+    benji.moving = false;
+    return seg.t >= seg.dur;
+  }
+  if (seg.kind === 'swim') return stepSwim(seg, adt);
+  if (seg.kind === 'bounce') return stepBounce(seg, adt);
+  if (seg.kind === 'fall') return stepFall(seg, dt);
+  if (seg.kind === 'tube') return stepTube(seg, adt);
+  return assertNever(seg.kind);
+}
+function stepSwim(seg, adt) {
+  seg.t += adt;
+  const k = clamp(seg.t / seg.dur, 0, 1);
+  const hop = Math.sin(k * Math.PI) * (seg.short ? 6 : 14);
+  benji.x = lerp(seg.x0, seg.x1, ease(k));
+  benji.y = lerp(seg.y0, seg.y1, ease(k)) - hop;
+  benji.moving = k < 1;
+  benji.squat = 0;
+  const nose = seg.dir === 'L' ? -1 : seg.dir === 'R' ? 1 : 0;
+  benji.rot = nose * (benji.flip ? -1 : 1) * 0.12 * Math.sin(k * Math.PI);
+  return k >= 1;
+}
+function stepBounce(seg, adt) {
+  seg.t += adt;
+  const k = clamp(seg.t / seg.dur, 0, 1);
+  benji.x = lerp(seg.x0, seg.x1, ease(k));
+  benji.y = lerp(seg.y0, seg.y1, ease(k)) - Math.sin(k * Math.PI) * 26;
+  benji.moving = k < 1;
+  return k >= 1;
+}
+function stepFall(seg, dt) {
+  if (seg.t >= seg.dur) return true;
+  seg.t += dt;
+  if (seg.t < 0.45) {
+    benji.forceState = 'oops';
+    benji.forceValue = (seg.t * 3) % 1;
+    benji.ox = Math.sin(seg.t * 40) * 7;
+    benji.rot = Math.sin(seg.t * 24) * 0.22;
+    benji.y = seg.y0 - Math.sin((seg.t / 0.45) * Math.PI) * 10;
+    benji.shrink = 1;
+    benji.alpha = 1;
+    benji.moving = false;
+    return false;
+  }
+  if (!seg.dropped) {
+    seg.dropped = true;
+    glide(1500, 260, 0.95, 'sine', 0.07);
+    bubbleBurst(benji.x, benji.y, 10, 40);
+  }
+  const k = clamp((seg.t - 0.45) / 0.8, 0, 1);
+  benji.forceState = null;
+  benji.y = seg.y0 + k * k * 150;
+  benji.shrink = 1 - 0.5 * k;
+  benji.alpha = 1 - k * k;
+  benji.rot += dt * 5;
+  benji.ox = Math.sin(seg.t * 30) * 4 * (1 - k);
+  if (Math.random() < 0.5) bubbleBurst(benji.x, benji.y, 1, 20);
+  benji.moving = false;
+  return k >= 1;
+}
+function stepTube(seg, adt) {
+  seg.t += adt;
+  if (seg.phase === 'in') {
+    const k = clamp(seg.t / 0.2, 0, 1);
+    benji.shrink = lerp(1, seg.ts, ease(k));
+    benji.x = seg.mouth.x;
+    benji.y = seg.mouth.y + k * 8;
+    benji.moving = true;
+    if (k >= 1) { seg.phase = 'ride'; seg.t = 0; seg.ang = null; benji.spin = 0; }
+    return false;
+  }
+  if (seg.phase === 'ride') {
+    const k = clamp(seg.t / seg.ride, 0, 1);
+    const q = samplePoly(seg.pts, ease(k));
+    benji.x = q.x; benji.y = q.y;
+    benji.shrink = seg.ts;
+    benji.rot = 0;
+    benji.moving = true;
+    let ang = benji.flip ? Math.atan2(-q.dy, -q.dx) : Math.atan2(q.dy, q.dx);
+    if (seg.ang != null) {
+      while (ang - seg.ang > Math.PI) ang -= Math.PI * 2;
+      while (ang - seg.ang < -Math.PI) ang += Math.PI * 2;
+    }
+    seg.ang = ang;
+    benji.spin = ang;
+    if (k > 0.04 && k < 0.96 && Math.random() < 0.7) {
+      const mag = Math.hypot(q.dx, q.dy) || 1;
+      const tx = q.dx / mag, ty = q.dy / mag;
+      parts.push({
+        kind: 'bubble',
+        x: benji.x - tx * 30 + (Math.random() * 12 - 6),
+        y: benji.y - ty * 30 + (Math.random() * 12 - 6),
+        vx: -tx * 30, vy: -20,
+        r: 3 + Math.random() * 4,
+        life: 0.35 + Math.random() * 0.25,
+        t: 0
+      });
+    }
+    if (k >= 1) {
+      seg.phase = 'out';
+      seg.t = 0;
+      benji.spin = 0;
+      benji.x = seg.dest.x;
+      glide(260, 820, 0.14, 'sine', 0.1);
+      bubbleBurst(seg.dest.x, seg.dest.y, 8, 30);
+    }
+    return false;
+  }
+  if (seg.phase === 'out') {
+    const k = clamp(seg.t / 0.4, 0, 1);
+    benji.shrink = lerp(seg.ts, 1, bounceOut(k));
+    benji.spin = 0;
+    benji.x = seg.dest.x;
+    benji.y = seg.dest.y - Math.sin(k * Math.PI) * 34 + (1 - k) * 10;
+    benji.moving = k < 1;
+    return k >= 1;
+  }
+  return assertNever(seg.phase);
 }
 function tubePolyline(seg) {
   const route = tubes.filter(t => {
@@ -1572,11 +1896,42 @@ function samplePoly(pts, u) {
   for (let i = 1; i < pts.length; i++) {
     if (left <= seg[i - 1]) {
       const t = left / seg[i - 1];
-      return { x: lerp(pts[i - 1].x, pts[i].x, t), y: lerp(pts[i - 1].y, pts[i].y, t), dx: pts[i].x - pts[i - 1].x };
+      return {
+        x: lerp(pts[i - 1].x, pts[i].x, t), y: lerp(pts[i - 1].y, pts[i].y, t),
+        dx: pts[i].x - pts[i - 1].x, dy: pts[i].y - pts[i - 1].y
+      };
     }
     left -= seg[i - 1];
   }
-  return { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y, dx: 0 };
+  const last = pts[pts.length - 1], prev = pts[pts.length - 2] || last;
+  return { x: last.x, y: last.y, dx: last.x - prev.x, dy: last.y - prev.y };
+}
+function polyLen(pts) {
+  let n = 0;
+  for (let i = 1; i < pts.length; i++) n += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
+  return n;
+}
+function tubeShrink() {
+  const S = SPRITES.benji;
+  const f = S && S.ready && (S.frames.idle || [])[0];
+  const sc = (G.TW / 140) * 0.40;
+  const h = f ? f.h * S.pxScale * sc * 0.62 : 80 * sc;
+  const thick = Math.min(G.PW, G.TD) * 0.46;
+  return clamp(thick * 0.6 / Math.max(1, h), 0.5, 0.8);
+}
+function bubbleBurst(x, y, n, spread) {
+  for (let i = 0; i < n; i++) {
+    parts.push({
+      kind: 'bubble',
+      x: x + (Math.random() * 2 - 1) * spread,
+      y: y + (Math.random() * 2 - 1) * spread * 0.6,
+      vx: (Math.random() * 2 - 1) * 40,
+      vy: -60 - Math.random() * 100,
+      r: 3 + Math.random() * 7,
+      life: 0.7 + Math.random() * 0.6,
+      t: 0
+    });
+  }
 }
 function burst(x, y, color) {
   for (let i = 0; i < 14; i++) {
@@ -1892,30 +2247,44 @@ function drawActors() {
   items.sort((a, b) => a.row - b.row || a.layer - b.layer).forEach(it => it.draw());
   if (inTube) drawBenji();
 }
-function benjiState() {
-  if (mode === 'win') return 'happy';
-  if (mode === 'fail') return 'oops';
-  if (mode === 'run') return 'swim';
-  return 'idle';
+function benjiPose() {
+  if (benji.forceState) return { state: benji.forceState, value: benji.forceValue || 0 };
+  if (benji.moving) return { state: 'swim', value: (T * 2.5) % 1 };
+  if (mode === 'win') return { state: 'happy', value: (T * 3) % 1 };
+  if (mode === 'fail') return { state: 'oops', value: clamp((run && run.react && run.react.t) || 0, 0, 1) };
+  const bp = T % 3.5;
+  const value = bp < 0.07 ? 2 / 3 : bp < 0.15 ? 1 : bp < 0.22 ? 2 / 3 : ((T * 0.9) % 1) * 0.45;
+  return { state: 'idle', value: value };
 }
 function drawBenji() {
-  const sc = (G ? G.TW : 160) / 140 * 0.40;
-  const st = benjiState();
-  const frame = st === 'idle' || st === 'swim' || st === 'happy' ? Math.floor(T * 8) % 4 : Math.min(3, Math.floor(((run && run.react && run.react.t) || 0) * 10));
-  const squash = mode === 'fail' && run && run.react && run.react.why === 'urchin' ? 0.9 : 1;
-  const sy = 2 - squash;
+  if (benji.hidden || benji.alpha <= 0.02) return;
+  const pin = benji.popIn < 1 ? bounceOut(benji.popIn) : 1;
+  const turn = benji.turnT < 1 ? Math.max(0.2, Math.abs(1 - 2 * benji.turnT)) : 1;
+  const sc = (G ? G.TW : 160) / 140 * 0.40 * benji.shrink * pin;
+  const pose = benjiPose();
+  const sx = (1 + benji.q + benji.squat) * turn;
+  const sy = 1 - benji.q - benji.squat;
   const sheet = SPRITES.benji;
   const base = sheet && ((sheet.frames.idle || [])[0]);
   const pt = sheet && sheet.points && sheet.points.center;
-  let x = benji.x;
-  let y = benji.y;
+  let x = benji.x + benji.ox;
+  let y = benji.y + benji.extraY;
   if (base && pt) {
     const cx = (pt[0] - base.ax) * sheet.pxScale;
     const cy = (pt[1] - base.ay) * sheet.pxScale;
-    x -= (benji.flip ? -cx : cx) * sc * squash;
+    x -= (benji.flip ? -cx : cx) * sc * sx;
     y -= cy * sc * sy;
   }
-  drawSprite('benji', st, x, y, { scale: sc, frame: frame, flipX: benji.flip, sx: squash, sy: sy });
+  ctx.save();
+  if (benji.spin) {
+    ctx.translate(benji.x, benji.y);
+    ctx.rotate(benji.spin);
+    ctx.translate(-benji.x, -benji.y);
+  }
+  drawSprite('benji', pose.state, x, y, {
+    scale: sc, value: pose.value, flipX: benji.flip, sx: sx, sy: sy, rot: benji.rot, alpha: benji.alpha
+  });
+  ctx.restore();
 }
 function drawBoard() {
   drawPipes();
@@ -2082,9 +2451,17 @@ function goalLabel(goal) {
 }
 function drawParts() {
   parts.forEach(p => {
-    ctx.globalAlpha = 1 - p.t / p.life;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, p.s, p.s * 0.6);
+    ctx.globalAlpha = clamp(1 - p.t / p.life, 0, 1);
+    if (p.kind === 'bubble') {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r || 5, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255,255,255,.95)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, p.s, p.s * 0.6);
+    }
     ctx.globalAlpha = 1;
   });
 }
@@ -2313,6 +2690,15 @@ window.__benji = {
   ui: uiSnapshot,
   toScreen: toScreen,
   turbo(n) { animMul = n || 1; },
+  pose() {
+    return {
+      x: Math.round(benji.x * 10) / 10, y: Math.round(benji.y * 10) / 10,
+      flip: benji.flip, moving: benji.moving, rot: Math.round(benji.rot * 1000) / 1000,
+      shrink: Math.round(benji.shrink * 1000) / 1000, alpha: Math.round(benji.alpha * 1000) / 1000,
+      spin: Math.round(benji.spin * 1000) / 1000, hidden: benji.hidden,
+      popIn: Math.round(benji.popIn * 1000) / 1000, home: !!benji.home, mode: mode
+    };
+  },
   wrongPrograms: wrongPrograms,
   ignoreSwitch: ignoreSwitch,
   pipeReport: pipeReport,
