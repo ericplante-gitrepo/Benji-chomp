@@ -512,13 +512,13 @@ const LEVEL_PACK = [
         "role": "set piece",
         "goal": "reach",
         "slots": 6,
-        "solution": "LRRRDD",
+        "solution": "LRRRRD",
         "grid": [
-          "5SyAa",
-          "....J",
+          "5SJyA",
+          "....a",
           "....G"
         ],
-        "source": "Argon D-10. v11 colour: gold pad and gold bed (teal moon)."
+        "source": "Argon D-10. v11 colour: gold pad and gold bed (teal moon). Stinger moved beside the pipe so the raised pose does not cover the exit."
       },
       {
         "id": "D6",
@@ -554,11 +554,11 @@ const LEVEL_PACK = [
         "slots": 2,
         "solution": "DD",
         "grid": [
-          "S#J",
+          "SJ#",
           "A.a",
           "..G"
         ],
-        "source": "v11: was Jelly Hatches DDDDDD, jelly safe with no choice. Rights zap; Down into the tube.",
+        "source": "v11: was Jelly Hatches DDDDDD, jelly safe with no choice. Rights zap; Down into the tube. Stinger moved off the pipe mouth.",
         "replaces": "D8"
       },
       {
@@ -596,13 +596,13 @@ const LEVEL_PACK = [
         "slots": 8,
         "solution": "RRDLLDLL",
         "grid": [
-          "S#3...",
+          "S##...",
           "..v...",
-          "AZ#...",
+          "AZ3...",
           ".....a",
           "...GJ#"
         ],
-        "source": "Opus D-03. v11 colour: pink clam and pink kelp gate."
+        "source": "Opus D-03. v11 colour: pink clam and pink kelp gate. Clam moved off the top row so it clears the title and the rhythm dots."
       }
     ]
   }

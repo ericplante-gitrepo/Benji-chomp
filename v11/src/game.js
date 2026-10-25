@@ -59,7 +59,13 @@ function trackImage(img, name, onOk) {
 }
 function registerSpriteSheet(name, src, json) {
   const img = new Image();
-  const sheet = { img: img, frames: (json && json.frames) || {}, pxScale: (json && json.pxScale) || 1, ready: false };
+  const sheet = {
+    img: img,
+    frames: (json && json.frames) || {},
+    pxScale: (json && json.pxScale) || 1,
+    points: (json && json.points) || null,
+    ready: false
+  };
   SPRITES[name] = sheet;
   const fin = trackImage(img, name, () => { sheet.ready = true; });
   img.src = src;
@@ -358,7 +364,13 @@ function traySetting() { return traySettingTest || TRAY_AFTER_FALL; }
 const prog = [0, 1, 2, 3].map(i => store.get('v11prog' + i, 0));
 const stars = [0, 1, 2, 3].map(i => store.get('v11stars' + i, []));
 musicOn = store.get('v11music', true);
-const TREAT_BAN = { M: 1, m: 1, J: 1, '5': 1, '6': 1, y: 1, z: 1, U: 1 };
+const TREAT_BAN = {
+  M: 1, m: 1, J: 1, '5': 1, '6': 1, y: 1, z: 1, U: 1,
+  F: 1, G: 1, A: 1, a: 1, B: 1, b: 1, C: 1, c: 1
+};
+const PIPE_MOUTH = { A: 1, a: 1, B: 1, b: 1, C: 1, c: 1 };
+const PROP_CELL = { U: 1, M: 1, y: 1, z: 1, h: 1, '2': 1, '3': 1, H: 1, Y: 1, Z: 1, m: 1, '5': 1, '6': 1 };
+function pipeOrProp(ch) { return !!(PIPE_MOUTH[ch] || PROP_CELL[ch]); }
 const bootReport = [];
 function bootLevels() {
   LEVEL_PACK.forEach((world, wi) => {
@@ -536,14 +548,21 @@ function layoutIssues(level) {
   const grid = level.grid;
   for (let r = 0; r < grid.length; r++) {
     for (let c = 0; c < grid[0].length; c++) {
-      if (grid[r][c] !== 'J' || r === 0) continue;
-      const above = grid[r - 1][c];
-      if (above === 'G' || above === 'F') issues.push('stinger directly below ' + above + ' at ' + r + ',' + c);
+      if (grid[r][c] !== 'J') continue;
+      if (r > 0) {
+        const above = grid[r - 1][c];
+        if (above === 'G' || above === 'F') issues.push('stinger directly below ' + above + ' at ' + r + ',' + c);
+        if (pipeOrProp(above)) issues.push('stinger rises into ' + above + ' at ' + r + ',' + c);
+      }
+      if (r + 1 < grid.length && pipeOrProp(grid[r + 1][c])) {
+        issues.push('stinger directly above ' + grid[r + 1][c] + ' at ' + r + ',' + c);
+      }
     }
   }
   const treat = pickTreat(level);
-  if (treat && TREAT_BAN[cellChar(level.grid, treat.r, treat.c)]) {
-    issues.push('treat on ' + cellChar(level.grid, treat.r, treat.c));
+  if (treat) {
+    const ch = cellChar(level.grid, treat.r, treat.c);
+    if (TREAT_BAN[ch]) issues.push('treat on ' + ch + ' at ' + treat.r + ',' + treat.c);
   }
   return issues;
 }
@@ -956,7 +975,7 @@ function backdrop() {
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
   if (state !== 'title' && (world === 1 || world === 2)) {
-    ctx.fillStyle = 'rgba(32,43,80,0.20)';
+    ctx.fillStyle = 'rgba(32,43,80,0.35)';
     ctx.fillRect(0, 0, W, H);
   }
   bubbles.forEach(b => {
@@ -1043,9 +1062,9 @@ function drawBubble(x, y, rad, locked) {
   ctx.save();
   ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2);
   const g = ctx.createRadialGradient(x - rad * 0.3, y - rad * 0.35, 2, x, y, rad);
-  g.addColorStop(0, 'rgba(255,255,255,.7)');
-  g.addColorStop(0.6, locked ? 'rgba(180,190,200,.25)' : 'rgba(180,255,230,.2)');
-  g.addColorStop(1, 'rgba(255,255,255,.05)');
+  g.addColorStop(0, 'rgba(255,255,255,.9)');
+  g.addColorStop(0.55, locked ? 'rgba(198,208,216,.84)' : 'rgba(186,255,232,.8)');
+  g.addColorStop(1, 'rgba(255,255,255,.42)');
   ctx.fillStyle = g; ctx.fill();
   ctx.lineWidth = 4; ctx.strokeStyle = locked ? 'rgba(220,230,240,.7)' : 'rgba(235,255,245,.95)'; ctx.stroke();
   ctx.beginPath(); ctx.arc(x - rad * 0.25, y - rad * 0.3, rad * 0.22, Math.PI * 1.1, Math.PI * 1.7);
@@ -1116,7 +1135,7 @@ function drawBed(p, sc, channel, tint, mark) {
   } else if (t < 4 / 12) {
     drawSprite('urchinBed', 'tuck', p.x, p.y, Object.assign({ frame: Math.min(3, Math.floor(t * 12)) }, opt));
   } else drawSprite('urchinBed', 'flat', p.x, p.y, opt);
-  if (mark) drawMark(p.x, p.y - G.TD * 0.55, mark, Math.max(0.7, sc * 0.85));
+  if (mark) drawMark(p.x, p.y + G.TD * 0.32, mark, Math.max(0.55, sc * 0.62));
 }
 function drawClam(p, sc, look, channel) {
   const on = gateOpen(channel);
@@ -1149,33 +1168,38 @@ function drawStinger(p, sc) {
 }
 function drawActors() {
   const items = [];
+  const add = (row, layer, draw) => items.push({ row: row, layer: layer, draw: draw });
+  const openingFrame = Math.floor(T * 8) % 4;
   for (let r = 0; r < G.rows; r++) for (let c = 0; c < G.cols; c++) {
     const ch = L.grid[r][c];
     const p = cellXY(G, r, c);
     const sc = G.TW / 140;
-    if (ch === 'U') items.push({ y: p.y, draw: () => drawUrchinAt(p, sc, false) });
-    if (ch === 'M') items.push({ y: p.y, draw: () => drawBed(p, sc, 'm', null, null) });
-    if (ch === 'y') items.push({ y: p.y, draw: () => drawBed(p, sc, 'g', PAINT.gold, 'moon') });
-    if (ch === 'z') items.push({ y: p.y, draw: () => drawBed(p, sc, 'p', PAINT.pink, 'heart') });
-    if (ch === 'h') items.push({ y: p.y, draw: () => drawClam(p, sc, 'coral', 'k') });
-    if (ch === '2') items.push({ y: p.y, draw: () => drawClam(p, sc, 'gold', 'g') });
-    if (ch === '3') items.push({ y: p.y, draw: () => drawClam(p, sc, 'pink', 'p') });
-    if (ch === 'H') items.push({ y: p.y, draw: () => drawKelpGate(p, sc, 'coral', 'k') });
-    if (ch === 'Y') items.push({ y: p.y, draw: () => drawKelpGate(p, sc, 'gold', 'g') });
-    if (ch === 'Z') items.push({ y: p.y, draw: () => drawKelpGate(p, sc, 'pink', 'p') });
-    if (ch === 'm') items.push({ y: p.y, draw: () => drawPad(p, sc, 'm', null, null) });
-    if (ch === '5') items.push({ y: p.y, draw: () => drawPad(p, sc, 'g', PAINT.gold, 'moon') });
-    if (ch === '6') items.push({ y: p.y, draw: () => drawPad(p, sc, 'p', PAINT.pink, 'heart') });
-    if (ch === 'J') items.push({ y: p.y, draw: () => drawStinger(p, sc) });
-    if (ch === 'G') items.push({ y: p.y, draw: () => drawGoalBubble(r, c) });
-    if (ch === 'F') items.push({ y: p.y, draw: () => drawFriendBubble(r, c) });
+    if (PIPE_MOUTH[ch]) {
+      add(r, 0, () => drawSprite('tube_opening', ch.toLowerCase(), p.x, p.y, { scale: sc * 0.86, frame: openingFrame }));
+    }
+    if (ch === 'U') add(r, 0, () => drawUrchinAt(p, sc, false));
+    if (ch === 'M') add(r, 0, () => drawBed(p, sc, 'm', null, null));
+    if (ch === 'y') add(r, 0, () => drawBed(p, sc, 'g', PAINT.gold, 'moon'));
+    if (ch === 'z') add(r, 0, () => drawBed(p, sc, 'p', PAINT.pink, 'heart'));
+    if (ch === 'h') add(r, 0, () => drawClam(p, sc, 'coral', 'k'));
+    if (ch === '2') add(r, 0, () => drawClam(p, sc, 'gold', 'g'));
+    if (ch === '3') add(r, 0, () => drawClam(p, sc, 'pink', 'p'));
+    if (ch === 'H') add(r, 0, () => drawKelpGate(p, sc, 'coral', 'k'));
+    if (ch === 'Y') add(r, 0, () => drawKelpGate(p, sc, 'gold', 'g'));
+    if (ch === 'Z') add(r, 0, () => drawKelpGate(p, sc, 'pink', 'p'));
+    if (ch === 'm') add(r, 0, () => drawPad(p, sc, 'm', null, null));
+    if (ch === '5') add(r, 0, () => drawPad(p, sc, 'g', PAINT.gold, 'moon'));
+    if (ch === '6') add(r, 0, () => drawPad(p, sc, 'p', PAINT.pink, 'heart'));
+    if (ch === 'J') add(r, 0, () => drawStinger(p, sc));
+    if (ch === 'G') add(r, 1, () => drawGoalBubble(r, c));
+    if (ch === 'F') add(r, 1, () => drawFriendBubble(r, c));
     if (treat && !treat.got && treat.r === r && treat.c === c) {
-      items.push({ y: p.y + 2, draw: () => drawSprite('treat', treat.kind, p.x, p.y - 6, { scale: sc * 0.72, frame: Math.floor(T * 6) % 4 }) });
+      add(r, 0, () => drawSprite('treat', treat.kind, p.x, p.y - 6, { scale: sc * 0.72, frame: Math.floor(T * 6) % 4 }));
     }
   }
   const inTube = mode === 'run' && run && run.segs[run.si] && run.segs[run.si].kind === 'tube';
-  if (!inTube) items.push({ y: benji.y + G.TD * 0.2, draw: drawBenji });
-  items.sort((a, b) => a.y - b.y).forEach(it => it.draw());
+  if (!inTube) add((benji.y - G.by) / G.TD - 0.5, 2, drawBenji);
+  items.sort((a, b) => a.row - b.row || a.layer - b.layer).forEach(it => it.draw());
   if (inTube) drawBenji();
 }
 function benjiState() {
@@ -1185,21 +1209,23 @@ function benjiState() {
   return 'idle';
 }
 function drawBenji() {
-  const sc = Math.min(G ? G.TW : 160, 176) / 140 * 0.52;
+  const sc = (G ? G.TW : 160) / 140 * 0.52;
   const st = benjiState();
   const frame = st === 'idle' || st === 'swim' || st === 'happy' ? Math.floor(T * 8) % 4 : Math.min(3, Math.floor(((run && run.react && run.react.t) || 0) * 10));
   const squash = mode === 'fail' && run && run.react && run.react.why === 'urchin' ? 0.9 : 1;
-  drawSprite('benji', st, benji.x, benji.y, { scale: sc, frame: frame, flipX: benji.flip, sx: squash, sy: 2 - squash });
-}
-function drawOpenings() {
-  const sc = G.TW / 140 * 0.86;
-  const frame = Math.floor(T * 8) % 4;
-  for (let r = 0; r < G.rows; r++) for (let c = 0; c < G.cols; c++) {
-    const ch = L.grid[r][c];
-    if (!'AaBbCc'.includes(ch)) continue;
-    const p = cellXY(G, r, c);
-    drawSprite('tube_opening', ch.toLowerCase(), p.x, p.y, { scale: sc, frame: frame });
+  const sy = 2 - squash;
+  const sheet = SPRITES.benji;
+  const base = sheet && ((sheet.frames.idle || [])[0]);
+  const pt = sheet && sheet.points && sheet.points.center;
+  let x = benji.x;
+  let y = benji.y;
+  if (base && pt) {
+    const cx = (pt[0] - base.ax) * sheet.pxScale;
+    const cy = (pt[1] - base.ay) * sheet.pxScale;
+    x -= (benji.flip ? -cx : cx) * sc * squash;
+    y -= cy * sc * sy;
   }
+  drawSprite('benji', st, x, y, { scale: sc, frame: frame, flipX: benji.flip, sx: squash, sy: sy });
 }
 function drawBoard() {
   drawPipes();
@@ -1215,7 +1241,6 @@ function drawBoard() {
     } else drawFloor(r, c, floorState(ch));
   }
   drawPushHints();
-  drawOpenings();
   drawActors();
   drawTrails();
   if (L.hasJ) drawBeat();
@@ -1267,10 +1292,19 @@ function drawSlot(i, sg) {
     ctx.translate(wobble, 0);
     ctx.beginPath(); ctx.arc(x, y, r + 18, 0, Math.PI * 2);
     ctx.fillStyle = '#e11d2e'; ctx.fill();
+    ctx.beginPath(); ctx.arc(x, y, r + 23, 0, Math.PI * 2);
+    ctx.lineWidth = 4; ctx.strokeStyle = '#202b50'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, r + 18, 0, Math.PI * 2);
     ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.stroke();
     if (filled) dirDisc(queue[i], x, y, r);
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 10; ctx.lineCap = 'round';
+    ctx.lineCap = 'round';
     const xh = r * 0.95;
+    ctx.strokeStyle = '#202b50'; ctx.lineWidth = 16;
+    ctx.beginPath();
+    ctx.moveTo(x - xh, y - xh); ctx.lineTo(x + xh, y + xh);
+    ctx.moveTo(x + xh, y - xh); ctx.lineTo(x - xh, y + xh);
+    ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 10;
     ctx.beginPath();
     ctx.moveTo(x - xh, y - xh); ctx.lineTo(x + xh, y + xh);
     ctx.moveTo(x + xh, y - xh); ctx.lineTo(x - xh, y + xh);
