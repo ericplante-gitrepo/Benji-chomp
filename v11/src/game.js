@@ -463,7 +463,8 @@ function bootLevels() {
         intended: level.solution, intendedOk: intended.result === 'win',
         shortest: level.shortest, need: level.need,
         sameLength: !!shortest && shortest.length === level.solution.length,
-        layout: layout, layoutOk: layout.length === 0
+        layout: layout, layoutOk: layout.length === 0,
+        earn: level.earn || ''
       });
     });
   });
@@ -491,6 +492,10 @@ function spotOf(g, r, c) {
   const rr = clamp(r, 0, g.rows - 1), cc = clamp(c, 0, g.cols - 1);
   const p = cellXY(g, rr, cc);
   return { x: p.x + (c - cc) * g.PW, y: p.y + (r - rr) * g.TD - g.TD * 0.08 };
+}
+function goalSpot(g, r, c) {
+  const p = cellXY(g, r, c);
+  return { x: p.x, y: p.y - Math.min(g.TD * 0.3, 34) };
 }
 function arrowButtons() {
   return ['U', 'R', 'L', 'D'].map((dir, i) => ({ id: 'arrow' + dir, dir: dir, x: 1144, y: 92 + i * 122, w: 108, h: 108 }));
@@ -659,6 +664,38 @@ function reachableCells(level) {
   level.reach = cells;
   return cells;
 }
+function earnProgram(level, r, c) {
+  const cell = r + ',' + c;
+  const start = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
+  const seen = new Set([stateKey(start, 0, level.hasJ) + '|0']);
+  let frontier = [{ st: start, path: '', got: false }];
+  for (let depth = 0; depth < level.slots; depth++) {
+    const next = [];
+    for (let i = 0; i < frontier.length; i++) {
+      const node = frontier[i];
+      for (const d of ['L', 'R', 'U', 'D']) {
+        const res = resolve(level, node.st, d, depth + 1);
+        if (!res.ok) continue;
+        let got = node.got;
+        if (!got) {
+          for (let k = 0; k < res.moves.length; k++) {
+            const m = res.moves[k];
+            if (m.type === 'swim' && !m.fail && m.r + ',' + m.c === cell) got = true;
+            else if (m.type === 'tube' && m.nr + ',' + m.nc === cell) got = true;
+          }
+        }
+        const path = node.path + d;
+        if (got && isWin(level, res.st)) return path;
+        const key = stateKey(res.st, depth + 1, level.hasJ) + '|' + (got ? '1' : '0');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        next.push({ st: res.st, path: path, got: got });
+      }
+    }
+    frontier = next;
+  }
+  return null;
+}
 function sandCells(level) {
   const cells = [];
   for (let r = 0; r < level.grid.length; r++) {
@@ -730,7 +767,9 @@ function layoutIssues(level) {
   else {
     const ch = cellChar(level.grid, treat.r, treat.c);
     if (ch !== '#' || TREAT_BAN[ch]) issues.push('treat on ' + ch + ' at ' + treat.r + ',' + treat.c);
-    if (!reachableCells(level).has(treat.r + ',' + treat.c)) issues.push('treat unreachable at ' + treat.r + ',' + treat.c);
+    const earned = earnProgram(level, treat.r, treat.c);
+    level.earn = earned || '';
+    if (!earned) issues.push('treat not earned at ' + treat.r + ',' + treat.c);
   }
   return issues;
 }
@@ -937,6 +976,12 @@ function startReact(why, slot, dur) {
   mode = 'fail';
   sfx(why === 'jelly' ? 180 : 220, 0.2, 'sine', 0.08);
 }
+function winningGoal(seg) {
+  if (!run || !L || !seg || seg.fail) return false;
+  if (run.i !== run.cmds.length - 1) return false;
+  if (cellChar(L.grid, seg.r, seg.c) !== 'G') return false;
+  return isWin(L, { r: seg.r, c: seg.c, sw: run.sw, fr: run.fr });
+}
 function segDone() {
   const seg = run.segs[run.si];
   if (seg.kind === 'wait') {
@@ -958,7 +1003,7 @@ function segDone() {
     if (!seg.fail) {
       benji.x = seg.x1; benji.y = seg.y1;
       arrive(seg.r, seg.c);
-      bubbleBurst(benji.x, benji.y + 30, 2, 20);
+      if (!winningGoal(seg)) bubbleBurst(benji.x, benji.y + 30, 2, 20);
     } else if (seg.fail === 'jelly' || seg.fail === 'loop') {
       benji.x = seg.x1; benji.y = seg.y1;
       arrive(seg.r, seg.c);
@@ -1037,8 +1082,9 @@ function startWin() {
   chompSfx();
   after(0.08, goalChime);
   after(1.75, beginCard);
-  bubbleBurst(benji.x, benji.y, 12, 50);
-  sparkle(benji.x, benji.y - 20, 16);
+  const g = goalSpot(G, benji.r, benji.c);
+  bubbleBurst(g.x, g.y, 12, 50);
+  sparkle(g.x, g.y - 20, 16);
 }
 function beginCard() {
   if (!win || win.cardOn) return;
@@ -1232,6 +1278,10 @@ function stepSwim(seg, adt) {
   benji.squat = 0;
   const nose = seg.dir === 'L' ? -1 : seg.dir === 'R' ? 1 : 0;
   benji.rot = nose * (benji.flip ? -1 : 1) * 0.12 * Math.sin(k * Math.PI);
+  if (winningGoal(seg)) {
+    benji.forceState = 'chomp';
+    benji.forceValue = clamp(seg.t / seg.dur * 1.3, 0, 1);
+  }
   return k >= 1;
 }
 function stepBounce(seg, adt) {
@@ -2241,8 +2291,14 @@ window.__benji = {
       shrink: Math.round(benji.shrink * 1000) / 1000, alpha: Math.round(benji.alpha * 1000) / 1000,
       spin: Math.round(benji.spin * 1000) / 1000, hidden: benji.hidden,
       popIn: Math.round(benji.popIn * 1000) / 1000, home: !!benji.home, mode: mode,
-      state: pose.state, q: Math.round(benji.q * 1000) / 1000
+      state: pose.state, value: Math.round(pose.value * 1000) / 1000,
+      q: Math.round(benji.q * 1000) / 1000
     };
+  },
+  parts() {
+    return parts.map(p => ({
+      kind: p.kind || '', x: p.x, y: p.y, vx: p.vx || 0, vy: p.vy || 0, t: p.t, life: p.life
+    }));
   },
   winClock() {
     if (!win) return null;
