@@ -11,7 +11,7 @@ const BUILD = 'v11.0.0-test';
 
 const W = 1280, H = 800;
 const cv = document.getElementById('c');
-const ctx = cv.getContext('2d');
+let ctx = cv.getContext('2d');
 const FONT = '"Arial Rounded MT Bold","Trebuchet MS","Comic Sans MS","Roboto",sans-serif';
 let scale = 1, offX = 0, offY = 0, dpr = 1, viewW = 1280, viewH = 800;
 
@@ -52,7 +52,7 @@ const store = {
 // --- sprites -----------------------------------------------------------------
 const SPRITES = {};
 const IMAGES = {};
-let artPending = 0, artReady = false;
+let artPending = 0, artReady = false, bootReady = false, markScoresDone = false, penScratch = null;
 const artErrors = [];
 function trackImage(img, name, onOk) {
   artPending++;
@@ -61,7 +61,10 @@ function trackImage(img, name, onOk) {
     img._fin = true;
     if (ok) { if (onOk) onOk(); } else artErrors.push(name);
     artPending--;
-    if (artPending <= 0) artReady = true;
+    if (artPending <= 0) {
+      artReady = true;
+      if (bootReady) applyMarkScores();
+    }
   };
   img.onload = () => fin(true);
   img.onerror = () => fin(false);
@@ -162,12 +165,12 @@ function sfx(f, dur, type, vol) {
   if (!a || a.state !== 'running') return;
   try { toneAt(a, f, a.currentTime, dur || 0.12, type || 'sine', vol || 0.07); } catch (e) {}
 }
-function glide(f0, f1, dur, type, vol) {
+function glide(f0, f1, dur, type, vol, delay) {
   if (!audioUnlocked || muted) return;
   const a = audioCtx();
   if (!a || a.state !== 'running') return;
   try {
-    const t = a.currentTime;
+    const t = a.currentTime + (delay || 0);
     const o = a.createOscillator(), g = a.createGain();
     o.type = type || 'sine';
     o.frequency.setValueAtTime(Math.max(40, f0), t);
@@ -183,14 +186,58 @@ function blub() {
   const f = 320 + Math.random() * 80;
   glide(f, f * 1.9, 0.1, 'sine', 0.1);
 }
-function fanfare() {
+let noiseBuf = null;
+function noise(dur, vol, freq, delay) {
   if (!audioUnlocked || muted) return;
   const a = audioCtx();
   if (!a || a.state !== 'running') return;
   try {
-    [523, 659, 784, 1046].forEach((f, i) => toneAt(a, f, a.currentTime + i * 0.12, 0.28, 'triangle', 0.09));
+    if (!noiseBuf) {
+      noiseBuf = a.createBuffer(1, a.sampleRate, a.sampleRate);
+      const ch = noiseBuf.getChannelData(0);
+      for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    }
+    const t = a.currentTime + (delay || 0);
+    const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    s.buffer = noiseBuf;
+    f.type = 'lowpass';
+    f.frequency.value = freq || 900;
+    g.gain.setValueAtTime(vol || 0.2, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(a.destination);
+    s.start(t); s.stop(t + dur + 0.05);
   } catch (e) {}
 }
+function chompSfx() {
+  noise(0.07, 0.35, 1800);
+  glide(320, 140, 0.08, 'square', 0.09);
+  noise(0.12, 0.3, 900, 0.06);
+}
+function goalChime() {
+  if (!audioUnlocked || muted) return;
+  const a = audioCtx();
+  if (!a || a.state !== 'running') return;
+  try {
+    [784, 988, 1175, 1568].forEach((f, k) => toneAt(a, f, a.currentTime + k * 0.09, 0.32, 'triangle', 0.14));
+    toneAt(a, 2093, a.currentTime + 0.38, 0.6, 'sine', 0.06);
+  } catch (e) {}
+}
+function whoosh() {
+  noise(0.5, 0.14, 650);
+  glide(500, 1100, 0.4, 'sine', 0.06, 0.05);
+}
+function starSfx() {
+  glide(880, 1320, 0.1, 'sine', 0.15);
+  if (!audioUnlocked || muted) return;
+  const a = audioCtx();
+  if (!a || a.state !== 'running') return;
+  try { toneAt(a, 1320, a.currentTime + 0.08, 0.15, 'triangle', 0.1); } catch (e) {}
+}
+function unclick() {
+  glide(900, 420, 0.06, 'sine', 0.14);
+  noise(0.03, 0.06, 2400);
+}
+function after(sec, fn) { later.push({ t: sec, fn: fn }); }
 function musicPump() {
   try {
     const a = audioCtx();
@@ -396,8 +443,8 @@ const prog = [0, 1, 2, 3].map(i => store.get('v11prog' + i, 0));
 const stars = [0, 1, 2, 3].map(i => store.get('v11stars' + i, []));
 musicOn = store.get('v11music', true);
 const TREAT_BAN = {
-  M: 1, m: 1, J: 1, '5': 1, '6': 1, y: 1, z: 1, U: 1,
-  F: 1, G: 1, A: 1, a: 1, B: 1, b: 1, C: 1, c: 1
+  S: 1, G: 1, F: 1, J: 1, U: 1,
+  A: 1, a: 1, B: 1, b: 1, C: 1, c: 1
 };
 const PIPE_MOUTH = { A: 1, a: 1, B: 1, b: 1, C: 1, c: 1 };
 const PROP_CELL = { U: 1, M: 1, y: 1, z: 1, h: 1, '2': 1, '3': 1, H: 1, Y: 1, Z: 1, m: 1, '5': 1, '6': 1 };
@@ -405,6 +452,20 @@ function pipeOrProp(ch) { return !!(PIPE_MOUTH[ch] || PROP_CELL[ch]); }
 const TITLE_BAND_BOTTOM = 54 + 48 / 2 + 8 / 2;
 const STINGER_RISE = 98.5;
 const bootReport = [];
+// Winning-program counts at 313e9f0, one entry per level.
+const ORIGINAL_WINS = { R1: 1, R2: 1, R3: 1, R4: 5, R5: 1, R6: 1, R7: 1, R8: 2, R9: 16, R10: 1, R11: 1, K1: 1, K2: 1, K3: 1, K4: 179, K5: 1, K6: 1, K7: 1, K8: 1, K9: 1, K10: 2, K11: 1, S1: 1, S2: 1, S3: 1, S4: 1, S5: 1, S6: 1, S7: 1, S8: 12, S9: 1, S10: 1, D1: 1, D2: 1, D3: 2, D4: 1, D5: 1, D6: 1, D7: 2, D8: 1, D9: 1, D10: 27, D11: 1 };
+// R3 and D8 have no treat. Their winning route never crosses an allowed cell.
+const NO_TREAT = { R3: 1, D8: 1 };
+const PLATE_TREAT = {
+  K4: [0, 3],
+  S2: [2, 0],
+  S3: [0, 1],
+  S4: [0, 1],
+  S7: [0, 2],
+  S10: [2, 1],
+  D4: [0, 3],
+  D5: [0, 3]
+};
 function bootLevels() {
   LEVEL_PACK.forEach((world, wi) => {
     world.levels.forEach((raw, i) => {
@@ -419,10 +480,28 @@ function bootLevels() {
         intended: level.solution, intendedOk: intended.result === 'win',
         shortest: level.shortest, need: level.need,
         sameLength: !!shortest && shortest.length === level.solution.length,
-        layout: layout, layoutOk: layout.length === 0
+        layout: layout, layoutOk: layout.length === 0,
+        earn: level.earn || '',
+        treat: level.treatCell || '',
+        floor: level.treatFloor || '',
+        onPath: !!level.treatOnPath,
+        overGoal: !!level.treatOverGoal,
+        unplaced: !!level.treatUnplaced,
+        wins: level.winCount || 0,
+        mark: '',
+        markOpen: null,
+        eyeOpen: null,
+        eyeCover: null,
+        urchinOpen: null,
+        outside: null,
+        tuckEye: null,
+        chin: '',
+        cover: '',
+        markScored: false
       });
     });
   });
+  bootReady = true;
 }
 bootLevels();
 
@@ -447,6 +526,10 @@ function spotOf(g, r, c) {
   const rr = clamp(r, 0, g.rows - 1), cc = clamp(c, 0, g.cols - 1);
   const p = cellXY(g, rr, cc);
   return { x: p.x + (c - cc) * g.PW, y: p.y + (r - rr) * g.TD - g.TD * 0.08 };
+}
+function goalSpot(g, r, c) {
+  const p = cellXY(g, r, c);
+  return { x: p.x, y: p.y - Math.min(g.TD * 0.3, 34) };
 }
 function arrowButtons() {
   return ['U', 'R', 'L', 'D'].map((dir, i) => ({ id: 'arrow' + dir, dir: dir, x: 1144, y: 92 + i * 122, w: 108, h: 108 }));
@@ -553,7 +636,7 @@ function pipePoints(route) {
 
 // --- game state --------------------------------------------------------------
 let state = 'title', world = 0, levelIdx = 0, L = null, G = null;
-let mode = 'edit', queue = [], run = null, runs = 0, win = null, reward = null;
+let mode = 'edit', queue = [], run = null, runs = 0, win = null, reward = null, later = [];
 let pressed = null, T = 0, animMul = 1, slotShake = 0;
 let tubes = [], fx = {}, trails = [], treat = null, parts = [], bubbles = [];
 const benji = {
@@ -590,6 +673,31 @@ function faceToward(dir) {
   else if (dir === 'R') benji.flip = false;
   if (was !== benji.flip) benji.turnT = 0;
 }
+function reachableCells(level) {
+  if (level.reach) return level.reach;
+  const start = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
+  const seen = new Set([stateKey(start, 0, level.hasJ)]);
+  const cells = new Set();
+  const frontier = [{ st: start, n: 0 }];
+  while (frontier.length) {
+    const node = frontier.shift();
+    if (node.n >= level.slots) continue;
+    for (const d of ['L', 'R', 'U', 'D']) {
+      const res = resolve(level, node.st, d, node.n + 1);
+      res.moves.forEach(m => {
+        if (m.type === 'swim' && !m.fail) cells.add(m.r + ',' + m.c);
+        else if (m.type === 'tube') cells.add(m.nr + ',' + m.nc);
+      });
+      if (!res.ok) continue;
+      const k = stateKey(res.st, node.n + 1, level.hasJ);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      frontier.push({ st: res.st, n: node.n + 1 });
+    }
+  }
+  level.reach = cells;
+  return cells;
+}
 function sandCells(level) {
   const cells = [];
   for (let r = 0; r < level.grid.length; r++) {
@@ -599,17 +707,114 @@ function sandCells(level) {
   }
   return cells;
 }
-function pickTreat(level) {
+function visitCells(level, cmds) {
+  const list = typeof cmds === 'string' ? cmds.split('') : cmds.slice();
+  let st = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
+  const cells = [];
+  for (let i = 0; i < list.length; i++) {
+    const res = resolve(level, st, list[i], i + 1);
+    res.moves.forEach(m => {
+      if (m.type === 'swim' && !m.fail) cells.push([m.r, m.c]);
+      else if (m.type === 'tube') cells.push([m.nr, m.nc]);
+    });
+    if (!res.ok) break;
+    st = res.st;
+  }
+  return cells;
+}
+function pathSandCells(level) {
   const sim = runSim(level, level.solution);
-  const onPath = [];
-  (sim.trace || []).forEach(p => {
-    if (cellChar(level.grid, p[0], p[1]) === '#') onPath.push(p);
+  if (sim.result !== 'win') return [];
+  const seen = new Set();
+  const out = [];
+  visitCells(level, level.solution).forEach(p => {
+    const k = p[0] + ',' + p[1];
+    if (seen.has(k)) return;
+    seen.add(k);
+    if (cellChar(level.grid, p[0], p[1]) === '#') out.push(p);
   });
-  const list = onPath.length ? onPath : sandCells(level);
-  if (!list.length) return null;
-  const p = list[Math.floor(list.length / 2)];
+  return out;
+}
+function legacyTreatCell(level) {
+  const sand = sandCells(level);
+  if (!sand.length) return null;
+  return sand[Math.floor(sand.length / 2)];
+}
+function treatFloor(ch) {
+  if (ch === '#') return 'sand';
+  if (ch === 'm' || ch === '5' || ch === '6') return 'pad';
+  if (ch === 'M' || ch === 'y' || ch === 'z') return 'bed';
+  if (ch === '>' || ch === '<' || ch === '^' || ch === 'v') return 'current';
+  return '';
+}
+function plateMark(ch) {
+  switch (ch) {
+    case 'm': return 'star';
+    case '5':
+    case 'y': return 'moon';
+    case '6':
+    case 'z': return 'heart';
+    case '>':
+    case '<':
+    case '^':
+    case 'v': return 'arrow';
+    default: return '';
+  }
+}
+function pipeInteriors(level) {
+  const inside = new Set();
+  buildTubes(level).forEach(route => {
+    const cells = route.cells || [];
+    cells.forEach((p, i) => {
+      if (i > 0 && i < cells.length - 1) inside.add(p[0] + ',' + p[1]);
+    });
+  });
+  return inside;
+}
+function pickTreat(level) {
+  if (NO_TREAT[level.id]) return null;
   const kinds = ['cracker', 'sushi', 'shrimp', 'cupcake'];
-  return { r: p[0], c: p[1], kind: kinds[level.index % kinds.length], got: false };
+  const kind = kinds[level.index % kinds.length];
+  const forced = PLATE_TREAT[level.id];
+  if (forced) return { r: forced[0], c: forced[1], kind: kind, got: false };
+  const onPath = pathSandCells(level);
+  const pool = onPath.length ? onPath : sandCells(level);
+  if (!pool.length) return null;
+  const p = pool[Math.floor(pool.length / 2)];
+  return { r: p[0], c: p[1], kind: kind, got: false };
+}
+function winningProgramCount(level) {
+  const start = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
+  let frontier = [{ st: start, ways: 1 }];
+  let total = 0;
+  for (let depth = 0; depth < level.slots; depth++) {
+    const next = new Map();
+    for (let i = 0; i < frontier.length; i++) {
+      const node = frontier[i];
+      for (const d of ['L', 'R', 'U', 'D']) {
+        const res = resolve(level, node.st, d, depth + 1);
+        if (!res.ok) continue;
+        if (isWin(level, res.st)) total += node.ways;
+        const k = stateKey(res.st, depth + 1, level.hasJ);
+        const prev = next.get(k);
+        if (prev) prev.ways += node.ways;
+        else next.set(k, { st: res.st, ways: node.ways });
+      }
+    }
+    frontier = Array.from(next.values());
+  }
+  return total;
+}
+function treatOverGoal(level, treat) {
+  return !!(treat && cellChar(level.grid, treat.r + 1, treat.c) === 'G');
+}
+function treatLiftRow(level, treat) {
+  if (!treat) return -1;
+  const below = cellChar(level.grid, treat.r + 1, treat.c);
+  if (below === 'G' || below === 'F' || below === 'h' || below === '2' || below === '3' || below === 'H' || below === 'Y' || below === 'Z') {
+    return treat.r + 1;
+  }
+  return -1;
 }
 function layoutIssues(level) {
   const issues = [];
@@ -635,19 +840,539 @@ function layoutIssues(level) {
       if (top < TITLE_BAND_BOTTOM) issues.push('stinger cuts the title at ' + r + ',' + c);
     }
   }
+  const sim = runSim(level, level.solution);
+  if (level.solution.length > level.slots) issues.push('solution longer than slots');
+  if (sim.result !== 'win') issues.push('solution does not win');
+  if (Object.prototype.hasOwnProperty.call(ORIGINAL_WINS, level.id)) {
+    const wins = winningProgramCount(level);
+    level.winCount = wins;
+    if (wins !== ORIGINAL_WINS[level.id]) {
+      issues.push('winning programs ' + wins + ' expected ' + ORIGINAL_WINS[level.id]);
+    }
+  }
   const treat = pickTreat(level);
-  if (!treat) issues.push('missing treat');
-  else {
-    const ch = cellChar(level.grid, treat.r, treat.c);
-    if (ch !== '#' || TREAT_BAN[ch]) issues.push('treat on ' + ch + ' at ' + treat.r + ',' + treat.c);
+  if (!treat) {
+    level.treatFloor = '';
+    level.treatOnPath = false;
+    level.treatCell = '';
+    level.treatOverGoal = false;
+    level.earn = '';
+    level.treatUnplaced = false;
+    if (!NO_TREAT[level.id]) issues.push('missing treat');
+    return issues;
+  }
+  const ch = cellChar(level.grid, treat.r, treat.c);
+  const floor = treatFloor(ch);
+  const inside = pipeInteriors(level);
+  const key = treat.r + ',' + treat.c;
+  level.treatFloor = floor;
+  if (!floor || TREAT_BAN[ch] || inside.has(key)) {
+    issues.push('treat on ' + (ch || 'empty') + ' at ' + key);
+  }
+  const visits = sim.result === 'win' ? visitCells(level, level.solution) : [];
+  const seen = new Set();
+  let pathAllowed = false;
+  visits.forEach(p => {
+    const k = p[0] + ',' + p[1];
+    if (seen.has(k)) return;
+    seen.add(k);
+    const step = cellChar(level.grid, p[0], p[1]);
+    if (treatFloor(step) && !TREAT_BAN[step] && !inside.has(k)) pathAllowed = true;
+  });
+  const onPath = seen.has(key);
+  level.treatOnPath = onPath;
+  level.treatCell = key;
+  level.treatOverGoal = treatOverGoal(level, treat);
+  level.earn = onPath ? level.solution : '';
+  level.treatUnplaced = !pathAllowed;
+  if (level.solution.length > level.slots || sim.result !== 'win' || !onPath) {
+    issues.push('winning program missed the treat');
+  }
+  if (pathAllowed) {
+    if (!onPath) issues.push('treat off winning path at ' + key);
+  } else {
+    const legacy = legacyTreatCell(level);
+    if (!legacy || legacy[0] !== treat.r || legacy[1] !== treat.c) {
+      issues.push('no allowed cell and treat is not the 313e9f0 cell');
+    }
   }
   return issues;
+}
+function withPen(fn) {
+  if (!penScratch) {
+    penScratch = document.createElement('canvas');
+    penScratch.width = W;
+    penScratch.height = H;
+  }
+  const g = penScratch.getContext('2d', { willReadFrequently: true });
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.globalAlpha = 1;
+  g.globalCompositeOperation = 'source-over';
+  g.filter = 'none';
+  g.clearRect(0, 0, W, H);
+  const prev = ctx;
+  ctx = g;
+  try { fn(); }
+  finally { ctx = prev; }
+  return g;
+}
+function opaqueKeys(g, x, y, w, h, minA) {
+  const cut = minA == null ? 40 : minA;
+  const x0 = Math.max(0, Math.floor(x));
+  const y0 = Math.max(0, Math.floor(y));
+  const x1 = Math.min(W, Math.ceil(x + w));
+  const y1 = Math.min(H, Math.ceil(y + h));
+  const keys = new Set();
+  if (x1 <= x0 || y1 <= y0) return keys;
+  const img = g.getImageData(x0, y0, x1 - x0, y1 - y0);
+  const d = img.data;
+  for (let yy = 0; yy < img.height; yy++) {
+    for (let xx = 0; xx < img.width; xx++) {
+      if (d[(yy * img.width + xx) * 4 + 3] > cut) keys.add((x0 + xx) + ',' + (y0 + yy));
+    }
+  }
+  return keys;
+}
+function navyKeys(g, x, y, w, h) {
+  const x0 = Math.max(0, Math.floor(x));
+  const y0 = Math.max(0, Math.floor(y));
+  const x1 = Math.min(W, Math.ceil(x + w));
+  const y1 = Math.min(H, Math.ceil(y + h));
+  const keys = new Set();
+  if (x1 <= x0 || y1 <= y0) return keys;
+  const img = g.getImageData(x0, y0, x1 - x0, y1 - y0);
+  const d = img.data;
+  for (let yy = 0; yy < img.height; yy++) {
+    for (let xx = 0; xx < img.width; xx++) {
+      const i = (yy * img.width + xx) * 4;
+      const r = d[i], gg = d[i + 1], b = d[i + 2], a = d[i + 3];
+      if (a > 180 && r < 80 && gg < 90 && b < 130) keys.add((x0 + xx) + ',' + (y0 + yy));
+    }
+  }
+  return keys;
+}
+function openPercent(symbol, treatKeys) {
+  if (!symbol.size) return null;
+  let open = 0;
+  symbol.forEach(k => { if (!treatKeys.has(k)) open++; });
+  return Math.round(1000 * open / symbol.size) / 10;
+}
+function spriteBox(name, state, x, y, scale) {
+  const s = SPRITES[name];
+  const f = s && s.frames[state] && s.frames[state][0];
+  if (!f) return null;
+  const k = s.pxScale * scale;
+  return { x: x - f.ax * k, y: y - f.ay * k, w: f.w * k, h: f.h * k };
+}
+function keysHit(keys, treatKeys) {
+  let n = 0;
+  keys.forEach(k => { if (treatKeys.has(k)) n++; });
+  return n;
+}
+function eyeOpenPercent(name, state, frame, rx0, rx1, ry0, ry1, treatKeys, pose) {
+  const s = SPRITES[name];
+  if (!s || !s.ready || !s.frames[state]) return null;
+  const frames = s.frames[state];
+  const f = frames[Math.min(frame, frames.length - 1)];
+  const c = document.createElement('canvas');
+  c.width = f.w;
+  c.height = f.h;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(s.img, f.x, f.y, f.w, f.h, 0, 0, f.w, f.h);
+  const img = g.getImageData(0, 0, f.w, f.h);
+  const d = img.data;
+  const k = s.pxScale * pose.sc;
+  const eyes = new Set();
+  for (let y = 0; y < f.h; y++) {
+    for (let x = 0; x < f.w; x++) {
+      const rx = x - f.ax, ry = y - f.ay;
+      if (rx < rx0 || rx > rx1 || ry < ry0 || ry > ry1) continue;
+      const i = (y * f.w + x) * 4;
+      if (d[i + 3] <= 180 || d[i] >= 50 || d[i + 1] >= 50 || d[i + 2] >= 70) continue;
+      eyes.add(Math.round(pose.x + rx * k) + ',' + Math.round(pose.cy + ry * k));
+    }
+  }
+  return openPercent(eyes, treatKeys);
+}
+function strayCollect(level) {
+  const tr = pickTreat(level);
+  if (!tr) return '';
+  const reach2 = G.PW * 0.5 * (G.PW * 0.5);
+  const centre = treatAnchor();
+  const start = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
+  const seen = new Set([stateKey(start, 0, level.hasJ)]);
+  let frontier = [{ st: start, x: spotOf(G, start.r, start.c).x, y: spotOf(G, start.r, start.c).y }];
+  for (let depth = 0; depth < level.slots; depth++) {
+    const next = [];
+    for (let n = 0; n < frontier.length; n++) {
+      const node = frontier[n];
+      for (const d of ['L', 'R', 'U', 'D']) {
+        const res = resolve(level, node.st, d, depth + 1);
+        let x = node.x, y = node.y;
+        for (let m = 0; m < res.moves.length; m++) {
+          const mv = res.moves[m];
+          if (mv.type === 'tube') {
+            const dest = spotOf(G, mv.nr, mv.nc);
+            x = dest.x;
+            y = dest.y;
+            continue;
+          }
+          if (mv.type !== 'swim') continue;
+          const fail = mv.fail || null;
+          const bump = !!(fail && BUMP_FAIL[fail]);
+          const arrives = !fail || fail === 'jelly' || fail === 'loop';
+          const full = spotOf(G, mv.r, mv.c);
+          const x1 = bump ? lerp(x, full.x, 0.42) : full.x;
+          const y1 = bump ? lerp(y, full.y, 0.42) : full.y;
+          let near = false;
+          if (mv.r === tr.r && mv.c === tr.c) {
+            for (let s = 0; s <= 20; s++) {
+              const k = s / 20;
+              const hop = Math.sin(k * Math.PI) * (bump ? 6 : 14);
+              const px = lerp(x, x1, ease(k));
+              const py = lerp(y, y1, ease(k)) - hop;
+              const dx = px - centre.x, dy = py - centre.y;
+              if (dx * dx + dy * dy <= reach2) near = true;
+            }
+          }
+          const early = near && arrives;
+          const landed = arrives && mv.r === tr.r && mv.c === tr.c;
+          if (early !== landed) return 'collect mismatch toward ' + mv.r + ',' + mv.c;
+          if (arrives && !fail) { x = x1; y = y1; }
+        }
+        if (!res.ok) continue;
+        const key = stateKey(res.st, depth + 1, level.hasJ);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        next.push({ st: res.st, x: x, y: y });
+      }
+    }
+    frontier = next;
+  }
+  return '';
+}
+function boxesNear(a, b) {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+}
+function treatAnchor() {
+  const ch = cellChar(L.grid, treat.r, treat.c);
+  return treatPose(G, treat.r, treat.c, ch);
+}
+function benjiTreatOverlap() {
+  if (!treat || treat.got || !G || !L) return 0;
+  const pose = treatAnchor();
+  const tbox = spriteBox('treat', treat.kind, pose.x, pose.y, pose.scale);
+  if (!tbox) return 0;
+  const bsc = (G.TW / 140) * 0.40 * (benji.shrink || 1);
+  const benjiBox = { x: benji.x - 220 * bsc, y: benji.y - 160 * bsc, w: 440 * bsc, h: 320 * bsc };
+  if (!boxesNear(tbox, benjiBox)) return 0;
+  const board = boardActors();
+  let treatAt = -1, benjiAt = -1;
+  for (let i = 0; i < board.items.length; i++) {
+    if (board.items[i].kind === 'treat') treatAt = i;
+    if (board.items[i].kind === 'benji') benjiAt = i;
+  }
+  if (treatAt < 0 || benjiAt < 0 || treatAt < benjiAt) return 0;
+  const frames = (SPRITES.treat && SPRITES.treat.frames[treat.kind]) || [];
+  const nFrames = frames.length || 1;
+  const tg = withPen(() => {
+    for (let f = 0; f < nFrames; f++) drawSprite('treat', treat.kind, pose.x, pose.y, { scale: pose.scale, frame: f });
+  });
+  const tkeys = opaqueKeys(tg, tbox.x - 2, tbox.y - 2, tbox.w + 4, tbox.h + 4);
+  const bg = withPen(() => drawBenji());
+  const bkeys = opaqueKeys(bg, tbox.x - 2, tbox.y - 2, tbox.w + 4, tbox.h + 4);
+  return keysHit(bkeys, tkeys);
+}
+function chinOverlap(level) {
+  if (!treat || !level.solution) return '';
+  const saved = {
+    mode: mode, run: run, fx: fx, got: treat.got,
+    x: benji.x, y: benji.y, r: benji.r, c: benji.c, flip: benji.flip,
+    moving: benji.moving, forceState: benji.forceState, forceValue: benji.forceValue,
+    rot: benji.rot, hidden: benji.hidden
+  };
+  let detail = '';
+  try {
+    treat.got = false;
+    mode = 'run';
+    fx = {};
+    benji.forceState = null;
+    benji.forceValue = 0;
+    benji.shrink = 1;
+    benji.alpha = 1;
+    benji.hidden = false;
+    benji.popIn = 1;
+    benji.turnT = 1;
+    benji.q = 0;
+    benji.qv = 0;
+    benji.squat = 0;
+    benji.rot = 0;
+    benji.ox = 0;
+    benji.extraY = 0;
+    benji.spin = 0;
+    benji.home = null;
+    benji.flip = level.goalAt[1] < level.start[1];
+    const reach2 = G.PW * 0.5 * (G.PW * 0.5);
+    let sw = new Set();
+    let st = { r: level.start[0], c: level.start[1], sw: sw, fr: new Set() };
+    let x = spotOf(G, st.r, st.c).x;
+    let y = spotOf(G, st.r, st.c).y;
+    let flip = benji.flip;
+    let got = false;
+    let sawTreatSwim = false;
+    const sampleAt = (px, py, fl, moving, k, dir, collectsNow) => {
+      if (got || detail) return;
+      run = { sw: sw, fr: new Set(), segs: [], si: 0 };
+      benji.x = px;
+      benji.y = py;
+      benji.flip = fl;
+      benji.moving = moving;
+      const nose = dir === 'L' ? -1 : dir === 'R' ? 1 : 0;
+      benji.rot = moving ? nose * (fl ? -1 : 1) * 0.12 * Math.sin(k * Math.PI) : 0;
+      const pose = treatAnchor();
+      const dx = px - pose.x, dy = py - pose.y;
+      if (collectsNow && dx * dx + dy * dy <= reach2) { got = true; return; }
+      const overlap = benjiTreatOverlap();
+      if (!overlap) return;
+      if (collectsNow) { got = true; return; }
+      detail = 'treat covers Benji d=' + (Math.sqrt(dx * dx + dy * dy) / G.PW).toFixed(2) + 'pw n=' + overlap;
+    };
+    sampleAt(x, y, flip, false, 0, '', false);
+    const cmds = level.solution.split('');
+    for (let i = 0; i < cmds.length && !detail; i++) {
+      const res = resolve(level, st, cmds[i], i + 1);
+      let fromR = st.r, fromC = st.c;
+      for (let m = 0; m < res.moves.length && !detail; m++) {
+        const mv = res.moves[m];
+        if (mv.type === 'tube') {
+          const dest = spotOf(G, mv.nr, mv.nc);
+          x = dest.x;
+          y = dest.y;
+          fromR = mv.nr;
+          fromC = mv.nc;
+          continue;
+        }
+        if (mv.type !== 'swim') continue;
+        const fail = mv.fail || null;
+        const bump = !!(fail && BUMP_FAIL[fail]);
+        const arrives = !fail || fail === 'jelly' || fail === 'loop';
+        const full = spotOf(G, mv.r, mv.c);
+        const x1 = bump ? lerp(x, full.x, 0.42) : full.x;
+        const y1 = bump ? lerp(y, full.y, 0.42) : full.y;
+        const dir = travelDir(mv.r - fromR, mv.c - fromC) || cmds[i];
+        if (dir === 'L') flip = true;
+        else if (dir === 'R') flip = false;
+        const collects = !got && arrives && mv.r === treat.r && mv.c === treat.c;
+        if (collects) sawTreatSwim = true;
+        for (let s = 0; s <= 40; s++) {
+          const k = s / 40;
+          const hop = Math.sin(k * Math.PI) * (bump ? 6 : 14);
+          const px = lerp(x, x1, ease(k));
+          const py = lerp(y, y1, ease(k)) - hop;
+          sampleAt(px, py, flip, true, k, dir, collects);
+          if (detail) break;
+        }
+        if (arrives && !fail) {
+          x = x1;
+          y = y1;
+          fromR = mv.r;
+          fromC = mv.c;
+        }
+      }
+      if (!res.ok) break;
+      st = res.st;
+      sw = st.sw;
+      ['m', 'g', 'p', 'k', 'c', 's', 'o'].forEach(col => { if (sw.has(col)) fx[col] = 1; });
+    }
+    if (!detail && sawTreatSwim && !got) return 'winning swim missed the treat';
+    return detail;
+  } finally {
+    mode = saved.mode;
+    run = saved.run;
+    fx = saved.fx;
+    treat.got = saved.got;
+    benji.x = saved.x;
+    benji.y = saved.y;
+    benji.r = saved.r;
+    benji.c = saved.c;
+    benji.flip = saved.flip;
+    benji.moving = saved.moving;
+    benji.forceState = saved.forceState;
+    benji.forceValue = saved.forceValue;
+    benji.rot = saved.rot;
+    benji.hidden = saved.hidden;
+  }
+}
+function scorePlate(level, row) {
+  const issues = [];
+  world = level.world;
+  L = level;
+  G = geomOf(level);
+  treat = pickTreat(level);
+  mode = 'edit';
+  run = null;
+  win = null;
+  jellyUp = true;
+  T = 0;
+  if (!treat) {
+    const board = boardActors();
+    if (board.items.some(it => it.kind === 'treat')) issues.push('treat drawn with nothing to collect');
+    row.chin = 'clear';
+    row.markScored = true;
+    if (issues.length) {
+      row.layout = row.layout.concat(issues);
+      row.layoutOk = false;
+    }
+    return;
+  }
+  placeBenji(level.start[0], level.start[1]);
+  const ch = cellChar(level.grid, treat.r, treat.c);
+  const pose = treatPose(G, treat.r, treat.c, ch);
+  const body = withPen(() => drawTreatBodyFrames(treat.r, treat.c));
+  const box = spriteBox('treat', treat.kind, pose.x, pose.y, pose.scale)
+    || { x: pose.x - 40, y: pose.y - 80, w: 80, h: 120 };
+  const treatKeys = opaqueKeys(body, box.x - 4, box.y - 8, box.w + 8, box.h + 16);
+  if (!treatKeys.size) issues.push('treat sprite not measured');
+  const mark = plateMark(ch);
+  let pct = null;
+  if (mark === 'arrow') {
+    const face = { '>': 'r', '<': 'l', '^': 'u', v: 'd' }[ch];
+    const abox = spriteBox('current', face, pose.x, pose.cy, pose.sc);
+    const frames = (SPRITES.current && SPRITES.current.frames[face]) || [];
+    let worst = null;
+    for (let f = 0; f < frames.length; f++) {
+      const g = withPen(() => drawSprite('current', face, pose.x, pose.cy, { scale: pose.sc, frame: f }));
+      const keys = abox ? opaqueKeys(g, abox.x, abox.y, abox.w, abox.h) : new Set();
+      const open = openPercent(keys, treatKeys);
+      if (open == null) continue;
+      if (worst == null || open < worst) worst = open;
+    }
+    pct = worst;
+    if (pct == null) issues.push('current arrow not measured');
+    else if (pct < 70) issues.push('arrow uncovered ' + pct + '% < 70');
+  } else if (mark === 'star') {
+    const g = withPen(() => drawSprite('urchinPad', 'up', pose.x, pose.cy, { scale: pose.sc, frame: 0 }));
+    const k = 0.5 * pose.sc;
+    const keys = navyKeys(g, pose.x + (105 - 128) * k, pose.cy + (111 - 139) * k, 55 * k, 31 * k);
+    pct = openPercent(keys, treatKeys);
+    if (pct == null) issues.push('pad star not measured');
+    else if (pct < 70) issues.push('star uncovered ' + pct + '% < 70');
+  } else if (mark === 'moon' || mark === 'heart') {
+    const onBed = pose.floor === 'bed';
+    const msc = onBed ? Math.max(0.55, pose.sc * 0.62) : Math.max(0.75, pose.sc);
+    const mx = pose.x;
+    const my = onBed ? pose.cy + G.TD * 0.32 : pose.cy - 10 * pose.sc;
+    const rad = 24 * msc + 8;
+    const g = withPen(() => drawMark(mx, my, mark, msc));
+    const keys = opaqueKeys(g, mx - rad, my - rad, rad * 2, rad * 2);
+    pct = openPercent(keys, treatKeys);
+    if (pct == null) issues.push(mark + ' not measured');
+    else if (pct < 70) issues.push(mark + ' uncovered ' + pct + '% < 70');
+  }
+  let eyeOpen = null;
+  let tuckEye = null;
+  let urchinOpen = null;
+  let outside = null;
+  if (pose.floor === 'bed') {
+    eyeOpen = eyeOpenPercent('urchin', 'idle', 0, -45, 40, -62, -30, treatKeys, pose);
+    tuckEye = eyeOpenPercent('urchinBed', 'tuck', 3, -50, 50, -30, -8, treatKeys, pose);
+    const ubox = spriteBox('urchin', 'idle', pose.x, pose.cy, pose.sc);
+    const ug = withPen(() => drawSprite('urchin', 'idle', pose.x, pose.cy, { scale: pose.sc, frame: 0 }));
+    const ukeys = ubox ? opaqueKeys(ug, ubox.x, ubox.y, ubox.w, ubox.h) : new Set();
+    urchinOpen = openPercent(ukeys, treatKeys);
+    const cell = cellXY(G, treat.r, treat.c);
+    outside = 0;
+    treatKeys.forEach(k => {
+      const xy = k.split(',');
+      const x = +xy[0] + 0.5, y = +xy[1] + 0.5;
+      if (x < cell.x - G.PW / 2 || x > cell.x + G.PW / 2 || y < cell.y - G.TD / 2 || y > cell.y + G.TD / 2) outside++;
+    });
+    const covered = eyeOpen == null ? null : Math.round((100 - eyeOpen) * 10) / 10;
+    if (covered == null || covered > 0) issues.push('standing eye covered ' + (covered == null ? 'unmeasured' : covered + '%'));
+    if (outside) issues.push('treat leaves its cell (' + outside + ' px)');
+  }
+  const chin = chinOverlap(level);
+  const stray = strayCollect(level);
+  if (stray) issues.push(stray);
+  const board = boardActors();
+  let treatAt = -1;
+  for (let i = 0; i < board.items.length; i++) if (board.items[i].kind === 'treat') treatAt = i;
+  if (treatAt < 0) issues.push('treat not drawn');
+  const covers = [];
+  for (let i = treatAt + 1; i < board.items.length; i++) {
+    const g = withPen(() => board.items[i].draw());
+    const keys = opaqueKeys(g, box.x - 2, box.y - 2, box.w + 4, box.h + 4);
+    if (keysHit(keys, treatKeys)) covers.push(board.items[i].kind);
+  }
+  if (L.hasJ) {
+    const g = withPen(() => drawBeat());
+    const keys = opaqueKeys(g, box.x - 2, box.y - 2, box.w + 4, box.h + 4);
+    if (keysHit(keys, treatKeys)) covers.push('beat');
+  }
+  if (covers.length) issues.push('treat covered by ' + covers.join(', '));
+  if (chin) issues.push(chin);
+  row.mark = mark;
+  row.markOpen = pct;
+  row.eyeOpen = eyeOpen;
+  row.eyeCover = eyeOpen == null ? null : Math.round((100 - eyeOpen) * 10) / 10;
+  row.urchinOpen = urchinOpen;
+  row.outside = outside;
+  row.tuckEye = tuckEye;
+  row.chin = chin || 'clear';
+  row.cover = covers.join(', ');
+  row.markScored = true;
+  if (issues.length) {
+    row.layout = row.layout.concat(issues);
+    row.layoutOk = false;
+  }
+}
+function applyMarkScores() {
+  if (!artReady || !bootReady || markScoresDone) return;
+  markScoresDone = true;
+  const snap = {
+    world: world, L: L, G: G, treat: treat, mode: mode, run: run, win: win,
+    jellyUp: jellyUp, T: T,
+    r: benji.r, c: benji.c, x: benji.x, y: benji.y, flip: benji.flip
+  };
+  try {
+    const rows = {};
+    bootReport.forEach(row => { rows[row.id] = row; });
+    LEVEL_PACK.forEach(pack => {
+      pack.levels.forEach(raw => {
+        const level = raw.prep;
+        const row = rows[level.id];
+        if (!row || row.markScored) return;
+        try { scorePlate(level, row); }
+        catch (err) {
+          row.layout = row.layout.concat(['mark score failed']);
+          row.layoutOk = false;
+          row.markScored = true;
+          row.cover = String(err && err.message ? err.message : err);
+        }
+      });
+    });
+  } finally {
+    world = snap.world;
+    L = snap.L;
+    G = snap.G;
+    treat = snap.treat;
+    mode = snap.mode;
+    run = snap.run;
+    win = snap.win;
+    jellyUp = snap.jellyUp;
+    T = snap.T;
+    benji.r = snap.r;
+    benji.c = snap.c;
+    benji.x = snap.x;
+    benji.y = snap.y;
+    benji.flip = snap.flip;
+  }
 }
 function loadLevel(i) {
   levelIdx = i;
   L = worldLevels()[i].prep;
   G = geomOf(L);
-  queue = []; runs = 0; mode = 'edit'; run = null; win = null; reward = null;
+  queue = []; runs = 0; mode = 'edit'; run = null; win = null; reward = null; later = [];
   resetFx();
   tubes = buildTubes(L);
   treat = pickTreat(L);
@@ -657,11 +1382,11 @@ function loadLevel(i) {
   benji.flip = L.goalAt[1] < L.start[1];
   state = 'play';
 }
-function openSelect(w) { world = w; state = 'select'; L = null; run = null; win = null; reward = null; }
+function openSelect(w) { world = w; state = 'select'; L = null; run = null; win = null; reward = null; later = []; }
 function showReward() {
   state = 'reward';
   reward = { t: 0 };
-  L = null; run = null; win = null;
+  L = null; run = null; win = null; later = [];
 }
 function continueReward() {
   const n = worldLevels().length;
@@ -703,6 +1428,7 @@ function beginReturn(keepQueue) {
   const sx = benji.x, sy = benji.y;
   mode = 'edit';
   run = null;
+  later = [];
   resetFx();
   if (treat) treat.got = false;
   benji.forceState = null;
@@ -818,15 +1544,26 @@ function beginSeg() {
     glide(320, 1100, 0.45, 'sine', 0.08);
   }
 }
+function takeTreat() {
+  if (!treat || treat.got) return;
+  treat.got = true;
+  sfx(740, 0.1, 'triangle', 0.06);
+  burst(benji.x, benji.y, '#ffe14d');
+}
+function maybeCollectTreat(seg) {
+  if (!treat || treat.got || !G || !seg || seg.kind !== 'swim') return;
+  if (seg.r !== treat.r || seg.c !== treat.c) return;
+  if (seg.fail && seg.fail !== 'jelly' && seg.fail !== 'loop') return;
+  const p = treatAnchor();
+  const dx = benji.x - p.x, dy = benji.y - p.y;
+  const reach = G.PW * 0.5;
+  if (dx * dx + dy * dy <= reach * reach || benjiTreatOverlap()) takeTreat();
+}
 function arrive(r, c) {
   const ch = cellChar(L.grid, r, c);
   if (SW[ch]) run.sw.add(SW[ch]);
   if (ch === 'F') run.fr.add(r + ',' + c);
-  if (treat && !treat.got && treat.r === r && treat.c === c) {
-    treat.got = true;
-    sfx(740, 0.1, 'triangle', 0.06);
-    burst(benji.x, benji.y, '#ffe14d');
-  }
+  if (treat && !treat.got && treat.r === r && treat.c === c) takeTreat();
   benji.r = r; benji.c = c;
 }
 function overshootIndex(cmds) {
@@ -844,6 +1581,12 @@ function startReact(why, slot, dur) {
   run.react = { why: why, t: 0, dur: dur == null ? 1 : dur };
   mode = 'fail';
   sfx(why === 'jelly' ? 180 : 220, 0.2, 'sine', 0.08);
+}
+function winningGoal(seg) {
+  if (!run || !L || !seg || seg.fail) return false;
+  if (run.i !== run.cmds.length - 1) return false;
+  if (cellChar(L.grid, seg.r, seg.c) !== 'G') return false;
+  return isWin(L, { r: seg.r, c: seg.c, sw: run.sw, fr: run.fr });
 }
 function segDone() {
   const seg = run.segs[run.si];
@@ -866,7 +1609,7 @@ function segDone() {
     if (!seg.fail) {
       benji.x = seg.x1; benji.y = seg.y1;
       arrive(seg.r, seg.c);
-      bubbleBurst(benji.x, benji.y + 30, 2, 20);
+      if (!winningGoal(seg)) bubbleBurst(benji.x, benji.y + 30, 2, 20);
     } else if (seg.fail === 'jelly' || seg.fail === 'loop') {
       benji.x = seg.x1; benji.y = seg.y1;
       arrive(seg.r, seg.c);
@@ -930,16 +1673,30 @@ function startWin() {
   let n = runs <= 1 ? 3 : runs === 2 ? 2 : 1;
   if (L.goal === 'fewest' && len > L.need) n = Math.min(n, 2);
   const shell = L.goal === 'fewest' && len === L.need;
-  win = { stars: n, shell: shell, t: 0, friend: L.cast.goal };
+  win = { stars: n, shell: shell, t: 0, age: 0, friend: L.cast.goal, cardOn: false, cardT: 0 };
   mode = 'win';
   benji.moving = false;
   benji.rot = 0;
+  benji.forceState = 'chomp';
+  benji.forceValue = 0;
+  benji.q = 0;
+  benji.qv += 10;
   const prev = stars[world][levelIdx] || 0;
   if (n > prev) { stars[world][levelIdx] = n; store.set('v11stars' + world, stars[world]); }
   const unlocked = levelIdx + 1;
   if (unlocked > prog[world]) { prog[world] = unlocked; store.set('v11prog' + world, prog[world]); }
-  fanfare();
-  burst(benji.x, benji.y - 20, '#fff');
+  chompSfx();
+  after(0.08, goalChime);
+  after(1.75, beginCard);
+  const g = goalSpot(G, benji.r, benji.c);
+  bubbleBurst(g.x, g.y, 12, 50);
+  sparkle(g.x, g.y - 20, 16);
+}
+function beginCard() {
+  if (!win || win.cardOn) return;
+  win.cardOn = true;
+  win.cardT = 0;
+  whoosh();
 }
 
 function addCmd(dir) {
@@ -980,7 +1737,10 @@ function onPointer(x, y) {
     return;
   }
   if (state === 'reward') { if (hit(rewardNext(), x, y) || hit(playButton(), x, y)) continueReward(); return; }
-  if (state === 'play' && mode === 'win') { if (hit(nextButton(), x, y) || hit(playButton(), x, y)) nextFromWin(); return; }
+  if (state === 'play' && mode === 'win') {
+    if (win && win.cardOn && win.cardT >= 0.5 && (hit(nextButton(), x, y) || hit(playButton(), x, y))) nextFromWin();
+    return;
+  }
   if (state !== 'play' || !L) return;
   arrowButtons().forEach(a => { if (hit(a, x, y)) addCmd(a.dir); });
   if (hit(playButton(), x, y)) pressPlay();
@@ -1036,12 +1796,29 @@ function spawnBedTrail(channel) {
     trails.push({ x0: a.x, y0: a.y, x1: c.x, y1: c.y, t: 0, dur: 0.55 });
   }));
 }
+function pingCardStars(was, now) {
+  if (!win) return;
+  for (let i = 0; i < 3; i++) {
+    const at = 0.62 + i * 0.25;
+    if (was < at && now >= at) {
+      if (i < win.stars) starSfx();
+      else unclick();
+    }
+  }
+}
 function update(dt) {
   T += dt;
+  for (let i = later.length - 1; i >= 0; i--) {
+    later[i].t -= dt;
+    if (later[i].t <= 0) { const fn = later[i].fn; later.splice(i, 1); fn(); }
+  }
+  if (win && win.cardOn) {
+    const was = win.cardT;
+    win.cardT += dt;
+    pingCardStars(was, win.cardT);
+  }
   const adt = dt * animMul;
   slotShake = Math.max(0, slotShake - dt);
-  benji.qv += (-benji.q * 260 - benji.qv * 14) * adt;
-  benji.q += benji.qv * adt;
   benji.turnT = Math.min(1, benji.turnT + adt / 0.14);
   if (benji.popIn < 1) benji.popIn = Math.min(1, benji.popIn + dt / 0.35);
   const stroking = mode === 'run' && run && run.segs[run.si] && run.segs[run.si].kind === 'swim';
@@ -1056,13 +1833,6 @@ function update(dt) {
     if (k >= 1) { benji.home = null; benji.moving = false; }
   }
   bubbles.forEach(b => { b.y -= b.s * dt; if (b.y < -20) b.y = H + 10; b.x += Math.sin(T + b.w) * 8 * dt; });
-  parts.forEach(p => {
-    p.t += dt;
-    p.x += (p.vx || 0) * dt;
-    p.y += (p.vy || 0) * dt;
-    if (p.kind !== 'bubble') p.vy += 40 * dt;
-  });
-  parts = parts.filter(p => p.t < p.life);
   updateJelly(adt);
   if (state === 'reward' && reward) reward.t += dt;
   if (state === 'play' && win) win.t += dt;
@@ -1075,6 +1845,17 @@ function update(dt) {
     const fallLive = seg && seg.kind === 'fall' && seg.t < seg.dur;
     if (!fallLive && run.react.t >= run.react.dur) beginReturn(false);
   }
+  benji.qv += (-benji.q * 260 - benji.qv * 14) * dt;
+  benji.q += benji.qv * dt;
+  if (mode === 'win' && win) win.age += dt;
+  parts.forEach(p => {
+    p.t += dt;
+    p.x += (p.vx || 0) * dt;
+    p.y += (p.vy || 0) * dt;
+    if (p.kind === 'spark') p.vy += 500 * dt;
+    else if (p.kind !== 'bubble') p.vy += 40 * dt;
+  });
+  parts = parts.filter(p => p.t < p.life);
   updateFx(adt);
   if (G && mode === 'edit' && L && !benji.home && benji.popIn >= 1) {
     const p = spotOf(G, benji.r, benji.c);
@@ -1103,6 +1884,11 @@ function stepSwim(seg, adt) {
   benji.squat = 0;
   const nose = seg.dir === 'L' ? -1 : seg.dir === 'R' ? 1 : 0;
   benji.rot = nose * (benji.flip ? -1 : 1) * 0.12 * Math.sin(k * Math.PI);
+  if (winningGoal(seg)) {
+    benji.forceState = 'chomp';
+    benji.forceValue = clamp(seg.t / seg.dur * 1.3, 0, 1);
+  }
+  maybeCollectTreat(seg);
   return k >= 1;
 }
 function stepBounce(seg, adt) {
@@ -1262,6 +2048,22 @@ function bubbleBurst(x, y, n, spread) {
       r: 3 + Math.random() * 7,
       life: 0.7 + Math.random() * 0.6,
       t: 0
+    });
+  }
+}
+function sparkle(x, y, n) {
+  const colors = ['#ffe14d', '#ff9ec7', '#7ee8ff', '#a6ff7e'];
+  const count = n || 14;
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const v = 100 + Math.random() * 220;
+    parts.push({
+      kind: 'spark', x: x, y: y,
+      vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+      s: 0.25 + Math.random() * 0.25,
+      color: colors[Math.floor(Math.random() * 4)],
+      life: 0.6 + Math.random() * 0.4,
+      t: 0, rot: Math.random() * 6
     });
   }
 }
@@ -1449,17 +2251,28 @@ function drawBubble(x, y, rad, locked) {
   ctx.restore();
 }
 function friendFrame() { return Math.floor(T * 6) % 4; }
+function cheerHop(phase) {
+  if (mode !== 'win' || !win) return 0;
+  return Math.sin(Math.min(win.age, 1.75) * Math.PI * 3 + phase) * 16;
+}
 function drawGoalBubble(r, c) {
   const p = cellXY(G, r, c);
   const sc = G.TW / 140;
-  const y = p.y - G.TD * 0.55 + Math.sin(T * 2.4) * 4;
+  const hop = cheerHop(0);
+  const y = p.y - G.TD * 0.55 + Math.sin(T * 2.4) * 4 - hop;
   const rescued = L.friendKeys.filter(k => run && run.fr && run.fr.has(k)).length;
   const need = L.friendKeys.length;
   const locked = L.goal === 'rescue-all' && rescued < need;
-  drawBubble(p.x, y, 40 * sc, locked);
+  const pop = (mode === 'win' && win) ? clamp(win.age / 0.6, 0, 1) : 0;
+  if (pop < 1) {
+    ctx.save();
+    ctx.globalAlpha = 1 - pop;
+    drawBubble(p.x, y + hop * 0.35, 40 * sc * (1 + pop * 0.45), locked);
+    ctx.restore();
+  }
   const bob = friendFrame();
   drawSprite(L.cast.goal, mode === 'win' ? 'happy' : 'idle', p.x, y + 6 * sc, { scale: 0.40 * sc, frame: bob });
-  if (L.goal === 'rescue-all') {
+  if (L.goal === 'rescue-all' && pop < 1) {
     text(rescued + '/' + need, p.x, y + 34 * sc, Math.max(16, 18 * sc), '#fff', '#14324a', 4);
   }
 }
@@ -1468,7 +2281,7 @@ function drawFriendBubble(r, c) {
   const sc = G.TW / 140;
   const key = r + ',' + c;
   const got = run && run.fr && run.fr.has(key);
-  const y = p.y - G.TD * 0.42 + Math.sin(T * 2 + c) * 3;
+  const y = p.y - G.TD * 0.42 + Math.sin(T * 2 + c) * 3 - (got ? cheerHop(c) : 0);
   drawBubble(p.x, y, 34 * sc, !got && L.goal === 'rescue-all');
   drawSprite(L.cast.extras[key] || 'turtle', got ? 'happy' : 'idle', p.x, y + 4 * sc, { scale: 0.34 * sc, frame: friendFrame() });
 }
@@ -1543,41 +2356,96 @@ function drawStinger(p, sc) {
   if (!jellyUp && !jellyAnim) drawSprite('stingerWarn', 'pulse', p.x, p.y, { scale: sc, frame: Math.floor(T * 12) % 6 });
   drawSprite('stinger', s.state, p.x, p.y, { scale: sc, frame: s.frame });
 }
-function drawActors() {
+function treatPose(g, r, c, ch) {
+  const p = cellXY(g, r, c);
+  const floor = treatFloor(ch);
+  const plate = floor === 'pad' || floor === 'bed' || floor === 'current';
+  const sc = g.TW / 140;
+  let scale = sc * 0.72;
+  let y = p.y - 6;
+  if (plate) {
+    scale *= 0.8;
+    const drop = g.TD * 0.18;
+    y -= drop;
+    if (floor === 'bed') {
+      const chan = { M: 'm', y: 'g', z: 'p' }[ch];
+      const tuck = chan && gateOpen(chan) ? clamp((fx[chan] || 0) * 3, 0, 1) : 0;
+      y += drop * 2 * (1 - tuck);
+    }
+  }
+  return { x: p.x, y: y, scale: scale, plate: plate, sc: sc, floor: floor, cy: p.y };
+}
+function drawTreatShadow(pose) {
+  const k = 0.5 * pose.scale;
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = '#14324a';
+  ctx.filter = 'blur(' + Math.max(1.5, pose.sc * 1.5) + 'px)';
+  ctx.beginPath();
+  ctx.ellipse(pose.x, pose.y + 26 * k, 46 * k, 12 * k, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+function drawTreatBodyFrames(r, c) {
+  const ch = cellChar(L.grid, r, c);
+  const pose = treatPose(G, r, c, ch);
+  const frames = (SPRITES.treat && SPRITES.treat.frames[treat.kind]) || [];
+  const n = frames.length || 1;
+  for (let f = 0; f < n; f++) {
+    drawSprite('treat', treat.kind, pose.x, pose.y, { scale: pose.scale, frame: f });
+  }
+  return pose;
+}
+function drawTreatSprite(r, c) {
+  const ch = cellChar(L.grid, r, c);
+  const pose = treatPose(G, r, c, ch);
+  if (pose.plate) drawTreatShadow(pose);
+  drawSprite('treat', treat.kind, pose.x, pose.y, { scale: pose.scale, frame: Math.floor(T * 6) % 4 });
+}
+function boardActors() {
   const items = [];
-  const add = (row, layer, draw) => items.push({ row: row, layer: layer, draw: draw });
+  const add = (row, layer, kind, draw) => items.push({ row: row, layer: layer, kind: kind, draw: draw });
   const openingFrame = Math.floor(T * 8) % 4;
   for (let r = 0; r < G.rows; r++) for (let c = 0; c < G.cols; c++) {
     const ch = L.grid[r][c];
     const p = cellXY(G, r, c);
     const sc = G.TW / 140;
     if (PIPE_MOUTH[ch]) {
-      add(r, 0, () => drawSprite('tube_opening', ch.toLowerCase(), p.x, p.y, { scale: sc * 0.86, frame: openingFrame }));
+      add(r, 0, 'pipe', () => drawSprite('tube_opening', ch.toLowerCase(), p.x, p.y, { scale: sc * 0.86, frame: openingFrame }));
     }
-    if (ch === 'U') add(r, 0, () => drawUrchinAt(p, sc, false));
-    if (ch === 'M') add(r, 0, () => drawBed(p, sc, 'm', null, null));
-    if (ch === 'y') add(r, 0, () => drawBed(p, sc, 'g', PAINT.gold, 'moon'));
-    if (ch === 'z') add(r, 0, () => drawBed(p, sc, 'p', PAINT.pink, 'heart'));
-    if (ch === 'h') add(r, 0, () => drawClam(p, sc, 'coral', 'k'));
-    if (ch === '2') add(r, 0, () => drawClam(p, sc, 'gold', 'g'));
-    if (ch === '3') add(r, 0, () => drawClam(p, sc, 'pink', 'p'));
-    if (ch === 'H') add(r, 0, () => drawKelpGate(p, sc, 'coral', 'k'));
-    if (ch === 'Y') add(r, 0, () => drawKelpGate(p, sc, 'gold', 'g'));
-    if (ch === 'Z') add(r, 0, () => drawKelpGate(p, sc, 'pink', 'p'));
-    if (ch === 'm') add(r, 0, () => drawPad(p, sc, 'm', null, null));
-    if (ch === '5') add(r, 0, () => drawPad(p, sc, 'g', PAINT.gold, 'moon'));
-    if (ch === '6') add(r, 0, () => drawPad(p, sc, 'p', PAINT.pink, 'heart'));
-    if (ch === 'J') add(r, 0, () => drawStinger(p, sc));
-    if (ch === 'G') add(r, 1, () => drawGoalBubble(r, c));
-    if (ch === 'F') add(r, 1, () => drawFriendBubble(r, c));
-    if (treat && !treat.got && treat.r === r && treat.c === c) {
-      add(r, 0, () => drawSprite('treat', treat.kind, p.x, p.y - 6, { scale: sc * 0.72, frame: Math.floor(T * 6) % 4 }));
+    if (ch === 'U') add(r, 0, 'urchin', () => drawUrchinAt(p, sc, false));
+    if (ch === 'M') add(r, 0, 'bed', () => drawBed(p, sc, 'm', null, null));
+    if (ch === 'y') add(r, 0, 'bed', () => drawBed(p, sc, 'g', PAINT.gold, 'moon'));
+    if (ch === 'z') add(r, 0, 'bed', () => drawBed(p, sc, 'p', PAINT.pink, 'heart'));
+    if (ch === 'h') add(r, 0, 'clam', () => drawClam(p, sc, 'coral', 'k'));
+    if (ch === '2') add(r, 0, 'clam', () => drawClam(p, sc, 'gold', 'g'));
+    if (ch === '3') add(r, 0, 'clam', () => drawClam(p, sc, 'pink', 'p'));
+    if (ch === 'H') add(r, 0, 'kelp', () => drawKelpGate(p, sc, 'coral', 'k'));
+    if (ch === 'Y') add(r, 0, 'kelp', () => drawKelpGate(p, sc, 'gold', 'g'));
+    if (ch === 'Z') add(r, 0, 'kelp', () => drawKelpGate(p, sc, 'pink', 'p'));
+    if (ch === 'm') add(r, 0, 'pad', () => drawPad(p, sc, 'm', null, null));
+    if (ch === '5') add(r, 0, 'pad', () => drawPad(p, sc, 'g', PAINT.gold, 'moon'));
+    if (ch === '6') add(r, 0, 'pad', () => drawPad(p, sc, 'p', PAINT.pink, 'heart'));
+    if (ch === 'J') add(r, 0, 'stinger', () => drawStinger(p, sc));
+    if (ch === 'G') add(r, 1, 'goal', () => drawGoalBubble(r, c));
+    if (ch === 'F') add(r, 1, 'friend', () => drawFriendBubble(r, c));
+    const lift = treat && !treat.got ? treatLiftRow(L, treat) : -1;
+    if (treat && !treat.got && treat.r === r && treat.c === c && lift < 0) {
+      add(r, 0, 'treat', () => drawTreatSprite(r, c));
+    }
+    if (lift === r && treat && !treat.got && treat.r === r - 1 && treat.c === c) {
+      add(r, 2, 'treat', () => drawTreatSprite(treat.r, treat.c));
     }
   }
   const inTube = mode === 'run' && run && run.segs[run.si] && run.segs[run.si].kind === 'tube';
-  if (!inTube) add((benji.y - G.by) / G.TD - 0.5, 2, drawBenji);
-  items.sort((a, b) => a.row - b.row || a.layer - b.layer).forEach(it => it.draw());
-  if (inTube) drawBenji();
+  if (!inTube) add((benji.y - G.by) / G.TD - 0.5, 2, 'benji', drawBenji);
+  items.sort((a, b) => a.row - b.row || a.layer - b.layer);
+  return { items: items, inTube: inTube };
+}
+function drawActors() {
+  const board = boardActors();
+  board.items.forEach(it => it.draw());
+  if (board.inTube) drawBenji();
 }
 function benjiPose() {
   if (benji.forceState) return { state: benji.forceState, value: benji.forceValue || 0 };
@@ -1783,6 +2651,7 @@ function goalLabel(goal) {
 }
 function drawParts() {
   parts.forEach(p => {
+    ctx.save();
     ctx.globalAlpha = clamp(1 - p.t / p.life, 0, 1);
     if (p.kind === 'bubble') {
       ctx.beginPath();
@@ -1790,11 +2659,21 @@ function drawParts() {
       ctx.strokeStyle = 'rgba(255,255,255,.95)';
       ctx.lineWidth = 2.5;
       ctx.stroke();
+    } else if (p.kind === 'spark') {
+      ctx.globalAlpha = Math.min(1, (1 - p.t / p.life) * 1.6);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot || 0);
+      starPath(36 * (p.s || 0.35));
+      ctx.fillStyle = p.color || '#ffe14d';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(0,0,0,.25)';
+      ctx.stroke();
     } else {
       ctx.fillStyle = p.color;
       ctx.fillRect(p.x, p.y, p.s, p.s * 0.6);
     }
-    ctx.globalAlpha = 1;
+    ctx.restore();
   });
 }
 function drawFailPop() {
@@ -1803,14 +2682,55 @@ function drawFailPop() {
   const msg = why === 'toofar' ? 'Too far!' : why === 'friends' ? 'Someone is waiting!' : why === 'jelly' ? 'Zap!' : 'Oops!';
   text(msg, benji.x, benji.y - 78, 36, '#fff', '#14324a', 6);
 }
+function viewRect() {
+  return { x0: -offX / scale, y0: -offY / scale, x1: (viewW - offX) / scale, y1: (viewH - offY) / scale };
+}
+function drawWinStars(k) {
+  for (let i = 0; i < 3; i++) {
+    const q = clamp((k - 0.62 - i * 0.25) / 0.25, 0, 1);
+    if (q <= 0) continue;
+    ctx.save();
+    ctx.translate(640 + (i - 1) * 96, 470 - (i === 1 ? 10 : 0));
+    const ss = bounceOut(q) * (i === 1 ? 1.15 : 1);
+    ctx.scale(ss, ss);
+    ctx.rotate((1 - q) * 2);
+    starPath(28);
+    ctx.fillStyle = i < win.stars ? '#ffd43b' : 'rgba(255,255,255,.35)';
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = i < win.stars ? '#b7791f' : 'rgba(0,0,0,.2)';
+    ctx.stroke();
+    ctx.restore();
+  }
+}
 function drawWin() {
-  ctx.fillStyle = 'rgba(8,24,48,.45)'; ctx.fillRect(0, 0, W, H);
+  if (!win || !win.cardOn) return;
+  const k = win.cardT;
+  const v = viewRect();
+  const R = Math.hypot(v.x1 - v.x0, v.y1 - v.y0) * 0.62 * ease(clamp(k / 0.3, 0, 1));
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(640, 400, Math.max(0, R), 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = '#2cc46e';
+  ctx.fillRect(v.x0 - 30, v.y0 - 30, (v.x1 - v.x0) + 60, (v.y1 - v.y0) + 60);
+  ctx.fillStyle = 'rgba(255,255,255,.09)';
+  for (let i = 0; i < 14; i++) {
+    ctx.beginPath();
+    ctx.arc(v.x0 + (i * 211) % (v.x1 - v.x0), v.y0 + (i * 271) % (v.y1 - v.y0), 26 + (i % 4) * 18, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const pk = k < 0.3 ? 0 : k < 0.5 ? bounceOut((k - 0.3) / 0.2) : 1;
+  const sc = 0.4 + 0.6 * pk;
+  ctx.translate(640, 400);
+  ctx.scale(sc, sc);
+  ctx.translate(-640, -400);
   roundRect(240, 150, 800, 500, 36);
   ctx.fillStyle = '#fff7d6'; ctx.fill();
   ctx.lineWidth = 8; ctx.strokeStyle = '#f0b429'; ctx.stroke();
   text('Rescue Party!', 640, 230, 64, '#ff7a1a', '#14324a', 8);
   drawSprite(win.friend, 'happy', 640, 360, { scale: 1.05, frame: Math.floor(T * 8) % 4 });
-  drawStars(640, 470, win.stars, 28);
+  drawWinStars(k);
   if (win.shell) {
     text('Shortest swim!', 600, 530, 28, '#0c6b4a', '#fff', 4);
     ctx.save();
@@ -1823,10 +2743,13 @@ function drawWin() {
     ctx.lineWidth = 3; ctx.strokeStyle = '#c98a00'; ctx.stroke();
     ctx.restore();
   }
-  const nb = nextButton();
-  roundRect(nb.x, nb.y, nb.w, nb.h, 28);
-  ctx.fillStyle = '#3cc46b'; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = '#146b38'; ctx.stroke();
-  text('Next', nb.x + nb.w / 2, nb.y + nb.h / 2, 40, '#fff', '#146b38', 6);
+  if (k >= 0.5) {
+    const nb = nextButton();
+    roundRect(nb.x, nb.y, nb.w, nb.h, 28);
+    ctx.fillStyle = '#3cc46b'; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = '#146b38'; ctx.stroke();
+    text('Next', nb.x + nb.w / 2, nb.y + nb.h / 2, 40, '#fff', '#146b38', 6);
+  }
+  ctx.restore();
 }
 function drawTitle() {
   text('Chomp Benji Chomp!', 640, 78, 72, '#ffe14d', '#0c3d6b', 12);
@@ -1909,12 +2832,12 @@ function render() {
     drawControls();
     fitText(L.name, 640, 54, 48, 860, '#fff', '#0c3d6b', 8);
     drawFailPop();
-    if (mode === 'win' && win) drawWin();
   }
   if (state !== 'title') drawIconButton(backButton(), 'back');
   drawIconButton(musicButton(), 'music');
   drawIconButton(muteButton(), 'mute');
   drawParts();
+  if (win && win.cardOn) drawWin();
   if (portrait()) drawPortrait();
 }
 
@@ -2023,13 +2946,40 @@ window.__benji = {
   toScreen: toScreen,
   turbo(n) { animMul = n || 1; },
   pose() {
+    const pose = benjiPose();
     return {
       x: Math.round(benji.x * 10) / 10, y: Math.round(benji.y * 10) / 10,
       flip: benji.flip, moving: benji.moving, rot: Math.round(benji.rot * 1000) / 1000,
       shrink: Math.round(benji.shrink * 1000) / 1000, alpha: Math.round(benji.alpha * 1000) / 1000,
       spin: Math.round(benji.spin * 1000) / 1000, hidden: benji.hidden,
-      popIn: Math.round(benji.popIn * 1000) / 1000, home: !!benji.home, mode: mode
+      popIn: Math.round(benji.popIn * 1000) / 1000, home: !!benji.home, mode: mode,
+      state: pose.state, value: Math.round(pose.value * 1000) / 1000,
+      q: Math.round(benji.q * 1000) / 1000
     };
+  },
+  parts() {
+    return parts.map(p => ({
+      kind: p.kind || '', x: p.x, y: p.y, vx: p.vx || 0, vy: p.vy || 0, t: p.t, life: p.life
+    }));
+  },
+  winClock() {
+    if (!win) return null;
+    return {
+      age: win.age, card: !!win.cardOn, cardT: win.cardT,
+      pose: benji.forceState || '', q: benji.q
+    };
+  },
+  treats() {
+    const out = [];
+    LEVEL_PACK.forEach(w => w.levels.forEach(raw => {
+      const level = raw.prep;
+      const t = pickTreat(level);
+      out.push({
+        id: level.id, r: t ? t.r : -1, c: t ? t.c : -1, kind: t ? t.kind : '',
+        reach: !!(t && reachableCells(level).has(t.r + ',' + t.c))
+      });
+    }));
+    return out;
   },
   wrongPrograms: wrongPrograms,
   ignoreSwitch: ignoreSwitch,
@@ -2037,3 +2987,4 @@ window.__benji = {
   stars: stars,
   prog: prog
 };
+if (bootReady && artReady) applyMarkScores();
