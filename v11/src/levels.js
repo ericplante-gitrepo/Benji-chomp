@@ -229,11 +229,11 @@ const LEVEL_PACK = [
         "slots": 6,
         "solution": "DDUULL",
         "grid": [
-          "GHS",
+          "GYS",
           "..#",
-          "..h"
+          "..2"
         ],
-        "source": "Sol K-03"
+        "source": "Sol K-03. v11 colour: gold clam and gold kelp gate (teal moon)."
       },
       {
         "id": "K7",
@@ -256,12 +256,12 @@ const LEVEL_PACK = [
         "slots": 4,
         "solution": "URDD",
         "grid": [
-          ".h>#.",
+          ".3>#.",
           ".S.v.",
-          "...H.",
+          "...Z.",
           "...G."
         ],
-        "source": "Argon K-06 (revised in its trace)"
+        "source": "Argon K-06 (revised in its trace). v11 colour: pink clam and pink kelp gate."
       },
       {
         "id": "K9",
@@ -299,11 +299,11 @@ const LEVEL_PACK = [
         "slots": 6,
         "solution": "RRDDRR",
         "grid": [
-          "S>#h..",
+          "S>32..",
           "A..#..",
-          ".a#H#G"
+          ".a#YZG"
         ],
-        "source": "Dispatch"
+        "source": "Dispatch. v11 colour: gold and pink kelp gates. Both switches are on the ride."
       }
     ]
   },
@@ -389,11 +389,11 @@ const LEVEL_PACK = [
         "slots": 5,
         "solution": "UDRRD",
         "grid": [
-          ".m...",
-          ".S#>M",
+          ".5...",
+          ".S#>y",
           "....G"
         ],
-        "source": "Argon S-09"
+        "source": "Argon S-09. v11 colour: gold pad and gold bed (teal moon)."
       },
       {
         "id": "S7",
@@ -403,10 +403,10 @@ const LEVEL_PACK = [
         "slots": 7,
         "solution": "DURRRRD",
         "grid": [
-          "S#M#F",
-          "m...G"
+          "S6yzF",
+          "5...G"
         ],
-        "source": "Dispatch"
+        "source": "Dispatch. v11 colour: gold pad opens the gold bed, pink pad opens the pink bed."
       },
       {
         "id": "S8",
@@ -430,9 +430,9 @@ const LEVEL_PACK = [
         "slots": 5,
         "solution": "RRRRR",
         "grid": [
-          "Sm#M#G"
+          "S6#z#G"
         ],
-        "source": "Dispatch"
+        "source": "Dispatch. v11 colour: pink pad and pink bed."
       },
       {
         "id": "S10",
@@ -472,13 +472,13 @@ const LEVEL_PACK = [
         "role": "play",
         "goal": "reach",
         "slots": 5,
-        "solution": "RRUUL",
+        "solution": "DDRRU",
         "grid": [
-          ".G#",
-          ".J#",
-          "S##"
+          "S..",
+          "#.G",
+          "#J#"
         ],
-        "source": "v11: was Bobbing Jelly RRRRR, all Rights after D1. Cross the jelly on arrow 3 after a turn.",
+        "source": "v11: jelly sits beside the path, not under the goal. Cross it on arrow 3 after the turn.",
         "replaces": "D2"
       },
       {
@@ -514,11 +514,11 @@ const LEVEL_PACK = [
         "slots": 6,
         "solution": "LRRRDD",
         "grid": [
-          "mSMAa",
+          "5SyAa",
           "....J",
           "....G"
         ],
-        "source": "Argon D-10"
+        "source": "Argon D-10. v11 colour: gold pad and gold bed (teal moon)."
       },
       {
         "id": "D6",
@@ -596,13 +596,13 @@ const LEVEL_PACK = [
         "slots": 8,
         "solution": "RRDLLDLL",
         "grid": [
-          "S#h...",
+          "S#3...",
           "..v...",
-          "AH#...",
+          "AZ#...",
           ".....a",
           "...GJ#"
         ],
-        "source": "Opus D-03"
+        "source": "Opus D-03. v11 colour: pink clam and pink kelp gate."
       }
     ]
   }

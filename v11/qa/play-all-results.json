@@ -29,6 +29,96 @@
       "wrong": [],
       "overshoot": [],
       "overflow": [],
+      "switches": [
+        {
+          "id": "K6",
+          "solution": "DDUULL",
+          "ignored": [
+            {
+              "color": "g",
+              "plan": null
+            }
+          ]
+        },
+        {
+          "id": "K8",
+          "solution": "URDD",
+          "ignored": [
+            {
+              "color": "p",
+              "plan": null
+            }
+          ]
+        },
+        {
+          "id": "K11",
+          "solution": "RRDDRR",
+          "ignored": [
+            {
+              "color": "p",
+              "plan": null
+            },
+            {
+              "color": "g",
+              "plan": null
+            }
+          ]
+        },
+        {
+          "id": "S6",
+          "solution": "UDRRD",
+          "ignored": [
+            {
+              "color": "g",
+              "plan": null
+            }
+          ]
+        },
+        {
+          "id": "S7",
+          "solution": "DURRRRD",
+          "ignored": [
+            {
+              "color": "p",
+              "plan": null
+            },
+            {
+              "color": "g",
+              "plan": null
+            }
+          ]
+        },
+        {
+          "id": "S9",
+          "solution": "RRRRR",
+          "ignored": [
+            {
+              "color": "p",
+              "plan": null
+            }
+          ]
+        },
+        {
+          "id": "D5",
+          "solution": "LRRRDD",
+          "ignored": [
+            {
+              "color": "g",
+              "plan": null
+            }
+          ]
+        },
+        {
+          "id": "D11",
+          "solution": "RRDLLDLL",
+          "ignored": [
+            {
+              "color": "p",
+              "plan": null
+            }
+          ]
+        }
+      ],
       "scroll": {
         "w": 1280,
         "h": 800,
@@ -107,38 +197,11 @@
     }
   ],
   "webkit": {
-    "loaded": {
-      "n": 43,
-      "bad": [],
-      "art": []
-    },
-    "wins": [
-      {
-        "id": "R1",
-        "win": true,
-        "stars": 3,
-        "shell": false
-      },
-      {
-        "id": "K1",
-        "win": true,
-        "stars": 3,
-        "shell": false
-      },
-      {
-        "id": "S1",
-        "win": true,
-        "stars": 3,
-        "shell": false
-      },
-      {
-        "id": "D1",
-        "win": true,
-        "stars": 3,
-        "shell": false
-      }
-    ],
+    "label": "webkit-1280x800",
+    "wins": 43,
+    "n": 43,
     "console": [],
-    "network": []
+    "network": [],
+    "fails": []
   }
 }

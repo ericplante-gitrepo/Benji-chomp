@@ -74,6 +74,22 @@ function loadImage(name, src) {
   if (img.complete && img.naturalWidth) fin(true);
   return img;
 }
+function tintedSheet(sheet, tint) {
+  if (!sheet.tints) sheet.tints = {};
+  if (sheet.tints[tint]) return sheet.tints[tint];
+  if (!sheet.ready || !sheet.img.naturalWidth) return null;
+  const c = document.createElement('canvas');
+  c.width = sheet.img.naturalWidth;
+  c.height = sheet.img.naturalHeight;
+  const g = c.getContext('2d');
+  g.drawImage(sheet.img, 0, 0);
+  g.globalCompositeOperation = 'source-atop';
+  g.fillStyle = tint;
+  g.globalAlpha = 0.72;
+  g.fillRect(0, 0, c.width, c.height);
+  sheet.tints[tint] = c;
+  return c;
+}
 function drawSprite(name, state, x, y, o) {
   const s = SPRITES[name];
   if (!s || !s.ready) return false;
@@ -91,7 +107,12 @@ function drawSprite(name, state, x, y, o) {
   ctx.scale((o.flipX ? -1 : 1) * (o.sx || 1), o.sy || 1);
   if (o.alpha != null) ctx.globalAlpha *= o.alpha;
   if (o.add) ctx.globalCompositeOperation = 'lighter';
-  ctx.drawImage(s.img, f.x, f.y, f.w, f.h, -f.ax * k, -f.ay * k, f.w * k, f.h * k);
+  let img = s.img;
+  if (o.tint) {
+    const tinted = tintedSheet(s, o.tint);
+    if (tinted) img = tinted;
+  }
+  ctx.drawImage(img, f.x, f.y, f.w, f.h, -f.ax * k, -f.ay * k, f.w * k, f.h * k);
   ctx.restore();
   return true;
 }
@@ -337,6 +358,7 @@ function traySetting() { return traySettingTest || TRAY_AFTER_FALL; }
 const prog = [0, 1, 2, 3].map(i => store.get('v11prog' + i, 0));
 const stars = [0, 1, 2, 3].map(i => store.get('v11stars' + i, []));
 musicOn = store.get('v11music', true);
+const TREAT_BAN = { M: 1, m: 1, J: 1, '5': 1, '6': 1, y: 1, z: 1, U: 1 };
 const bootReport = [];
 function bootLevels() {
   LEVEL_PACK.forEach((world, wi) => {
@@ -346,11 +368,13 @@ function bootLevels() {
       level.need = shortest ? shortest.length : -1;
       level.shortest = shortest || '';
       const intended = runSim(level, level.solution);
+      const layout = layoutIssues(level);
       bootReport.push({
         id: level.id, world: WORLD_LOOK[wi].name, slots: level.slots, goal: level.goal,
         intended: level.solution, intendedOk: intended.result === 'win',
         shortest: level.shortest, need: level.need,
-        sameLength: !!shortest && shortest.length === level.solution.length
+        sameLength: !!shortest && shortest.length === level.solution.length,
+        layout: layout, layoutOk: layout.length === 0
       });
     });
   });
@@ -497,7 +521,8 @@ function pickTreat(level) {
   const any = [];
   (sim.trace || []).forEach(p => {
     const ch = cellChar(level.grid, p[0], p[1]);
-    if (ch === '#' ) sands.push(p);
+    if (TREAT_BAN[ch]) return;
+    if (ch === '#') sands.push(p);
     else if (ch && ch !== 'S' && ch !== 'G' && ch !== '.') any.push(p);
   });
   const list = sands.length ? sands : any;
@@ -505,6 +530,22 @@ function pickTreat(level) {
   const p = list[Math.floor(list.length / 2)];
   const kinds = ['cracker', 'sushi', 'shrimp', 'cupcake'];
   return { r: p[0], c: p[1], kind: kinds[level.index % kinds.length], got: false };
+}
+function layoutIssues(level) {
+  const issues = [];
+  const grid = level.grid;
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[0].length; c++) {
+      if (grid[r][c] !== 'J' || r === 0) continue;
+      const above = grid[r - 1][c];
+      if (above === 'G' || above === 'F') issues.push('stinger directly below ' + above + ' at ' + r + ',' + c);
+    }
+  }
+  const treat = pickTreat(level);
+  if (treat && TREAT_BAN[cellChar(level.grid, treat.r, treat.c)]) {
+    issues.push('treat on ' + cellChar(level.grid, treat.r, treat.c));
+  }
+  return issues;
 }
 function loadLevel(i) {
   levelIdx = i;
@@ -621,7 +662,7 @@ function overshootIndex(cmds) {
 }
 function startReact(why, slot) {
   run.failSlot = slot;
-  run.react = { why: why, t: 0, dur: why === 'toofar' || why === 'miss' || why === 'friends' ? 0.9 : 0.85 };
+  run.react = { why: why, t: 0, dur: 1 };
   mode = 'fail';
   sfx(why === 'jelly' ? 180 : 220, 0.2, 'sine', 0.08);
 }
@@ -742,16 +783,19 @@ function updateFx(dt) {
   if (!run) return;
   ['k', 'm', 'c', 'g', 'p', 's', 'o'].forEach(col => {
     if (run.sw.has(col)) {
-      if (fx[col] == null) { fx[col] = 0; if (col === 'm') spawnBedTrail(); }
+      if (fx[col] == null) { fx[col] = 0; if (col === 'm' || col === 'g' || col === 'p') spawnBedTrail(col); }
       fx[col] += dt;
     }
   });
   trails.forEach(t => { t.t += dt; });
   trails = trails.filter(t => t.t < t.dur + 0.4);
 }
-function spawnBedTrail() {
+function spawnBedTrail(channel) {
   if (!L) return;
-  const pads = L.pos.m || [], beds = L.pos.M || [];
+  const pairs = { m: ['m', 'M'], g: ['5', 'y'], p: ['6', 'z'] };
+  const pair = pairs[channel];
+  if (!pair) return;
+  const pads = L.pos[pair[0]] || [], beds = L.pos[pair[1]] || [];
   pads.forEach(p => beds.forEach(b => {
     const a = cellXY(G, p[0], p[1]), c = cellXY(G, b[0], b[1]);
     trails.push({ x0: a.x, y0: a.y, x1: c.x, y1: c.y, t: 0, dur: 0.55 });
@@ -781,9 +825,9 @@ function update(dt) {
     }
     if (u >= 1) segDone();
   } else if (mode === 'fail' && run && run.react) {
-    run.react.t += adt;
+    run.react.t += dt;
     if (run.react.why === 'water') {
-      benji.y += 28 * adt;
+      benji.y += 28 * dt;
     }
     if (run.react.t >= run.react.dur) finishFail();
   }
@@ -911,6 +955,10 @@ function backdrop() {
     g.addColorStop(0, '#7fd4c8'); g.addColorStop(1, '#1b6ea8');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   }
+  if (state !== 'title' && (world === 1 || world === 2)) {
+    ctx.fillStyle = 'rgba(32,43,80,0.20)';
+    ctx.fillRect(0, 0, W, H);
+  }
   bubbles.forEach(b => {
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 2; ctx.stroke();
@@ -1032,31 +1080,62 @@ function drawUrchinAt(p, sc, bump) {
   drawSprite('urchin_warn', 'pulse', p.x, p.y, { scale: sc, frame: Math.floor(T * 8) % 6, alpha: 0.95 });
   drawSprite('urchin', bump ? 'bump' : 'idle', p.x, p.y, { scale: sc, frame: bump ? Math.floor(T * 12) % 4 : 0 });
 }
-function drawBed(p, sc) {
-  const on = gateOpen('m');
-  const t = fx.m || 0;
-  if (!on) {
-    drawSprite('urchinBed', 'plate', p.x, p.y, { scale: sc });
-    drawUrchinAt(p, sc, false);
-    return;
+const PAINT = { gold: '#2ec4b6', pink: '#ff6fb5' };
+function drawMark(x, y, kind, sc) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = '#fff';
+  ctx.strokeStyle = '#14324a';
+  ctx.lineWidth = Math.max(3, 4 * sc);
+  ctx.lineJoin = 'round';
+  if (kind === 'moon') {
+    ctx.beginPath();
+    ctx.arc(0, 0, 16 * sc, 0.45, Math.PI * 1.75);
+    ctx.arc(7 * sc, -2 * sc, 13 * sc, Math.PI * 1.15, 0.35, true);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(0, 8 * sc);
+    ctx.bezierCurveTo(-18 * sc, -6 * sc, -8 * sc, -16 * sc, 0, -6 * sc);
+    ctx.bezierCurveTo(8 * sc, -16 * sc, 18 * sc, -6 * sc, 0, 8 * sc);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
   }
-  if (t < 4 / 12) drawSprite('urchinBed', 'tuck', p.x, p.y, { scale: sc, frame: Math.min(3, Math.floor(t * 12)) });
-  else drawSprite('urchinBed', 'flat', p.x, p.y, { scale: sc });
+  ctx.restore();
 }
-function drawClam(p, sc) {
-  const on = gateOpen('k');
-  if (!on) drawSprite('clam', 'coral_closed', p.x, p.y, { scale: sc, frame: Math.floor(T * 6) % 4 });
-  else drawSprite('clam', 'coral_open', p.x, p.y, { scale: sc, frame: frameHold('clam', 'coral_open', 12, fx.k || 0) });
+function drawBed(p, sc, channel, tint, mark) {
+  const on = gateOpen(channel);
+  const t = fx[channel] || 0;
+  const opt = { scale: sc, tint: tint || null };
+  if (!on) {
+    drawSprite('urchinBed', 'plate', p.x, p.y, opt);
+    drawUrchinAt(p, sc, false);
+  } else if (t < 4 / 12) {
+    drawSprite('urchinBed', 'tuck', p.x, p.y, Object.assign({ frame: Math.min(3, Math.floor(t * 12)) }, opt));
+  } else drawSprite('urchinBed', 'flat', p.x, p.y, opt);
+  if (mark) drawMark(p.x, p.y - G.TD * 0.55, mark, Math.max(0.7, sc * 0.85));
 }
-function drawKelpGate(p, sc) {
-  const on = gateOpen('k');
-  if (!on) drawSprite('kelpgate', 'coral_closed', p.x, p.y, { scale: sc, frame: Math.floor(T * 6) % 4 });
-  else drawSprite('kelpgate', 'coral_open', p.x, p.y, { scale: sc, frame: frameHold('kelpgate', 'coral_open', 12, fx.k || 0) });
+function drawClam(p, sc, look, channel) {
+  const on = gateOpen(channel);
+  const state = look + (on ? '_open' : '_closed');
+  const frame = on ? frameHold('clam', state, 12, fx[channel] || 0) : Math.floor(T * 6) % 4;
+  drawSprite('clam', state, p.x, p.y, { scale: sc, frame: frame });
 }
-function drawPad(p, sc) {
-  const on = gateOpen('m');
-  if (!on) drawSprite('urchinPad', 'up', p.x, p.y, { scale: sc, frame: Math.floor(T * 6) % 4 });
-  else drawSprite('urchinPad', 'down', p.x, p.y, { scale: sc, frame: frameHold('urchinPad', 'down', 12, fx.m || 0) });
+function drawKelpGate(p, sc, look, channel) {
+  const on = gateOpen(channel);
+  const state = look + (on ? '_open' : '_closed');
+  const frame = on ? frameHold('kelpgate', state, 12, fx[channel] || 0) : Math.floor(T * 6) % 4;
+  drawSprite('kelpgate', state, p.x, p.y, { scale: sc, frame: frame });
+}
+function drawPad(p, sc, channel, tint, mark) {
+  const on = gateOpen(channel);
+  const state = on ? 'down' : 'up';
+  const frame = on ? frameHold('urchinPad', 'down', 12, fx[channel] || 0) : Math.floor(T * 6) % 4;
+  drawSprite('urchinPad', state, p.x, p.y, { scale: sc, frame: frame, tint: tint || null });
+  if (mark) drawMark(p.x, p.y - 10 * sc, mark, Math.max(0.75, sc));
 }
 function stingerState() {
   if (mode === 'fail' && run && run.react && run.react.why === 'jelly') return { state: 'sting', frame: Math.min(3, Math.floor(run.react.t * 12)) };
@@ -1075,10 +1154,18 @@ function drawActors() {
     const p = cellXY(G, r, c);
     const sc = G.TW / 140;
     if (ch === 'U') items.push({ y: p.y, draw: () => drawUrchinAt(p, sc, false) });
-    if (ch === 'M') items.push({ y: p.y, draw: () => drawBed(p, sc) });
-    if (ch === 'h') items.push({ y: p.y, draw: () => drawClam(p, sc) });
-    if (ch === 'H') items.push({ y: p.y, draw: () => drawKelpGate(p, sc) });
-    if (ch === 'm') items.push({ y: p.y, draw: () => drawPad(p, sc) });
+    if (ch === 'M') items.push({ y: p.y, draw: () => drawBed(p, sc, 'm', null, null) });
+    if (ch === 'y') items.push({ y: p.y, draw: () => drawBed(p, sc, 'g', PAINT.gold, 'moon') });
+    if (ch === 'z') items.push({ y: p.y, draw: () => drawBed(p, sc, 'p', PAINT.pink, 'heart') });
+    if (ch === 'h') items.push({ y: p.y, draw: () => drawClam(p, sc, 'coral', 'k') });
+    if (ch === '2') items.push({ y: p.y, draw: () => drawClam(p, sc, 'gold', 'g') });
+    if (ch === '3') items.push({ y: p.y, draw: () => drawClam(p, sc, 'pink', 'p') });
+    if (ch === 'H') items.push({ y: p.y, draw: () => drawKelpGate(p, sc, 'coral', 'k') });
+    if (ch === 'Y') items.push({ y: p.y, draw: () => drawKelpGate(p, sc, 'gold', 'g') });
+    if (ch === 'Z') items.push({ y: p.y, draw: () => drawKelpGate(p, sc, 'pink', 'p') });
+    if (ch === 'm') items.push({ y: p.y, draw: () => drawPad(p, sc, 'm', null, null) });
+    if (ch === '5') items.push({ y: p.y, draw: () => drawPad(p, sc, 'g', PAINT.gold, 'moon') });
+    if (ch === '6') items.push({ y: p.y, draw: () => drawPad(p, sc, 'p', PAINT.pink, 'heart') });
     if (ch === 'J') items.push({ y: p.y, draw: () => drawStinger(p, sc) });
     if (ch === 'G') items.push({ y: p.y, draw: () => drawGoalBubble(r, c) });
     if (ch === 'F') items.push({ y: p.y, draw: () => drawFriendBubble(r, c) });
@@ -1120,6 +1207,7 @@ function drawBoard() {
     const ch = L.grid[r][c];
     if (ch === '.') continue;
     if (CUR[ch]) {
+      drawFloor(r, c, 'sand');
       const p = cellXY(G, r, c);
       const sc = G.TW / 140;
       const face = { '>': 'r', '<': 'l', '^': 'u', v: 'd' }[ch];
@@ -1174,14 +1262,19 @@ function drawSlot(i, sg) {
     ctx.fill();
   }
   if (bad) {
+    const wobble = Math.sin((run.react.t || 0) * 16) * 8;
     ctx.save();
-    ctx.translate(Math.sin(T * 40) * 3, 0);
-    ctx.beginPath(); ctx.arc(x, y, r + 8, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,60,70,.45)'; ctx.fill();
+    ctx.translate(wobble, 0);
+    ctx.beginPath(); ctx.arc(x, y, r + 18, 0, Math.PI * 2);
+    ctx.fillStyle = '#e11d2e'; ctx.fill();
+    ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.stroke();
     if (filled) dirDisc(queue[i], x, y, r);
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.moveTo(x - r * 0.45, y - r * 0.45); ctx.lineTo(x + r * 0.45, y + r * 0.45);
-    ctx.moveTo(x + r * 0.45, y - r * 0.45); ctx.lineTo(x - r * 0.45, y + r * 0.45); ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 10; ctx.lineCap = 'round';
+    const xh = r * 0.95;
+    ctx.beginPath();
+    ctx.moveTo(x - xh, y - xh); ctx.lineTo(x + xh, y + xh);
+    ctx.moveTo(x + xh, y - xh); ctx.lineTo(x - xh, y + xh);
+    ctx.stroke();
     ctx.restore();
   } else if (filled) dirDisc(queue[i], x, y, r);
   else {
@@ -1381,7 +1474,7 @@ function render() {
   else if (state === 'play' && L && G) {
     drawBoard();
     drawControls();
-    text(L.name, 640, 36, 26, '#fff', '#0c3d6b', 5);
+    fitText(L.name, 640, 54, 48, 860, '#fff', '#0c3d6b', 8);
     drawFailPop();
     if (mode === 'win' && win) drawWin();
   }
@@ -1439,6 +1532,19 @@ function wrongPrograms(level) {
   });
   return fails;
 }
+function ignoreSwitch(level) {
+  const colors = new Set();
+  level.grid.forEach(row => {
+    for (const ch of row) {
+      if (SW[ch]) colors.add(SW[ch]);
+      if (GATE[ch]) colors.add(GATE[ch]);
+    }
+  });
+  return Array.from(colors).map(color => ({
+    color: color,
+    plan: solve(level, { disable: color, maxDepth: level.slots })
+  }));
+}
 function pipeReport(level) {
   const routes = buildTubes(level);
   const bad = [];
@@ -1484,6 +1590,7 @@ window.__benji = {
   toScreen: toScreen,
   turbo(n) { animMul = n || 1; },
   wrongPrograms: wrongPrograms,
+  ignoreSwitch: ignoreSwitch,
   pipeReport: pipeReport,
   stars: stars,
   prog: prog

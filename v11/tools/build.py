@@ -15,20 +15,24 @@ V10_SHEETS = [
     'toytile', 'puff', 'treat', 'urchin', 'urchin_warn', 'finger',
 ]
 NEW_SHEETS = [
-    ('current', 82), ('kelpgate', 84), ('stinger', 84), ('stingerWarn', 82),
-    ('tile_deep', 82), ('tile_kelp', 82), ('tile_ship', 82), ('tileGlow', 80),
-    ('urchinBed', 84), ('urchinPad', 84), ('worldBtn', 80),
+    'current', 'kelpgate', 'stinger', 'stingerWarn',
+    'tile_deep', 'tile_kelp', 'tile_ship', 'tileGlow',
+    'urchinBed', 'urchinPad', 'worldBtn',
 ]
 BGS = [('bg_kelp', 64), ('bg_ship', 64), ('bg_deep', 64)]
 
 
-def webp_bytes(png, quality):
+def webp_bytes(png, quality=None, lossless=False):
     WEBP.mkdir(parents=True, exist_ok=True)
-    out = WEBP / (pathlib.Path(png).stem + '.webp')
-    subprocess.check_call(
-        ['ffmpeg', '-y', '-i', str(png), '-c:v', 'libwebp', '-quality', str(quality), str(out)],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    )
+    tag = 'll' if lossless else str(quality)
+    out = WEBP / (pathlib.Path(png).stem + '-' + tag + '.webp')
+    cmd = ['ffmpeg', '-y', '-i', str(png), '-c:v', 'libwebp']
+    if lossless:
+        cmd += ['-lossless', '1']
+    else:
+        cmd += ['-quality', str(quality)]
+    cmd.append(str(out))
+    subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return out.read_bytes()
 
 
@@ -58,10 +62,10 @@ def extract_v10():
 
 def new_sheet_calls():
     calls = []
-    for name, q in NEW_SHEETS:
+    for name in NEW_SHEETS:
         js = (ART / f'{name}_sprites.js').read_text(encoding='utf-8')
         meta = js[js.index('{'): js.rindex('}') + 1]
-        uri = data_uri(webp_bytes(ART / f'{name}.png', q))
+        uri = data_uri(webp_bytes(ART / f'{name}.png', lossless=True))
         calls.append(f'registerSpriteSheet({name!r}, "{uri}", {meta});')
     return '\n'.join(calls)
 
@@ -69,7 +73,7 @@ def new_sheet_calls():
 def bg_calls():
     lines = []
     for name, q in BGS:
-        uri = data_uri(webp_bytes(ART / f'{name}.png', q))
+        uri = data_uri(webp_bytes(ART / f'{name}.png', quality=q))
         key = name.split('_', 1)[1]
         lines.append(f'loadImage({key!r}, "{uri}");')
     return '\n'.join(lines)

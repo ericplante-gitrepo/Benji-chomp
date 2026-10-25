@@ -365,8 +365,8 @@
   {
     "id": "D2",
     "world": "Deep Sea",
-    "intended": "RRUUL",
-    "shortest": "RRUUL",
+    "intended": "DDRRU",
+    "shortest": "DDRRU",
     "verdict": "ok",
     "why": "stated solution wins",
     "wins": 1,

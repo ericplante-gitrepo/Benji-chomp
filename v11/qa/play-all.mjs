@@ -79,7 +79,9 @@ async function playLevel(page, wi, i, shot) {
 
 async function suite(browserType, opts) {
   const bag = { console: [], network: [] };
-  const browser = await browserType.launch({ headless: true, channel: opts.channel });
+  const launch = { headless: true };
+  if (opts.channel) launch.channel = opts.channel;
+  const browser = await browserType.launch(launch);
   const context = await browser.newContext({
     viewport: { width: opts.w, height: opts.h },
     deviceScaleFactor: opts.dpr
@@ -119,7 +121,13 @@ async function checks(browserType) {
   await boot(page);
   const audit = await page.evaluate(() => {
     const b = window.__benji;
-    const badBoot = b.bootReport.filter((r) => !r.intendedOk || r.need < 1 || r.need > r.slots || !r.sameLength);
+    const badBoot = b.bootReport.filter((r) => !r.intendedOk || r.need < 1 || r.need > r.slots || !r.sameLength || !r.layoutOk);
+    const changed = ['K6', 'K8', 'K11', 'S6', 'S7', 'S9', 'D5', 'D11'];
+    const switches = [];
+    b.LEVEL_PACK.forEach((w) => w.levels.forEach((raw) => {
+      if (changed.indexOf(raw.id) < 0) return;
+      switches.push({ id: raw.id, solution: raw.solution, ignored: b.ignoreSwitch(raw.prep) });
+    }));
     const ties = b.bootReport.filter((r) => r.intended !== r.shortest).map((r) => ({ id: r.id, intended: r.intended, shortest: r.shortest }));
     const pipes = [];
     const wrong = [];
@@ -144,7 +152,7 @@ async function checks(browserType) {
     const de = document.documentElement;
     return {
       tray: b.TRAY_AFTER_FALL,
-      badBoot, ties, pipes, wrong, overshoot, overflow,
+      badBoot, ties, pipes, wrong, overshoot, overflow, switches,
       scroll: { w: de.scrollWidth, h: de.scrollHeight, iw: innerWidth, ih: innerHeight },
       artErrors: b.artErrors,
       lastError: b.lastError
@@ -235,28 +243,9 @@ async function main() {
   }
   if (!ONLY || ONLY === 'webkit' || ONLY === 'all') {
     process.stdout.write('\nwebkit\n');
-    const bag = { console: [], network: [] };
-    const browser = await webkit.launch({ headless: true });
-    const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1 });
-    const page = await context.newPage();
-    attach(page, bag);
-    await boot(page);
-    const loaded = await page.evaluate(() => {
-      const ids = [];
-      window.__benji.LEVEL_PACK.forEach((w, wi) => w.levels.forEach((lv, i) => {
-        window.__benji.jump(wi, i);
-        ids.push({ id: lv.id, state: window.__benji.state, err: window.__benji.lastError });
-      }));
-      return { n: ids.length, bad: ids.filter((x) => x.state !== 'play' || x.err), art: window.__benji.artErrors };
-    });
-    const wins = [];
-    for (const spec of [[0, 0, 'R1'], [1, 0, 'K1'], [2, 0, 'S1'], [3, 0, 'D1']]) {
-      const r = await playLevel(page, spec[0], spec[1], false);
-      wins.push(r);
-      process.stdout.write('webkit ' + r.id + ' ' + r.win + '\n');
-    }
-    await browser.close();
-    out.webkit = { loaded, wins, console: bag.console, network: bag.network };
+    const s = await suite(webkit, { label: 'webkit-1280x800', w: 1280, h: 800, dpr: 1, shots: false });
+    out.webkit = { label: s.label, wins: s.wins, n: s.n, console: s.console, network: s.network, fails: s.results.filter((r) => !r.win) };
+    process.stdout.write('webkit ' + s.wins + '/' + s.n + '\n');
   }
   fs.writeFileSync(path.join(QA, 'play-all-results.json'), JSON.stringify(out, null, 2));
   process.stdout.write('wrote results\n');
