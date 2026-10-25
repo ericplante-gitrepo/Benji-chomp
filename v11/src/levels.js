@@ -37,9 +37,9 @@ const LEVEL_PACK = [
         "grid": [
           "S.G",
           "A.a",
-          ".#."
+          "..#"
         ],
-        "source": "Opus R-02. v11: sand below the pipe holds the treat."
+        "source": "Opus R-02. v11: sand under the pipe exit holds the treat."
       },
       {
         "id": "R4",
@@ -349,10 +349,10 @@ const LEVEL_PACK = [
         "solution": "DLRURR",
         "grid": [
           "SMG",
-          "A.#",
-          "ma."
+          "A..",
+          "ma#"
         ],
-        "source": "Opus S-01 (Hulk level 2)"
+        "source": "Opus S-01 (Hulk level 2). v11: sand beside the pipe exit holds the treat."
       },
       {
         "id": "S4",
@@ -443,12 +443,12 @@ const LEVEL_PACK = [
         "slots": 7,
         "solution": "RRLLDRR",
         "grid": [
-          "Sa..#",
+          "Sa#..",
           "B....",
           "bMG..",
           "...Am"
         ],
-        "source": "Sol S-05"
+        "source": "Sol S-05. v11: sand beside the pipe exit holds the treat."
       }
     ]
   },

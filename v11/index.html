@@ -229,9 +229,9 @@ const LEVEL_PACK = [
         "grid": [
           "S.G",
           "A.a",
-          ".#."
+          "..#"
         ],
-        "source": "Opus R-02. v11: sand below the pipe holds the treat."
+        "source": "Opus R-02. v11: sand under the pipe exit holds the treat."
       },
       {
         "id": "R4",
@@ -541,10 +541,10 @@ const LEVEL_PACK = [
         "solution": "DLRURR",
         "grid": [
           "SMG",
-          "A.#",
-          "ma."
+          "A..",
+          "ma#"
         ],
-        "source": "Opus S-01 (Hulk level 2)"
+        "source": "Opus S-01 (Hulk level 2). v11: sand beside the pipe exit holds the treat."
       },
       {
         "id": "S4",
@@ -635,12 +635,12 @@ const LEVEL_PACK = [
         "slots": 7,
         "solution": "RRLLDRR",
         "grid": [
-          "Sa..#",
+          "Sa#..",
           "B....",
           "bMG..",
           "...Am"
         ],
-        "source": "Sol S-05"
+        "source": "Sol S-05. v11: sand beside the pipe exit holds the treat."
       }
     ]
   },
@@ -830,12 +830,12 @@ function sfx(f, dur, type, vol) {
   if (!a || a.state !== 'running') return;
   try { toneAt(a, f, a.currentTime, dur || 0.12, type || 'sine', vol || 0.07); } catch (e) {}
 }
-function glide(f0, f1, dur, type, vol) {
+function glide(f0, f1, dur, type, vol, delay) {
   if (!audioUnlocked || muted) return;
   const a = audioCtx();
   if (!a || a.state !== 'running') return;
   try {
-    const t = a.currentTime;
+    const t = a.currentTime + (delay || 0);
     const o = a.createOscillator(), g = a.createGain();
     o.type = type || 'sine';
     o.frequency.setValueAtTime(Math.max(40, f0), t);
@@ -851,14 +851,58 @@ function blub() {
   const f = 320 + Math.random() * 80;
   glide(f, f * 1.9, 0.1, 'sine', 0.1);
 }
-function fanfare() {
+let noiseBuf = null;
+function noise(dur, vol, freq, delay) {
   if (!audioUnlocked || muted) return;
   const a = audioCtx();
   if (!a || a.state !== 'running') return;
   try {
-    [523, 659, 784, 1046].forEach((f, i) => toneAt(a, f, a.currentTime + i * 0.12, 0.28, 'triangle', 0.09));
+    if (!noiseBuf) {
+      noiseBuf = a.createBuffer(1, a.sampleRate, a.sampleRate);
+      const ch = noiseBuf.getChannelData(0);
+      for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    }
+    const t = a.currentTime + (delay || 0);
+    const s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    s.buffer = noiseBuf;
+    f.type = 'lowpass';
+    f.frequency.value = freq || 900;
+    g.gain.setValueAtTime(vol || 0.2, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(a.destination);
+    s.start(t); s.stop(t + dur + 0.05);
   } catch (e) {}
 }
+function chompSfx() {
+  noise(0.07, 0.35, 1800);
+  glide(320, 140, 0.08, 'square', 0.09);
+  noise(0.12, 0.3, 900, 0.06);
+}
+function goalChime() {
+  if (!audioUnlocked || muted) return;
+  const a = audioCtx();
+  if (!a || a.state !== 'running') return;
+  try {
+    [784, 988, 1175, 1568].forEach((f, k) => toneAt(a, f, a.currentTime + k * 0.09, 0.32, 'triangle', 0.14));
+    toneAt(a, 2093, a.currentTime + 0.38, 0.6, 'sine', 0.06);
+  } catch (e) {}
+}
+function whoosh() {
+  noise(0.5, 0.14, 650);
+  glide(500, 1100, 0.4, 'sine', 0.06, 0.05);
+}
+function starSfx() {
+  glide(880, 1320, 0.1, 'sine', 0.15);
+  if (!audioUnlocked || muted) return;
+  const a = audioCtx();
+  if (!a || a.state !== 'running') return;
+  try { toneAt(a, 1320, a.currentTime + 0.08, 0.15, 'triangle', 0.1); } catch (e) {}
+}
+function unclick() {
+  glide(900, 420, 0.06, 'sine', 0.14);
+  noise(0.03, 0.06, 2400);
+}
+function after(sec, fn) { later.push({ t: sec, fn: fn }); }
 function musicPump() {
   try {
     const a = audioCtx();
@@ -1221,7 +1265,7 @@ function pipePoints(route) {
 
 // --- game state --------------------------------------------------------------
 let state = 'title', world = 0, levelIdx = 0, L = null, G = null;
-let mode = 'edit', queue = [], run = null, runs = 0, win = null, reward = null;
+let mode = 'edit', queue = [], run = null, runs = 0, win = null, reward = null, later = [];
 let pressed = null, T = 0, animMul = 1, slotShake = 0;
 let tubes = [], fx = {}, trails = [], treat = null, parts = [], bubbles = [];
 const benji = {
@@ -1258,6 +1302,31 @@ function faceToward(dir) {
   else if (dir === 'R') benji.flip = false;
   if (was !== benji.flip) benji.turnT = 0;
 }
+function reachableCells(level) {
+  if (level.reach) return level.reach;
+  const start = { r: level.start[0], c: level.start[1], sw: new Set(), fr: new Set() };
+  const seen = new Set([stateKey(start, 0, level.hasJ)]);
+  const cells = new Set();
+  const frontier = [{ st: start, n: 0 }];
+  while (frontier.length) {
+    const node = frontier.shift();
+    if (node.n >= level.slots) continue;
+    for (const d of ['L', 'R', 'U', 'D']) {
+      const res = resolve(level, node.st, d, node.n + 1);
+      res.moves.forEach(m => {
+        if (m.type === 'swim' && !m.fail) cells.add(m.r + ',' + m.c);
+        else if (m.type === 'tube') cells.add(m.nr + ',' + m.nc);
+      });
+      if (!res.ok) continue;
+      const k = stateKey(res.st, node.n + 1, level.hasJ);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      frontier.push({ st: res.st, n: node.n + 1 });
+    }
+  }
+  level.reach = cells;
+  return cells;
+}
 function sandCells(level) {
   const cells = [];
   for (let r = 0; r < level.grid.length; r++) {
@@ -1268,14 +1337,35 @@ function sandCells(level) {
   return cells;
 }
 function pickTreat(level) {
+  const reached = reachableCells(level);
   const sim = runSim(level, level.solution);
   const onPath = [];
   (sim.trace || []).forEach(p => {
     if (cellChar(level.grid, p[0], p[1]) === '#') onPath.push(p);
   });
-  const list = onPath.length ? onPath : sandCells(level);
-  if (!list.length) return null;
-  const p = list[Math.floor(list.length / 2)];
+  const onPathReach = onPath.filter(p => reached.has(p[0] + ',' + p[1]));
+  let pool = onPathReach;
+  if (!pool.length) {
+    const sand = sandCells(level);
+    const legacy = sand[Math.floor(sand.length / 2)];
+    if (legacy && reached.has(legacy[0] + ',' + legacy[1])) pool = [legacy];
+    else {
+      const open = sand.filter(p => reached.has(p[0] + ',' + p[1]));
+      if (!open.length) return null;
+      const anchors = [[level.start[0], level.start[1]]].concat(sim.trace || []);
+      let best = Infinity;
+      const near = [];
+      open.forEach(p => {
+        let d = Infinity;
+        anchors.forEach(a => { d = Math.min(d, Math.abs(a[0] - p[0]) + Math.abs(a[1] - p[1])); });
+        if (d < best) { best = d; near.length = 0; }
+        if (d === best) near.push(p);
+      });
+      near.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+      pool = near;
+    }
+  }
+  const p = pool[Math.floor(pool.length / 2)];
   const kinds = ['cracker', 'sushi', 'shrimp', 'cupcake'];
   return { r: p[0], c: p[1], kind: kinds[level.index % kinds.length], got: false };
 }
@@ -1308,6 +1398,7 @@ function layoutIssues(level) {
   else {
     const ch = cellChar(level.grid, treat.r, treat.c);
     if (ch !== '#' || TREAT_BAN[ch]) issues.push('treat on ' + ch + ' at ' + treat.r + ',' + treat.c);
+    if (!reachableCells(level).has(treat.r + ',' + treat.c)) issues.push('treat unreachable at ' + treat.r + ',' + treat.c);
   }
   return issues;
 }
@@ -1315,7 +1406,7 @@ function loadLevel(i) {
   levelIdx = i;
   L = worldLevels()[i].prep;
   G = geomOf(L);
-  queue = []; runs = 0; mode = 'edit'; run = null; win = null; reward = null;
+  queue = []; runs = 0; mode = 'edit'; run = null; win = null; reward = null; later = [];
   resetFx();
   tubes = buildTubes(L);
   treat = pickTreat(L);
@@ -1325,11 +1416,11 @@ function loadLevel(i) {
   benji.flip = L.goalAt[1] < L.start[1];
   state = 'play';
 }
-function openSelect(w) { world = w; state = 'select'; L = null; run = null; win = null; reward = null; }
+function openSelect(w) { world = w; state = 'select'; L = null; run = null; win = null; reward = null; later = []; }
 function showReward() {
   state = 'reward';
   reward = { t: 0 };
-  L = null; run = null; win = null;
+  L = null; run = null; win = null; later = [];
 }
 function continueReward() {
   const n = worldLevels().length;
@@ -1371,6 +1462,7 @@ function beginReturn(keepQueue) {
   const sx = benji.x, sy = benji.y;
   mode = 'edit';
   run = null;
+  later = [];
   resetFx();
   if (treat) treat.got = false;
   benji.forceState = null;
@@ -1598,16 +1690,29 @@ function startWin() {
   let n = runs <= 1 ? 3 : runs === 2 ? 2 : 1;
   if (L.goal === 'fewest' && len > L.need) n = Math.min(n, 2);
   const shell = L.goal === 'fewest' && len === L.need;
-  win = { stars: n, shell: shell, t: 0, friend: L.cast.goal };
+  win = { stars: n, shell: shell, t: 0, age: 0, friend: L.cast.goal, cardOn: false, cardT: 0 };
   mode = 'win';
   benji.moving = false;
   benji.rot = 0;
+  benji.forceState = 'chomp';
+  benji.forceValue = 0;
+  benji.q = 0;
+  benji.qv += 10;
   const prev = stars[world][levelIdx] || 0;
   if (n > prev) { stars[world][levelIdx] = n; store.set('v11stars' + world, stars[world]); }
   const unlocked = levelIdx + 1;
   if (unlocked > prog[world]) { prog[world] = unlocked; store.set('v11prog' + world, prog[world]); }
-  fanfare();
-  burst(benji.x, benji.y - 20, '#fff');
+  chompSfx();
+  after(0.08, goalChime);
+  after(1.75, beginCard);
+  bubbleBurst(benji.x, benji.y, 12, 50);
+  sparkle(benji.x, benji.y - 20, 16);
+}
+function beginCard() {
+  if (!win || win.cardOn) return;
+  win.cardOn = true;
+  win.cardT = 0;
+  whoosh();
 }
 
 function addCmd(dir) {
@@ -1648,7 +1753,10 @@ function onPointer(x, y) {
     return;
   }
   if (state === 'reward') { if (hit(rewardNext(), x, y) || hit(playButton(), x, y)) continueReward(); return; }
-  if (state === 'play' && mode === 'win') { if (hit(nextButton(), x, y) || hit(playButton(), x, y)) nextFromWin(); return; }
+  if (state === 'play' && mode === 'win') {
+    if (win && win.cardOn && win.cardT >= 0.5 && (hit(nextButton(), x, y) || hit(playButton(), x, y))) nextFromWin();
+    return;
+  }
   if (state !== 'play' || !L) return;
   arrowButtons().forEach(a => { if (hit(a, x, y)) addCmd(a.dir); });
   if (hit(playButton(), x, y)) pressPlay();
@@ -1704,12 +1812,29 @@ function spawnBedTrail(channel) {
     trails.push({ x0: a.x, y0: a.y, x1: c.x, y1: c.y, t: 0, dur: 0.55 });
   }));
 }
+function pingCardStars(was, now) {
+  if (!win) return;
+  for (let i = 0; i < 3; i++) {
+    const at = 0.62 + i * 0.25;
+    if (was < at && now >= at) {
+      if (i < win.stars) starSfx();
+      else unclick();
+    }
+  }
+}
 function update(dt) {
   T += dt;
+  for (let i = later.length - 1; i >= 0; i--) {
+    later[i].t -= dt;
+    if (later[i].t <= 0) { const fn = later[i].fn; later.splice(i, 1); fn(); }
+  }
+  if (win && win.cardOn) {
+    const was = win.cardT;
+    win.cardT += dt;
+    pingCardStars(was, win.cardT);
+  }
   const adt = dt * animMul;
   slotShake = Math.max(0, slotShake - dt);
-  benji.qv += (-benji.q * 260 - benji.qv * 14) * adt;
-  benji.q += benji.qv * adt;
   benji.turnT = Math.min(1, benji.turnT + adt / 0.14);
   if (benji.popIn < 1) benji.popIn = Math.min(1, benji.popIn + dt / 0.35);
   const stroking = mode === 'run' && run && run.segs[run.si] && run.segs[run.si].kind === 'swim';
@@ -1724,13 +1849,6 @@ function update(dt) {
     if (k >= 1) { benji.home = null; benji.moving = false; }
   }
   bubbles.forEach(b => { b.y -= b.s * dt; if (b.y < -20) b.y = H + 10; b.x += Math.sin(T + b.w) * 8 * dt; });
-  parts.forEach(p => {
-    p.t += dt;
-    p.x += (p.vx || 0) * dt;
-    p.y += (p.vy || 0) * dt;
-    if (p.kind !== 'bubble') p.vy += 40 * dt;
-  });
-  parts = parts.filter(p => p.t < p.life);
   updateJelly(adt);
   if (state === 'reward' && reward) reward.t += dt;
   if (state === 'play' && win) win.t += dt;
@@ -1743,6 +1861,17 @@ function update(dt) {
     const fallLive = seg && seg.kind === 'fall' && seg.t < seg.dur;
     if (!fallLive && run.react.t >= run.react.dur) beginReturn(false);
   }
+  benji.qv += (-benji.q * 260 - benji.qv * 14) * dt;
+  benji.q += benji.qv * dt;
+  if (mode === 'win' && win) win.age += dt;
+  parts.forEach(p => {
+    p.t += dt;
+    p.x += (p.vx || 0) * dt;
+    p.y += (p.vy || 0) * dt;
+    if (p.kind === 'spark') p.vy += 500 * dt;
+    else if (p.kind !== 'bubble') p.vy += 40 * dt;
+  });
+  parts = parts.filter(p => p.t < p.life);
   updateFx(adt);
   if (G && mode === 'edit' && L && !benji.home && benji.popIn >= 1) {
     const p = spotOf(G, benji.r, benji.c);
@@ -1933,6 +2062,22 @@ function bubbleBurst(x, y, n, spread) {
     });
   }
 }
+function sparkle(x, y, n) {
+  const colors = ['#ffe14d', '#ff9ec7', '#7ee8ff', '#a6ff7e'];
+  const count = n || 14;
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const v = 100 + Math.random() * 220;
+    parts.push({
+      kind: 'spark', x: x, y: y,
+      vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+      s: 0.25 + Math.random() * 0.25,
+      color: colors[Math.floor(Math.random() * 4)],
+      life: 0.6 + Math.random() * 0.4,
+      t: 0, rot: Math.random() * 6
+    });
+  }
+}
 function burst(x, y, color) {
   for (let i = 0; i < 14; i++) {
     const a = Math.random() * Math.PI * 2, v = 80 + Math.random() * 160;
@@ -2117,17 +2262,28 @@ function drawBubble(x, y, rad, locked) {
   ctx.restore();
 }
 function friendFrame() { return Math.floor(T * 6) % 4; }
+function cheerHop(phase) {
+  if (mode !== 'win' || !win) return 0;
+  return Math.sin(Math.min(win.age, 1.75) * Math.PI * 3 + phase) * 16;
+}
 function drawGoalBubble(r, c) {
   const p = cellXY(G, r, c);
   const sc = G.TW / 140;
-  const y = p.y - G.TD * 0.55 + Math.sin(T * 2.4) * 4;
+  const hop = cheerHop(0);
+  const y = p.y - G.TD * 0.55 + Math.sin(T * 2.4) * 4 - hop;
   const rescued = L.friendKeys.filter(k => run && run.fr && run.fr.has(k)).length;
   const need = L.friendKeys.length;
   const locked = L.goal === 'rescue-all' && rescued < need;
-  drawBubble(p.x, y, 40 * sc, locked);
+  const pop = (mode === 'win' && win) ? clamp(win.age / 0.6, 0, 1) : 0;
+  if (pop < 1) {
+    ctx.save();
+    ctx.globalAlpha = 1 - pop;
+    drawBubble(p.x, y + hop * 0.35, 40 * sc * (1 + pop * 0.45), locked);
+    ctx.restore();
+  }
   const bob = friendFrame();
   drawSprite(L.cast.goal, mode === 'win' ? 'happy' : 'idle', p.x, y + 6 * sc, { scale: 0.40 * sc, frame: bob });
-  if (L.goal === 'rescue-all') {
+  if (L.goal === 'rescue-all' && pop < 1) {
     text(rescued + '/' + need, p.x, y + 34 * sc, Math.max(16, 18 * sc), '#fff', '#14324a', 4);
   }
 }
@@ -2136,7 +2292,7 @@ function drawFriendBubble(r, c) {
   const sc = G.TW / 140;
   const key = r + ',' + c;
   const got = run && run.fr && run.fr.has(key);
-  const y = p.y - G.TD * 0.42 + Math.sin(T * 2 + c) * 3;
+  const y = p.y - G.TD * 0.42 + Math.sin(T * 2 + c) * 3 - (got ? cheerHop(c) : 0);
   drawBubble(p.x, y, 34 * sc, !got && L.goal === 'rescue-all');
   drawSprite(L.cast.extras[key] || 'turtle', got ? 'happy' : 'idle', p.x, y + 4 * sc, { scale: 0.34 * sc, frame: friendFrame() });
 }
@@ -2451,6 +2607,7 @@ function goalLabel(goal) {
 }
 function drawParts() {
   parts.forEach(p => {
+    ctx.save();
     ctx.globalAlpha = clamp(1 - p.t / p.life, 0, 1);
     if (p.kind === 'bubble') {
       ctx.beginPath();
@@ -2458,11 +2615,21 @@ function drawParts() {
       ctx.strokeStyle = 'rgba(255,255,255,.95)';
       ctx.lineWidth = 2.5;
       ctx.stroke();
+    } else if (p.kind === 'spark') {
+      ctx.globalAlpha = Math.min(1, (1 - p.t / p.life) * 1.6);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot || 0);
+      starPath(36 * (p.s || 0.35));
+      ctx.fillStyle = p.color || '#ffe14d';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(0,0,0,.25)';
+      ctx.stroke();
     } else {
       ctx.fillStyle = p.color;
       ctx.fillRect(p.x, p.y, p.s, p.s * 0.6);
     }
-    ctx.globalAlpha = 1;
+    ctx.restore();
   });
 }
 function drawFailPop() {
@@ -2471,14 +2638,55 @@ function drawFailPop() {
   const msg = why === 'toofar' ? 'Too far!' : why === 'friends' ? 'Someone is waiting!' : why === 'jelly' ? 'Zap!' : 'Oops!';
   text(msg, benji.x, benji.y - 78, 36, '#fff', '#14324a', 6);
 }
+function viewRect() {
+  return { x0: -offX / scale, y0: -offY / scale, x1: (viewW - offX) / scale, y1: (viewH - offY) / scale };
+}
+function drawWinStars(k) {
+  for (let i = 0; i < 3; i++) {
+    const q = clamp((k - 0.62 - i * 0.25) / 0.25, 0, 1);
+    if (q <= 0) continue;
+    ctx.save();
+    ctx.translate(640 + (i - 1) * 96, 470 - (i === 1 ? 10 : 0));
+    const ss = bounceOut(q) * (i === 1 ? 1.15 : 1);
+    ctx.scale(ss, ss);
+    ctx.rotate((1 - q) * 2);
+    starPath(28);
+    ctx.fillStyle = i < win.stars ? '#ffd43b' : 'rgba(255,255,255,.35)';
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = i < win.stars ? '#b7791f' : 'rgba(0,0,0,.2)';
+    ctx.stroke();
+    ctx.restore();
+  }
+}
 function drawWin() {
-  ctx.fillStyle = 'rgba(8,24,48,.45)'; ctx.fillRect(0, 0, W, H);
+  if (!win || !win.cardOn) return;
+  const k = win.cardT;
+  const v = viewRect();
+  const R = Math.hypot(v.x1 - v.x0, v.y1 - v.y0) * 0.62 * ease(clamp(k / 0.3, 0, 1));
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(640, 400, Math.max(0, R), 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = '#2cc46e';
+  ctx.fillRect(v.x0 - 30, v.y0 - 30, (v.x1 - v.x0) + 60, (v.y1 - v.y0) + 60);
+  ctx.fillStyle = 'rgba(255,255,255,.09)';
+  for (let i = 0; i < 14; i++) {
+    ctx.beginPath();
+    ctx.arc(v.x0 + (i * 211) % (v.x1 - v.x0), v.y0 + (i * 271) % (v.y1 - v.y0), 26 + (i % 4) * 18, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const pk = k < 0.3 ? 0 : k < 0.5 ? bounceOut((k - 0.3) / 0.2) : 1;
+  const sc = 0.4 + 0.6 * pk;
+  ctx.translate(640, 400);
+  ctx.scale(sc, sc);
+  ctx.translate(-640, -400);
   roundRect(240, 150, 800, 500, 36);
   ctx.fillStyle = '#fff7d6'; ctx.fill();
   ctx.lineWidth = 8; ctx.strokeStyle = '#f0b429'; ctx.stroke();
   text('Rescue Party!', 640, 230, 64, '#ff7a1a', '#14324a', 8);
   drawSprite(win.friend, 'happy', 640, 360, { scale: 1.05, frame: Math.floor(T * 8) % 4 });
-  drawStars(640, 470, win.stars, 28);
+  drawWinStars(k);
   if (win.shell) {
     text('Shortest swim!', 600, 530, 28, '#0c6b4a', '#fff', 4);
     ctx.save();
@@ -2491,10 +2699,13 @@ function drawWin() {
     ctx.lineWidth = 3; ctx.strokeStyle = '#c98a00'; ctx.stroke();
     ctx.restore();
   }
-  const nb = nextButton();
-  roundRect(nb.x, nb.y, nb.w, nb.h, 28);
-  ctx.fillStyle = '#3cc46b'; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = '#146b38'; ctx.stroke();
-  text('Next', nb.x + nb.w / 2, nb.y + nb.h / 2, 40, '#fff', '#146b38', 6);
+  if (k >= 0.5) {
+    const nb = nextButton();
+    roundRect(nb.x, nb.y, nb.w, nb.h, 28);
+    ctx.fillStyle = '#3cc46b'; ctx.fill(); ctx.lineWidth = 5; ctx.strokeStyle = '#146b38'; ctx.stroke();
+    text('Next', nb.x + nb.w / 2, nb.y + nb.h / 2, 40, '#fff', '#146b38', 6);
+  }
+  ctx.restore();
 }
 function drawTitle() {
   text('Chomp Benji Chomp!', 640, 78, 72, '#ffe14d', '#0c3d6b', 12);
@@ -2577,12 +2788,12 @@ function render() {
     drawControls();
     fitText(L.name, 640, 54, 48, 860, '#fff', '#0c3d6b', 8);
     drawFailPop();
-    if (mode === 'win' && win) drawWin();
   }
   if (state !== 'title') drawIconButton(backButton(), 'back');
   drawIconButton(musicButton(), 'music');
   drawIconButton(muteButton(), 'mute');
   drawParts();
+  if (win && win.cardOn) drawWin();
   if (portrait()) drawPortrait();
 }
 
@@ -2691,13 +2902,34 @@ window.__benji = {
   toScreen: toScreen,
   turbo(n) { animMul = n || 1; },
   pose() {
+    const pose = benjiPose();
     return {
       x: Math.round(benji.x * 10) / 10, y: Math.round(benji.y * 10) / 10,
       flip: benji.flip, moving: benji.moving, rot: Math.round(benji.rot * 1000) / 1000,
       shrink: Math.round(benji.shrink * 1000) / 1000, alpha: Math.round(benji.alpha * 1000) / 1000,
       spin: Math.round(benji.spin * 1000) / 1000, hidden: benji.hidden,
-      popIn: Math.round(benji.popIn * 1000) / 1000, home: !!benji.home, mode: mode
+      popIn: Math.round(benji.popIn * 1000) / 1000, home: !!benji.home, mode: mode,
+      state: pose.state, q: Math.round(benji.q * 1000) / 1000
     };
+  },
+  winClock() {
+    if (!win) return null;
+    return {
+      age: win.age, card: !!win.cardOn, cardT: win.cardT,
+      pose: benji.forceState || '', q: benji.q
+    };
+  },
+  treats() {
+    const out = [];
+    LEVEL_PACK.forEach(w => w.levels.forEach(raw => {
+      const level = raw.prep;
+      const t = pickTreat(level);
+      out.push({
+        id: level.id, r: t ? t.r : -1, c: t ? t.c : -1, kind: t ? t.kind : '',
+        reach: !!(t && reachableCells(level).has(t.r + ',' + t.c))
+      });
+    }));
+    return out;
   },
   wrongPrograms: wrongPrograms,
   ignoreSwitch: ignoreSwitch,
